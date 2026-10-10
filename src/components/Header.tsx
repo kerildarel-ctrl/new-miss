@@ -13,6 +13,7 @@ export const Header: React.FC = () => {
   const navLinks = [
     { href: '/', label: t('nav.home', 'Accueil') },
     { href: '/competitions', label: t('nav.competitions', 'Compétitions') },
+    { href: '/billetterie', label: 'Billetterie' },
     { href: '/classement', label: t('nav.rankings', 'Classement') },
     { href: '/resultats', label: t('nav.results', 'Résultats') },
     { href: '/creer-evenement', label: t('nav.createContest', 'Créer un concours') },
@@ -39,7 +40,7 @@ export const Header: React.FC = () => {
 
         {/* DESKTOP NAVIGATION */}
         <nav className="desktop-nav">
-          {navLinks.slice(0, 4).map((link) => {
+          {navLinks.slice(0, 5).map((link) => {
             const active = isActive(link.href);
             return (
               <Link
