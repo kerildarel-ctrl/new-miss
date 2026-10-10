@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="author" content="MK PROG">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MISS MISTER — Votre vote, votre choix, votre champion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top"><div class="wd">
+<a class="logo" href="#/"><i><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1c.7 6 5 10.3 11 11-6 .7-10.3 5-11 11-.7-6-5-10.3-11-11 6-.7 10.3-5 11-11z"/></svg></i><span>MISS MISTER</span></a>
+<nav><a href="#/" data-r="home">Accueil</a><a href="#/competitions" data-r="comps">Compétitions</a><a href="#/classement" data-r="rank">Classement</a><a href="#/resultats" data-r="res">Résultats</a></nav>
+<button class="lgb" id="lgb" onclick="setLang()" aria-label="Language">EN</button>
+</div></header>
+<main id="app"></main>
+<footer><div class="wd"><div class="fg">
+<div><a class="logo" href="#/" style="color:var(--ink)"><i><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1c.7 6 5 10.3 11 11-6 .7-10.3 5-11 11-.7-6-5-10.3-11-11 6-.7 10.3-5 11-11z"/></svg></i><span style="display:inline">MISS MISTER</span></a><p>La plateforme officielle de vote et d'élection en ligne pour concours de beauté et d'excellence.</p><p><b style="color:var(--ink)">Paiement Sécurisé Mobile Money</b></p></div>
+<div><h4>Navigation</h4><ul><li><a href="#/">Accueil</a></li><li><a href="#/competitions">Compétitions Officielle</a></li><li><a href="#/classement">Classement En Direct</a></li><li><a href="#/resultats">Analytiques &amp; Résultats</a></li></ul></div>
+<div><h4>Suivez-Nous</h4><ul><li><a href="https://www.facebook.com/share/1Hf5TYLo1o/?mibextid=wwXIfr" target="_blank" rel="noopener">Facebook</a></li><li><a href="https://www.instagram.com/mk__prog?igsi=MWhyaXBtZDVidGdhYg%3D%3D&amp;utm_source=qr" target="_blank" rel="noopener">Instagram</a></li></ul></div>
+</div><div class="cp"><span>© 2026 MISS MISTER. Tous droits réservés. Fait avec ♥ pour l'excellence.</span><span class="sg">Conçu et développé par <a href="https://www.instagram.com/mk__prog?igsi=MWhyaXBtZDVidGdhYg%3D%3D&amp;utm_source=qr" target="_blank" rel="noopener">MK PROG</a></span></div></div></footer>
+<dialog id="dlg"></dialog>
+<div id="toast" role="status"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
