@@ -151,7 +151,7 @@ export const VoteModal: React.FC<VoteModalProps> = ({
         zIndex: 100,
         display: 'grid',
         placeItems: 'center',
-        background: 'rgba(10, 14, 26, 0.82)',
+        background: 'rgba(8, 12, 24, 0.85)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
         padding: '16px',
@@ -165,12 +165,12 @@ export const VoteModal: React.FC<VoteModalProps> = ({
           position: 'relative',
           width: '100%',
           maxWidth: '460px',
-          background: '#161c2d',
+          background: '#0f1526',
           color: '#ffffff',
           borderRadius: '24px',
-          padding: '24px 22px',
-          border: '1px solid rgba(255, 255, 255, 0.15)',
-          boxShadow: '0 25px 60px rgba(0, 0, 0, 0.6), 0 0 35px rgba(124, 58, 237, 0.2)',
+          padding: '28px 24px',
+          border: '1px solid rgba(255, 255, 255, 0.12)',
+          boxShadow: '0 25px 60px rgba(0, 0, 0, 0.7), 0 0 40px rgba(129, 140, 248, 0.15)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -181,20 +181,19 @@ export const VoteModal: React.FC<VoteModalProps> = ({
           aria-label="Fermer la fenêtre"
           style={{
             position: 'absolute',
-            top: '18px',
-            right: '18px',
-            width: '36px',
-            height: '36px',
-            borderRadius: '50%',
-            background: 'rgba(255, 255, 255, 0.1)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            color: '#ffffff',
+            top: '20px',
+            right: '20px',
+            width: '32px',
+            height: '32px',
+            background: 'none',
+            border: 'none',
+            color: '#94a3b8',
             display: 'grid',
             placeItems: 'center',
             cursor: 'pointer',
-            fontSize: '1.1rem',
-            fontWeight: 700,
-            transition: 'all 0.2s',
+            fontSize: '1.2rem',
+            fontWeight: 500,
+            transition: 'color 0.2s',
           }}
         >
           ✕
@@ -203,62 +202,54 @@ export const VoteModal: React.FC<VoteModalProps> = ({
         {step === 'FORM' && (
           <>
             {/* BADGE */}
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(139, 92, 246, 0.2)', color: '#c084fc', padding: '4px 12px', borderRadius: '999px', fontSize: '0.8rem', fontWeight: 600 }}>
-              <span>🛡️</span>
-              <span>{t('vote.badge', 'Vote officiel sécurisé')}</span>
+            <div style={{ color: '#818cf8', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+              {t('vote.badge', 'VOTE OFFICIEL SÉCURISÉ')}
             </div>
 
             {/* TITLE & SUBTITLE */}
-            <h2 style={{ marginTop: '10px', fontSize: '1.4rem', fontWeight: 800, color: '#ffffff', lineHeight: 1.25 }}>
-              {t('vote.title', 'Voter pour')} <span style={{ color: '#c084fc' }}>{candidate.firstName} {candidate.lastName}</span>
+            <h2 style={{ marginTop: '6px', fontSize: '1.5rem', fontWeight: 800, color: '#ffffff', lineHeight: 1.25 }}>
+              {t('vote.title', 'Voter pour')} {candidate.firstName} {candidate.lastName}
             </h2>
-            <p style={{ marginTop: '4px', fontSize: '0.85rem', color: '#94a3b8', fontWeight: 500 }}>
-              {t('vote.candidate', 'Candidat')} #{candidate.candidateNumber.replace('#', '')} · {unitVotePrice} FCFA / vote
+            <p style={{ marginTop: '4px', fontSize: '0.84rem', color: '#94a3b8', fontWeight: 400 }}>
+              {t('vote.candidate', 'Candidat')} #{candidate.candidateNumber.replace('#', '')} · {unitVotePrice} FCFA par vote (Montant libre en multiples de {unitVotePrice} FCFA)
             </p>
 
-            {/* TOTAL PRICE BANNER */}
+            {/* TOTAL PRICE LINE CARD */}
             <div
               style={{
                 marginTop: '16px',
-                padding: '14px 18px',
-                borderRadius: '16px',
-                background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.25) 0%, rgba(99, 102, 241, 0.15) 100%)',
-                border: '1.5px solid rgba(139, 92, 246, 0.4)',
+                padding: '12px 16px',
+                borderRadius: '14px',
+                background: '#161e33',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
               }}
             >
-              <div>
-                <span style={{ fontSize: '0.92rem', color: '#f1f5f9', display: 'block', fontWeight: 600 }}>
-                  {voteCount} vote{voteCount > 1 ? 's' : ''}
-                </span>
-                <span style={{ fontSize: '0.76rem', color: '#cbd5e1' }}>
-                  ({unitVotePrice} FCFA / vote)
-                </span>
+              <div style={{ fontSize: '0.92rem', color: '#e2e8f0', fontWeight: 600 }}>
+                {voteCount} vote{voteCount > 1 ? 's' : ''} ({unitVotePrice} FCFA / vote)
               </div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#f59e0b', letterSpacing: '-0.02em' }}>
-                {totalPrice.toLocaleString('fr-FR')} <span style={{ fontSize: '0.95rem', fontWeight: 700 }}>FCFA</span>
+              <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.01em' }}>
+                {totalPrice.toLocaleString('fr-FR')} FCFA
               </div>
             </div>
 
             {/* STEPPER LABEL */}
             <label
               htmlFor="inpQte"
-              style={{ display: 'block', marginTop: '18px', fontSize: '0.88rem', fontWeight: 700, color: '#f1f5f9' }}
+              style={{ display: 'block', marginTop: '18px', fontSize: '0.88rem', fontWeight: 700, color: '#ffffff' }}
             >
               {t('vote.countLabel', 'Nombre de votes (ou montant de votre choix)')}
             </label>
+
+            {/* STEPPER ROW */}
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
                 marginTop: '8px',
-                background: 'rgba(15, 23, 42, 0.7)',
-                border: '1.5px solid rgba(255, 255, 255, 0.2)',
-                borderRadius: '14px',
-                padding: '6px',
               }}
             >
               <button
@@ -266,18 +257,18 @@ export const VoteModal: React.FC<VoteModalProps> = ({
                 onClick={() => setVoteCount((prev) => Math.max(1, prev - 1))}
                 aria-label="Diminuer"
                 style={{
-                  width: '46px',
-                  height: '44px',
-                  borderRadius: '10px',
-                  background: 'rgba(255, 255, 255, 0.12)',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  width: '48px',
+                  height: '46px',
+                  borderRadius: '12px',
+                  background: '#161e33',
+                  border: '1.5px solid rgba(255, 255, 255, 0.15)',
                   color: '#ffffff',
-                  fontSize: '1.4rem',
+                  fontSize: '1.3rem',
                   fontWeight: 700,
                   cursor: 'pointer',
                   display: 'grid',
                   placeItems: 'center',
-                  transition: 'background 0.2s',
+                  transition: 'all 0.15s',
                 }}
               >
                 -
@@ -291,10 +282,12 @@ export const VoteModal: React.FC<VoteModalProps> = ({
                 onChange={(e) => setVoteCount(Math.max(1, parseInt(e.target.value) || 1))}
                 style={{
                   flex: 1,
-                  background: 'transparent',
-                  border: 'none',
+                  height: '46px',
+                  background: '#161e33',
+                  border: '1.5px solid rgba(255, 255, 255, 0.15)',
+                  borderRadius: '12px',
                   color: '#ffffff',
-                  fontSize: '1.4rem',
+                  fontSize: '1.25rem',
                   fontWeight: 800,
                   textAlign: 'center',
                   outline: 'none',
@@ -305,18 +298,18 @@ export const VoteModal: React.FC<VoteModalProps> = ({
                 onClick={() => setVoteCount((prev) => prev + 1)}
                 aria-label="Augmenter"
                 style={{
-                  width: '46px',
-                  height: '44px',
-                  borderRadius: '10px',
-                  background: 'rgba(255, 255, 255, 0.12)',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  width: '48px',
+                  height: '46px',
+                  borderRadius: '12px',
+                  background: '#161e33',
+                  border: '1.5px solid rgba(255, 255, 255, 0.15)',
                   color: '#ffffff',
-                  fontSize: '1.4rem',
+                  fontSize: '1.3rem',
                   fontWeight: 700,
                   cursor: 'pointer',
                   display: 'grid',
                   placeItems: 'center',
-                  transition: 'background 0.2s',
+                  transition: 'all 0.15s',
                 }}
               >
                 +
@@ -347,118 +340,116 @@ export const VoteModal: React.FC<VoteModalProps> = ({
                     type="button"
                     onClick={() => setVoteCount(qty)}
                     style={{
-                      padding: '10px 6px',
-                      borderRadius: '12px',
+                      padding: '8px 4px',
+                      borderRadius: '10px',
                       border: isActive
-                        ? '2px solid #c084fc'
-                        : '1px solid rgba(255, 255, 255, 0.12)',
+                        ? '1.5px solid #818cf8'
+                        : '1px solid rgba(255, 255, 255, 0.1)',
                       background: isActive
-                        ? 'rgba(124, 58, 237, 0.35)'
-                        : 'rgba(255, 255, 255, 0.05)',
-                      color: isActive ? '#ffffff' : '#e2e8f0',
+                        ? 'rgba(129, 140, 248, 0.2)'
+                        : '#161e33',
+                      color: isActive ? '#ffffff' : '#cbd5e1',
                       cursor: 'pointer',
                       textAlign: 'center',
+                      fontSize: '0.82rem',
+                      fontWeight: isActive ? 700 : 500,
                       transition: 'all 0.15s',
                     }}
                   >
-                    <div style={{ fontSize: '0.85rem', fontWeight: isActive ? 800 : 600 }}>{label}</div>
-                    <div style={{ fontSize: '0.74rem', color: isActive ? '#f59e0b' : '#94a3b8', fontWeight: 600 }}>{price}</div>
+                    {label} ({price})
                   </button>
                 );
               })}
             </div>
 
             {/* PAYMENT METHOD SELECTION */}
-            <label style={{ display: 'block', marginTop: '18px', fontSize: '0.88rem', fontWeight: 700, color: '#f1f5f9' }}>
+            <label style={{ display: 'block', marginTop: '18px', fontSize: '0.88rem', fontWeight: 700, color: '#ffffff' }}>
               {t('vote.paymentMethod', 'Moyen de paiement')}
             </label>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '8px' }}>
-              {/* ORANGE MONEY */}
-              <button
-                type="button"
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
+              {/* ORANGE MONEY RADIO */}
+              <label
                 onClick={() => setPaymentMethod('orange')}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '12px',
-                  padding: '14px',
-                  borderRadius: '14px',
-                  border: paymentMethod === 'orange' ? '2.5px solid #ff7900' : '1.5px solid rgba(255, 255, 255, 0.12)',
-                  background: paymentMethod === 'orange' ? 'rgba(255, 121, 0, 0.18)' : 'rgba(255, 255, 255, 0.04)',
+                  gap: '10px',
+                  padding: '12px 14px',
+                  borderRadius: '12px',
+                  background: '#161e33',
+                  border: paymentMethod === 'orange' ? '1.5px solid #ff7900' : '1px solid rgba(255, 255, 255, 0.1)',
                   cursor: 'pointer',
-                  textAlign: 'left',
                 }}
               >
-                <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: '#ff7900', flexShrink: 0, boxShadow: paymentMethod === 'orange' ? '0 0 10px #ff7900' : 'none' }} />
-                <div>
-                  <div style={{ fontSize: '0.92rem', fontWeight: 700, color: paymentMethod === 'orange' ? '#ff7900' : '#ffffff' }}>Orange Money</div>
-                  <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 500 }}>#150#</div>
-                </div>
-              </button>
+                <input
+                  type="radio"
+                  name="pm"
+                  checked={paymentMethod === 'orange'}
+                  onChange={() => setPaymentMethod('orange')}
+                  style={{ accentColor: '#ff7900', width: '18px', height: '18px', cursor: 'pointer' }}
+                />
+                <span style={{ fontSize: '0.95rem', fontWeight: 700, color: paymentMethod === 'orange' ? '#ff7900' : '#ffffff' }}>
+                  Orange Money
+                </span>
+                <span style={{ fontSize: '0.78rem', color: '#94a3b8', marginLeft: 'auto' }}>#150#</span>
+              </label>
 
-              {/* MTN MOMO */}
-              <button
-                type="button"
+              {/* MTN MOMO RADIO */}
+              <label
                 onClick={() => setPaymentMethod('mtn')}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '12px',
-                  padding: '14px',
-                  borderRadius: '14px',
-                  border: paymentMethod === 'mtn' ? '2.5px solid #eab308' : '1.5px solid rgba(255, 255, 255, 0.12)',
-                  background: paymentMethod === 'mtn' ? 'rgba(234, 179, 8, 0.18)' : 'rgba(255, 255, 255, 0.04)',
+                  gap: '10px',
+                  padding: '12px 14px',
+                  borderRadius: '12px',
+                  background: '#161e33',
+                  border: paymentMethod === 'mtn' ? '1.5px solid #eab308' : '1px solid rgba(255, 255, 255, 0.1)',
                   cursor: 'pointer',
-                  textAlign: 'left',
                 }}
               >
-                <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: '#eab308', flexShrink: 0, boxShadow: paymentMethod === 'mtn' ? '0 0 10px #eab308' : 'none' }} />
-                <div>
-                  <div style={{ fontSize: '0.92rem', fontWeight: 700, color: paymentMethod === 'mtn' ? '#eab308' : '#ffffff' }}>MTN MoMo</div>
-                  <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 500 }}>*126#</div>
-                </div>
-              </button>
+                <input
+                  type="radio"
+                  name="pm"
+                  checked={paymentMethod === 'mtn'}
+                  onChange={() => setPaymentMethod('mtn')}
+                  style={{ accentColor: '#eab308', width: '18px', height: '18px', cursor: 'pointer' }}
+                />
+                <span style={{ fontSize: '0.95rem', fontWeight: 700, color: paymentMethod === 'mtn' ? '#eab308' : '#ffffff' }}>
+                  MTN MoMo
+                </span>
+                <span style={{ fontSize: '0.78rem', color: '#94a3b8', marginLeft: 'auto' }}>*126#</span>
+              </label>
             </div>
 
             {/* PHONE INPUT */}
             <label
               htmlFor="inpTel"
-              style={{ display: 'block', marginTop: '18px', fontSize: '0.88rem', fontWeight: 700, color: '#f1f5f9' }}
+              style={{ display: 'block', marginTop: '18px', fontSize: '0.88rem', fontWeight: 700, color: '#ffffff' }}
             >
               {t('vote.phone', 'Numéro de téléphone')}
             </label>
-            <div
+            <input
+              type="tel"
+              id="inpTel"
+              placeholder="6XXXXXXXX"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
+                width: '100%',
                 marginTop: '8px',
-                background: 'rgba(15, 23, 42, 0.7)',
-                border: '1.5px solid rgba(255, 255, 255, 0.2)',
-                borderRadius: '14px',
-                padding: '0 14px',
+                height: '48px',
+                background: '#161e33',
+                border: '1.5px solid rgba(255, 255, 255, 0.15)',
+                borderRadius: '12px',
+                padding: '0 16px',
+                color: '#ffffff',
+                fontSize: '0.95rem',
+                fontWeight: 600,
+                outline: 'none',
               }}
-            >
-              <span style={{ fontSize: '0.9rem', color: '#c084fc', fontWeight: 700 }}>🇨🇲 +237</span>
-              <input
-                type="tel"
-                id="inpTel"
-                placeholder="6XX XXX XXX"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                style={{
-                  flex: 1,
-                  background: 'transparent',
-                  border: 'none',
-                  color: '#ffffff',
-                  padding: '14px 0',
-                  fontSize: '1rem',
-                  fontWeight: 600,
-                  outline: 'none',
-                }}
-              />
-            </div>
-            <span style={{ display: 'block', fontSize: '0.76rem', color: '#94a3b8', marginTop: '6px', fontWeight: 500 }}>
+            />
+            <span style={{ display: 'block', fontSize: '0.78rem', color: '#94a3b8', marginTop: '6px', fontWeight: 400 }}>
               {t('vote.phoneTip', 'Numéro Orange Money ou MTN Mobile Money (+237).')}
             </span>
 
@@ -487,15 +478,15 @@ export const VoteModal: React.FC<VoteModalProps> = ({
               style={{
                 width: '100%',
                 marginTop: '22px',
-                padding: '16px 20px',
-                borderRadius: '16px',
+                padding: '15px 20px',
+                borderRadius: '99px',
                 border: 'none',
-                background: 'linear-gradient(135deg, #7c3aed 0%, #6366f1 100%)',
-                color: '#ffffff',
-                fontSize: '1.05rem',
+                background: '#818cf8',
+                color: '#0f172a',
+                fontSize: '1rem',
                 fontWeight: 800,
                 cursor: isSubmitting ? 'not-allowed' : 'pointer',
-                boxShadow: '0 10px 25px rgba(124, 58, 237, 0.4)',
+                boxShadow: '0 8px 24px rgba(129, 140, 248, 0.35)',
                 transition: 'all 0.2s ease',
                 opacity: isSubmitting ? 0.7 : 1,
               }}
@@ -505,7 +496,7 @@ export const VoteModal: React.FC<VoteModalProps> = ({
                 : `${t('vote.payBtn', 'Payer')} ${totalPrice.toLocaleString('fr-FR')} FCFA & ${t('vote.title', 'voter')}`}
             </button>
 
-            {/* SECURITY NOTICE */}
+            {/* SECURITY FOOTER */}
             <p
               style={{
                 display: 'flex',
@@ -516,13 +507,10 @@ export const VoteModal: React.FC<VoteModalProps> = ({
                 color: '#94a3b8',
                 marginTop: '14px',
                 textAlign: 'center',
-                fontWeight: 500,
+                fontWeight: 400,
               }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <rect x="3" y="11" width="18" height="11" rx="2" />
-                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-              </svg>
+              <span>🔒</span>
               <span>{t('vote.secureNote', 'Paiement chiffré et sécurisé. Débit direct après validation USSD.')}</span>
             </p>
           </>
@@ -531,10 +519,10 @@ export const VoteModal: React.FC<VoteModalProps> = ({
         {step === 'WAITING_PAYMENT' && (
           <div style={{ textAlign: 'center', padding: '24px 0' }}>
             <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>📲</div>
-            <p style={{ color: '#c084fc', fontSize: '0.9rem', fontWeight: 700 }}>En attente de confirmation</p>
+            <p style={{ color: '#818cf8', fontSize: '0.9rem', fontWeight: 700 }}>En attente de confirmation</p>
             <h2 style={{ marginTop: '8px', fontSize: '1.4rem', fontWeight: 800, color: '#ffffff' }}>Validez sur votre téléphone</h2>
             <p style={{ marginTop: '10px', color: '#cbd5e1', fontSize: '0.9rem', lineHeight: 1.5 }}>
-              Une demande de débit de <b style={{ color: '#f59e0b' }}>{totalPrice.toLocaleString('fr-FR')} FCFA</b> a été envoyée sur votre
+              Une demande de débit de <b style={{ color: '#818cf8' }}>{totalPrice.toLocaleString('fr-FR')} FCFA</b> a été envoyée sur votre
               numéro. Tapez votre code secret Mobile Money pour approuver.
             </p>
             <div style={{ marginTop: '24px' }}>
@@ -543,7 +531,7 @@ export const VoteModal: React.FC<VoteModalProps> = ({
                   width: '44px',
                   height: '44px',
                   borderRadius: '50%',
-                  border: '3px solid #7c3aed',
+                  border: '3px solid #818cf8',
                   borderTopColor: 'transparent',
                   animation: 'spin 1s linear infinite',
                   margin: '0 auto',
@@ -578,7 +566,7 @@ export const VoteModal: React.FC<VoteModalProps> = ({
             <h2 style={{ marginTop: '6px', fontSize: '1.4rem', fontWeight: 800, color: '#ffffff' }}>{t('vote.successTitle', 'Merci pour votre vote !')}</h2>
             <p style={{ color: '#cbd5e1', marginTop: '10px', fontSize: '0.92rem' }}>
               Vos <b style={{ color: '#ffffff' }}>{voteCount} vote{voteCount > 1 ? 's' : ''}</b> pour{' '}
-              <b style={{ color: '#c084fc' }}>{candidate.firstName} {candidate.lastName}</b> ont bien été comptabilisés.
+              <b style={{ color: '#818cf8' }}>{candidate.firstName} {candidate.lastName}</b> ont bien été comptabilisés.
             </p>
             <button
               type="button"
@@ -587,9 +575,9 @@ export const VoteModal: React.FC<VoteModalProps> = ({
                 width: '100%',
                 marginTop: '24px',
                 padding: '15px',
-                borderRadius: '16px',
+                borderRadius: '99px',
                 border: 'none',
-                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                background: '#10b981',
                 color: '#ffffff',
                 fontSize: '1rem',
                 fontWeight: 800,
@@ -631,11 +619,11 @@ export const VoteModal: React.FC<VoteModalProps> = ({
                 style={{
                   flex: 1,
                   padding: '14px',
-                  borderRadius: '14px',
+                  borderRadius: '99px',
                   border: 'none',
-                  background: '#7c3aed',
-                  color: '#ffffff',
-                  fontWeight: 700,
+                  background: '#818cf8',
+                  color: '#0f172a',
+                  fontWeight: 800,
                   cursor: 'pointer',
                 }}
               >
@@ -647,7 +635,7 @@ export const VoteModal: React.FC<VoteModalProps> = ({
                 style={{
                   flex: 1,
                   padding: '14px',
-                  borderRadius: '14px',
+                  borderRadius: '99px',
                   border: '1.5px solid rgba(255, 255, 255, 0.2)',
                   background: 'transparent',
                   color: '#ffffff',
