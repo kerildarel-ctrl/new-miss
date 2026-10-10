@@ -83,8 +83,9 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
         zIndex: 100,
         display: 'grid',
         placeItems: 'center',
-        background: 'rgba(11, 15, 25, 0.75)',
-        backdropFilter: 'blur(10px)',
+        background: 'rgba(10, 14, 26, 0.82)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
         padding: '16px',
         overflowY: 'auto',
       }}
@@ -95,13 +96,13 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
           margin: 'auto',
           position: 'relative',
           width: '100%',
-          maxWidth: '480px',
-          background: 'var(--card, #111827)',
-          color: 'var(--ink, #f9fafb)',
+          maxWidth: '460px',
+          background: '#161c2d',
+          color: '#ffffff',
           borderRadius: '24px',
-          padding: '24px',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          boxShadow: '0 25px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(124, 58, 237, 0.15)',
+          padding: '24px 22px',
+          border: '1px solid rgba(255, 255, 255, 0.15)',
+          boxShadow: '0 25px 60px rgba(0, 0, 0, 0.6), 0 0 35px rgba(124, 58, 237, 0.2)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -117,13 +118,14 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
             width: '36px',
             height: '36px',
             borderRadius: '50%',
-            background: 'rgba(255, 255, 255, 0.08)',
-            border: '1px solid rgba(255, 255, 255, 0.12)',
-            color: 'var(--ink, #fff)',
+            background: 'rgba(255, 255, 255, 0.1)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            color: '#ffffff',
             display: 'grid',
             placeItems: 'center',
             cursor: 'pointer',
-            fontSize: '1rem',
+            fontSize: '1.1rem',
+            fontWeight: 700,
             transition: 'all 0.2s',
           }}
         >
@@ -133,15 +135,15 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
         {!isSubmitted ? (
           <>
             {/* BADGE */}
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(124, 58, 237, 0.15)', color: '#a78bfa', padding: '4px 10px', borderRadius: '999px', fontSize: '0.78rem', fontWeight: 600 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(139, 92, 246, 0.2)', color: '#c084fc', padding: '4px 12px', borderRadius: '999px', fontSize: '0.8rem', fontWeight: 600 }}>
               <span>🏆</span>
               <span>{t('create.badge', 'Organisateurs')}</span>
             </div>
 
-            <h2 style={{ marginTop: '8px', fontSize: '1.4rem', fontWeight: 700, lineHeight: 1.25 }}>
+            <h2 style={{ marginTop: '10px', fontSize: '1.4rem', fontWeight: 800, color: '#ffffff', lineHeight: 1.25 }}>
               {t('create.title', 'Créer une compétition')}
             </h2>
-            <p style={{ marginTop: '4px', fontSize: '0.82rem', color: '#9ca3af', lineHeight: 1.4 }}>
+            <p style={{ marginTop: '4px', fontSize: '0.85rem', color: '#94a3b8', lineHeight: 1.45, fontWeight: 500 }}>
               {t('create.desc', 'Remplissez les informations de base. Notre équipe configure votre vote en 24h ouvrées.')}
             </p>
 
@@ -149,7 +151,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
               {/* ELECTION NAME */}
               <label
                 htmlFor="ceNom"
-                style={{ display: 'block', fontSize: '0.84rem', fontWeight: 600, color: '#d1d5db' }}
+                style={{ display: 'block', fontSize: '0.88rem', fontWeight: 700, color: '#f1f5f9' }}
               >
                 {t('create.name', 'Nom de l’élection')}
               </label>
@@ -162,13 +164,14 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
                 onChange={(e) => setFormData({ ...formData, eventName: e.target.value })}
                 style={{
                   width: '100%',
-                  marginTop: '6px',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1.5px solid rgba(255, 255, 255, 0.12)',
+                  marginTop: '8px',
+                  background: 'rgba(15, 23, 42, 0.7)',
+                  border: '1.5px solid rgba(255, 255, 255, 0.2)',
                   borderRadius: '14px',
-                  padding: '12px 14px',
-                  color: '#fff',
-                  fontSize: '0.92rem',
+                  padding: '14px 16px',
+                  color: '#ffffff',
+                  fontSize: '0.95rem',
+                  fontWeight: 600,
                   outline: 'none',
                 }}
               />
@@ -176,7 +179,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
               {/* CAMPUS / VILLE */}
               <label
                 htmlFor="ceCampus"
-                style={{ display: 'block', marginTop: '14px', fontSize: '0.84rem', fontWeight: 600, color: '#d1d5db' }}
+                style={{ display: 'block', marginTop: '16px', fontSize: '0.88rem', fontWeight: 700, color: '#f1f5f9' }}
               >
                 {t('create.campus', 'Établissement / Ville')}
               </label>
@@ -189,13 +192,14 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
                 onChange={(e) => setFormData({ ...formData, campus: e.target.value })}
                 style={{
                   width: '100%',
-                  marginTop: '6px',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1.5px solid rgba(255, 255, 255, 0.12)',
+                  marginTop: '8px',
+                  background: 'rgba(15, 23, 42, 0.7)',
+                  border: '1.5px solid rgba(255, 255, 255, 0.2)',
                   borderRadius: '14px',
-                  padding: '12px 14px',
-                  color: '#fff',
-                  fontSize: '0.92rem',
+                  padding: '14px 16px',
+                  color: '#ffffff',
+                  fontSize: '0.95rem',
+                  fontWeight: 600,
                   outline: 'none',
                 }}
               />
@@ -203,7 +207,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
               {/* WHATSAPP NUMBER */}
               <label
                 htmlFor="ceContact"
-                style={{ display: 'block', marginTop: '14px', fontSize: '0.84rem', fontWeight: 600, color: '#d1d5db' }}
+                style={{ display: 'block', marginTop: '16px', fontSize: '0.88rem', fontWeight: 700, color: '#f1f5f9' }}
               >
                 {t('create.phone', 'Numéro WhatsApp de l’organisateur')}
               </label>
@@ -211,15 +215,15 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '8px',
-                  marginTop: '6px',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1.5px solid rgba(255, 255, 255, 0.12)',
+                  gap: '10px',
+                  marginTop: '8px',
+                  background: 'rgba(15, 23, 42, 0.7)',
+                  border: '1.5px solid rgba(255, 255, 255, 0.2)',
                   borderRadius: '14px',
-                  padding: '0 12px',
+                  padding: '0 14px',
                 }}
               >
-                <span style={{ fontSize: '0.85rem', color: '#a78bfa', fontWeight: 600 }}>🇨🇲 +237</span>
+                <span style={{ fontSize: '0.9rem', color: '#c084fc', fontWeight: 700 }}>🇨🇲 +237</span>
                 <input
                   type="tel"
                   id="ceContact"
@@ -231,9 +235,10 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
                     flex: 1,
                     background: 'transparent',
                     border: 'none',
-                    color: '#fff',
-                    padding: '12px 0',
-                    fontSize: '0.92rem',
+                    color: '#ffffff',
+                    padding: '14px 0',
+                    fontSize: '0.95rem',
+                    fontWeight: 600,
                     outline: 'none',
                   }}
                 />
@@ -242,7 +247,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
               {/* PRICE */}
               <label
                 htmlFor="cePrix"
-                style={{ display: 'block', marginTop: '14px', fontSize: '0.84rem', fontWeight: 600, color: '#d1d5db' }}
+                style={{ display: 'block', marginTop: '16px', fontSize: '0.88rem', fontWeight: 700, color: '#f1f5f9' }}
               >
                 {t('create.price', 'Prix unitaire du vote (FCFA)')}
               </label>
@@ -255,13 +260,14 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
                 onChange={(e) => setFormData({ ...formData, votePrice: e.target.value })}
                 style={{
                   width: '100%',
-                  marginTop: '6px',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1.5px solid rgba(255, 255, 255, 0.12)',
+                  marginTop: '8px',
+                  background: 'rgba(15, 23, 42, 0.7)',
+                  border: '1.5px solid rgba(255, 255, 255, 0.2)',
                   borderRadius: '14px',
-                  padding: '12px 14px',
-                  color: '#fff',
-                  fontSize: '0.92rem',
+                  padding: '14px 16px',
+                  color: '#ffffff',
+                  fontSize: '0.95rem',
+                  fontWeight: 600,
                   outline: 'none',
                 }}
               />
@@ -272,21 +278,21 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
                 disabled={isSubmitting}
                 style={{
                   width: '100%',
-                  marginTop: '22px',
-                  padding: '15px 20px',
+                  marginTop: '24px',
+                  padding: '16px 20px',
                   borderRadius: '16px',
                   border: 'none',
                   background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
-                  color: '#fff',
-                  fontSize: '1rem',
-                  fontWeight: 700,
+                  color: '#ffffff',
+                  fontSize: '1.05rem',
+                  fontWeight: 800,
                   cursor: isSubmitting ? 'not-allowed' : 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '8px',
+                  gap: '10px',
                   boxShadow: '0 10px 25px rgba(37, 211, 102, 0.35)',
-                  transition: 'all 0.2s',
+                  transition: 'all 0.2s ease',
                   opacity: isSubmitting ? 0.7 : 1,
                 }}
               >
@@ -295,7 +301,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
               </button>
             </form>
 
-            <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '12px', textAlign: 'center', lineHeight: 1.4 }}>
+            <p style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '14px', textAlign: 'center', lineHeight: 1.4, fontWeight: 500 }}>
               {t('create.footer', 'Activation rapide sans frais fixes. Reversement direct via Mobile Money.')}
             </p>
           </>
@@ -306,21 +312,21 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
                 width: '64px',
                 height: '64px',
                 borderRadius: '50%',
-                background: 'rgba(16, 185, 129, 0.15)',
+                background: 'rgba(16, 185, 129, 0.2)',
                 color: '#10b981',
                 display: 'grid',
                 placeItems: 'center',
                 margin: '0 auto 16px',
-                fontSize: '2rem',
-                border: '1px solid rgba(16, 185, 129, 0.3)',
+                fontSize: '2.2rem',
+                border: '1.5px solid rgba(16, 185, 129, 0.4)',
               }}
             >
               ✓
             </div>
-            <p style={{ color: '#10b981', fontWeight: 700, fontSize: '0.88rem' }}>Demande enregistrée</p>
-            <h2 style={{ marginTop: '6px', fontSize: '1.35rem' }}>Merci pour votre initiative !</h2>
-            <p style={{ color: '#9ca3af', marginTop: '8px', fontSize: '0.88rem', lineHeight: 1.5 }}>
-              Votre demande pour <b style={{ color: '#fff' }}>&quot;{formData.eventName}&quot;</b> a été transmise. Un conseiller
+            <p style={{ color: '#10b981', fontWeight: 800, fontSize: '0.92rem' }}>Demande enregistrée</p>
+            <h2 style={{ marginTop: '6px', fontSize: '1.4rem', fontWeight: 800, color: '#ffffff' }}>Merci pour votre initiative !</h2>
+            <p style={{ color: '#cbd5e1', marginTop: '10px', fontSize: '0.9rem', lineHeight: 1.5 }}>
+              Votre demande pour <b style={{ color: '#ffffff' }}>&quot;{formData.eventName}&quot;</b> a été transmise. Un conseiller
               vous contactera sous 24h sur WhatsApp pour finaliser l&apos;ouverture.
             </p>
             <button
@@ -329,13 +335,13 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
               style={{
                 width: '100%',
                 marginTop: '24px',
-                padding: '14px',
+                padding: '15px',
                 borderRadius: '16px',
                 border: 'none',
                 background: 'linear-gradient(135deg, #7c3aed 0%, #6366f1 100%)',
-                color: '#fff',
-                fontSize: '0.95rem',
-                fontWeight: 700,
+                color: '#ffffff',
+                fontSize: '1rem',
+                fontWeight: 800,
                 cursor: 'pointer',
               }}
             >

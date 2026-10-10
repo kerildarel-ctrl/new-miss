@@ -16,8 +16,8 @@ export const Header: React.FC = () => {
     { href: '/classement', label: t('nav.rankings', 'Classement') },
     { href: '/resultats', label: t('nav.results', 'Résultats') },
     { href: '/creer-evenement', label: t('nav.createContest', 'Créer un concours') },
-    { href: '/keril', label: t('nav.admin', 'Administration') },
   ];
+
 
   const isActive = (path: string) => {
     if (path === '/') return pathname === '/';
