@@ -470,17 +470,27 @@ section {
   position: absolute;
   left: 10px;
   top: 10px;
-  font: 600 0.75rem var(--f);
-  background: rgba(23, 20, 46, 0.8);
+  font-size: 0.76rem;
+  font-weight: 700;
+  font-style: normal;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   color: #ffffff;
-  padding: 3px 11px;
+  padding: 4px 12px;
   border-radius: 99px;
   z-index: 2;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .ph em.one {
-  background: var(--a);
-  color: #2a0612;
+  background: rgba(225, 29, 72, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(225, 29, 72, 0.4);
 }
 
 .shr {
@@ -490,14 +500,22 @@ section {
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  border: 0;
-  background: #ffffff;
-  color: var(--hero);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #ffffff;
   display: grid;
   place-items: center;
   cursor: pointer;
   z-index: 2;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  transition: all 0.2s ease;
+}
+
+.shr:hover {
+  background: rgba(15, 23, 42, 0.85);
+  transform: scale(1.05);
 }
 
 .pa {

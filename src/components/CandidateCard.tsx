@@ -59,9 +59,16 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
     }
   };
 
+  // Check if bio is meaningful (ignore RAS, empty, etc.)
+  const hasValidBio =
+    candidate.bio &&
+    candidate.bio.trim() !== '' &&
+    candidate.bio.trim().toUpperCase() !== 'RAS' &&
+    candidate.bio.trim().toUpperCase() !== 'NONE';
+
   return (
     <article className="pc">
-      {/* PHOTO WITH RANK BADGE & SHARE BUTTON */}
+      {/* PHOTO WITH SUBTLE GLASS BADGE & SHARE BUTTON */}
       <div className="ph">
         <Link href={candidateUrl} style={{ position: 'absolute', inset: 0, zIndex: 1, display: 'block' }}>
           {candidate.photoUrl ? (
@@ -90,12 +97,12 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
           )}
         </Link>
 
-        {/* RANK BADGE */}
+        {/* RANK BADGE - Sleek & Compact */}
         <em className={candidate.rank === 1 ? 'one' : ''}>
-          {candidate.rank === 1 ? '1ère place' : `${candidate.rank}e place`}
+          {candidate.rank === 1 ? '🥇 1ère place' : `${candidate.rank}e place`}
         </em>
 
-        {/* SHARE BUTTON */}
+        {/* SHARE BUTTON - Subtle Glass Icon */}
         <button
           type="button"
           className="shr"
@@ -105,8 +112,8 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
         >
           {copied ? (
             <svg
-              width="16"
-              height="16"
+              width="15"
+              height="15"
               viewBox="0 0 24 24"
               fill="none"
               stroke="#10b981"
@@ -116,8 +123,8 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
             </svg>
           ) : (
             <svg
-              width="16"
-              height="16"
+              width="15"
+              height="15"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -134,18 +141,20 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
       </div>
 
       {/* CANDIDATE INFO & LINK */}
-      <Link href={candidateUrl}>
-        <h3>
+      <Link href={candidateUrl} style={{ textDecoration: 'none', color: 'inherit' }}>
+        <h3 style={{ marginTop: '12px', fontSize: '1.05rem', fontWeight: 700, lineHeight: 1.3 }}>
           {candidate.firstName} {candidate.lastName}{' '}
-          <span className="mute">
+          <span className="mute" style={{ fontWeight: 500, fontSize: '0.85rem' }}>
             {candidate.candidateNumber} · {candidate.category}
           </span>
         </h3>
-        <p className="bio">{candidate.bio}</p>
+
+        {/* Render bio only if valid */}
+        {hasValidBio && <p className="bio">{candidate.bio}</p>}
       </Link>
 
       {/* VOTES SCORE */}
-      <div className="vt">
+      <div className="vt" style={{ marginTop: hasValidBio ? '8px' : '6px' }}>
         {candidate.voteCount.toLocaleString('fr-FR')} votes ({candidate.percentage}%)
       </div>
 
