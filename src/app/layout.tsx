@@ -20,6 +20,8 @@ export const metadata: Metadata = {
   },
 };
 
+import { ClientProviders } from '@/components/ClientProviders';
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -28,8 +30,9 @@ export default function RootLayout({
   return (
     <html lang="fr" className={poppins.variable}>
       <body className="min-h-screen flex flex-col font-poppins selection:bg-[var(--p)] selection:text-white">
-        {children}
+        <ClientProviders>{children}</ClientProviders>
       </body>
     </html>
   );
 }
+

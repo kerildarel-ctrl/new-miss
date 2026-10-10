@@ -3,28 +3,25 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useLanguage } from '@/context/LanguageContext';
 
 export const Header: React.FC = () => {
-  const [lang, setLang] = useState<'FR' | 'EN'>('FR');
+  const { lang, toggleLang, t } = useLanguage();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
 
   const navLinks = [
-    { href: '/', label: 'Accueil' },
-    { href: '/competitions', label: 'Compétitions' },
-    { href: '/classement', label: 'Classement' },
-    { href: '/resultats', label: 'Résultats' },
-    { href: '/creer-evenement', label: 'Créer un concours' },
-    { href: '/keril', label: 'Administration' },
+    { href: '/', label: t('nav.home', 'Accueil') },
+    { href: '/competitions', label: t('nav.competitions', 'Compétitions') },
+    { href: '/classement', label: t('nav.rankings', 'Classement') },
+    { href: '/resultats', label: t('nav.results', 'Résultats') },
+    { href: '/creer-evenement', label: t('nav.createContest', 'Créer un concours') },
+    { href: '/keril', label: t('nav.admin', 'Administration') },
   ];
 
   const isActive = (path: string) => {
     if (path === '/') return pathname === '/';
     return pathname.startsWith(path);
-  };
-
-  const toggleLang = () => {
-    setLang((prev) => (prev === 'FR' ? 'EN' : 'FR'));
   };
 
   return (
