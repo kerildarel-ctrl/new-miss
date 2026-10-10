@@ -1,5 +1,7 @@
+-- ==========================================================
 -- SCRIPT SQL COMPLET SUPABASE POUR MISS MISTER
 -- A coller dans Supabase Dashboard > SQL Editor > New Query > RUN
+-- ==========================================================
 
 -- 1. NETTOYAGE DES ANCIENNES TABLES (Si existantes)
 DROP TABLE IF EXISTS public.votes CASCADE;
@@ -61,3 +63,40 @@ CREATE TABLE public.votes (
 ALTER TABLE public.competitions DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.candidates DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.votes DISABLE ROW LEVEL SECURITY;
+
+-- 6. DONNEES INITIALES (COPA AHN & CANDIDAT KOUSSO KERIL)
+INSERT INTO public.competitions (
+  id, slug, title, description, banner_image, logo_image, start_date, end_date, status, total_candidates, total_votes, vote_price, primary_color, rules
+) VALUES (
+  'comp_1788263429369',
+  'copa-ahn',
+  'COPA AHN',
+  'Compétition officielle COPA AHN',
+  '/images/copa_ahn_banner.png',
+  '/images/hero_bg.png',
+  NOW(),
+  NOW() + INTERVAL '30 days',
+  'EN COURS',
+  1,
+  0,
+  100,
+  '#2563EB',
+  'Votes ouverts à tous.'
+) ON CONFLICT (slug) DO NOTHING;
+
+INSERT INTO public.candidates (
+  id, competition_slug, first_name, last_name, candidate_number, photo_url, bio, category, vote_count, percentage, rank, status
+) VALUES (
+  'cand_1788264394767',
+  'copa-ahn',
+  'KOUSSO',
+  'KERIL',
+  '#1',
+  '/images/candidate_1.png',
+  'Candidat officiel',
+  'Mister',
+  0,
+  0,
+  1,
+  'ACTIF'
+) ON CONFLICT (id) DO NOTHING;

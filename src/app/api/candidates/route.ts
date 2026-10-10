@@ -75,6 +75,29 @@ export async function GET(request: Request) {
       return NextResponse.json({ success: true, data: mappedDb }, { headers: noCacheHeaders });
     }
 
+    // Auto-seed to Supabase if table is created and empty
+    if (!error && dbData && dbData.length === 0 && diskData.length > 0) {
+      try {
+        const supabaseAdmin = getSupabaseAdmin();
+        const toInsert = diskData.map((c) => ({
+          id: c.id,
+          competition_slug: c.competitionSlug,
+          first_name: c.firstName,
+          last_name: c.lastName,
+          candidate_number: c.candidateNumber,
+          photo_url: c.photoUrl,
+          bio: c.bio,
+          category: c.category,
+          vote_count: c.voteCount || 0,
+          status: c.status || 'ACTIF',
+          social_instagram: c.socialInstagram || ''
+        }));
+        await supabaseAdmin.from('candidates').insert(toInsert);
+      } catch {
+        // Continue
+      }
+    }
+
     const filteredDisk = competitionSlug
       ? diskData.filter((c) => c.competitionSlug === competitionSlug)
       : diskData;

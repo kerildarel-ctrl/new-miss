@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { getSupabaseAdmin } from '@/lib/supabaseClient';
 import { Candidate } from '@/data/mockData';
+import { recordConfirmedVote } from '@/lib/voteRecorder';
 
 const candsFilePath = path.join(process.cwd(), 'src', 'data', 'candidates.json');
 
@@ -108,27 +109,22 @@ export async function GET(request: Request) {
 
         // Only increment if not already processed in previous check/webhook
         if (!alreadyProcessed && targetCandidateId) {
-          const { data: cand } = await supabase
-            .from('candidates')
-            .select('vote_count')
-            .eq('id', targetCandidateId)
-            .maybeSingle();
-
-          if (cand) {
-            await supabase
-              .from('candidates')
-              .update({ vote_count: (cand.vote_count || 0) + incrementAmount })
-              .eq('id', targetCandidateId);
-          }
-
-          // Update candidate score on server disk JSON fallback
-          updateDiskCandidateVote(targetCandidateId, incrementAmount);
+          await recordConfirmedVote({
+            candidateId: targetCandidateId,
+            count: incrementAmount,
+            voteId: voteId || undefined,
+            transId: transId || undefined
+          });
         }
-
       } catch {
         // Fallback disk update if DB fails
         if (!alreadyProcessed && targetCandidateId) {
-          updateDiskCandidateVote(targetCandidateId, incrementAmount);
+          await recordConfirmedVote({
+            candidateId: targetCandidateId,
+            count: incrementAmount,
+            voteId: voteId || undefined,
+            transId: transId || undefined
+          });
         }
       }
     }

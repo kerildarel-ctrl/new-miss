@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabaseClient';
+import { recordConfirmedVote } from '@/lib/voteRecorder';
 
 export async function POST(request: Request) {
   try {
@@ -82,13 +83,24 @@ export async function POST(request: Request) {
       }
     }
 
-    // Fallback response for instant demo simulation
+    // Fallback response for instant demo simulation (saves vote immediately)
+    await recordConfirmedVote({
+      candidateId,
+      count: voteCount,
+      candidateName,
+      competitionSlug,
+      voteId,
+      transId: `sim_${voteId}`,
+      paymentMethod,
+      amount
+    });
+
     return NextResponse.json({
       success: true,
       voteId: voteId,
       transId: `sim_${voteId}`,
       link: null,
-      message: 'Vote enregistré en mode simulation.'
+      message: 'Vote enregistré avec succès.'
     });
 
   } catch (error: any) {

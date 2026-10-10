@@ -73,7 +73,35 @@ export async function GET() {
       return NextResponse.json({ success: true, data: mappedDb }, { headers: noCacheHeaders });
     }
 
-    return NextResponse.json({ success: true, data: readDiskCompetitions() }, { headers: noCacheHeaders });
+    const diskData = readDiskCompetitions();
+
+    // Auto-seed to Supabase if table is created and empty
+    if (!error && dbData && dbData.length === 0 && diskData.length > 0) {
+      try {
+        const supabaseAdmin = getSupabaseAdmin();
+        const toInsert = diskData.map((comp) => ({
+          id: comp.id,
+          slug: comp.slug,
+          title: comp.title,
+          description: comp.description || '',
+          banner_image: comp.bannerImage || '',
+          logo_image: comp.logoImage || '',
+          start_date: comp.startDate,
+          end_date: comp.endDate,
+          status: comp.status || 'EN COURS',
+          total_candidates: comp.totalCandidates || 0,
+          total_votes: comp.totalVotes || 0,
+          vote_price: comp.votePrice || 100,
+          primary_color: comp.primaryColor || '#2563EB',
+          rules: comp.rules || ''
+        }));
+        await supabaseAdmin.from('competitions').insert(toInsert);
+      } catch {
+        // Continue
+      }
+    }
+
+    return NextResponse.json({ success: true, data: diskData }, { headers: noCacheHeaders });
   } catch {
     return NextResponse.json({ success: true, data: readDiskCompetitions() }, { headers: noCacheHeaders });
   }

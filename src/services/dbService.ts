@@ -184,7 +184,7 @@ export async function deleteCandidate(id: string): Promise<boolean> {
 }
 
 // ----------------------------------------------------
-// VOTING & SCORE UPDATES
+// VOTING & SCORE UPDATES (PERSISTENT SUPABASE & LOCAL)
 // ----------------------------------------------------
 
 export async function submitVote(
@@ -196,7 +196,7 @@ export async function submitVote(
   paymentMethod: string = 'orange'
 ): Promise<boolean> {
   try {
-    await fetch('/api/pay/initiate', {
+    const res = await fetch('/api/candidates/vote', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -208,8 +208,9 @@ export async function submitVote(
         paymentMethod
       })
     });
+    return res.ok;
   } catch {
-    // Continue
+    return false;
   }
-  return true;
 }
+
