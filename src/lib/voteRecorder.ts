@@ -15,6 +15,7 @@ export async function recordConfirmedVote(params: {
   transId?: string;
   paymentMethod?: string;
   amount?: number;
+  email?: string;
 }): Promise<{ success: boolean; newVoteCount: number; error?: string }> {
   const {
     candidateId,
@@ -24,7 +25,8 @@ export async function recordConfirmedVote(params: {
     voteId = `vote_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
     transId = '',
     paymentMethod = 'mobile_money',
-    amount = count * 100
+    amount = count * 100,
+    email = ''
   } = params;
 
   let newVoteCount = count;
@@ -101,6 +103,7 @@ export async function recordConfirmedVote(params: {
         payment_method: paymentMethod,
         payment_status: 'SUCCESSFUL',
         fapshi_trans_id: transId || null,
+        voter_email: email || null,
         created_at: new Date().toISOString()
       }
     ]);

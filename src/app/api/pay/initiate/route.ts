@@ -11,8 +11,9 @@ export async function POST(request: Request) {
       competitionSlug,
       voteCount = 1,
       amount = 100,
-      paymentMethod = 'orange',
-      phone = ''
+      paymentMethod = 'email_vote',
+      phone = '',
+      email = ''
     } = body;
 
     const voteId = `vote_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
@@ -38,49 +39,12 @@ export async function POST(request: Request) {
           amount_fcfa: amount,
           payment_method: paymentMethod,
           payment_status: 'PENDING',
+          voter_email: email || null,
           created_at: new Date().toISOString()
         }
       ]);
     } catch {
       // Continue even if Supabase table is not created yet
-    }
-
-    // 2. Call Fapshi Payment Gateway API with Dynamic Webhook & Redirect URL
-    if (fapshiApiUser && fapshiApiKey) {
-      const redirectUrl = `${siteUrl}/competition/${competitionSlug}?voteSuccess=true&voteId=${voteId}&candidateId=${candidateId}`;
-      const webhookUrl = `${siteUrl}/api/pay/webhook`;
-
-      const fapshiResponse = await fetch(`${fapshiBaseUrl}/initiate-pay`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apiuser': fapshiApiUser,
-          'apikey': fapshiApiKey
-        },
-        body: JSON.stringify({
-          amount: amount,
-          email: process.env.FAPSHI_PAYMENT_EMAIL || 'MKprog.assistant@gmail.com',
-          userId: candidateId,
-          externalId: voteId,
-          redirectUrl: redirectUrl,
-          webhookUrl: webhookUrl,
-          message: `Vote MISS MISTER (${voteCount} vote(s)) pour ${candidateName}`,
-          serviceName: 'MISS MISTER',
-          phone: phone || undefined
-        })
-      });
-
-      const fapshiData = await fapshiResponse.json();
-
-      if (fapshiResponse.ok && (fapshiData.link || fapshiData.transId)) {
-        return NextResponse.json({
-          success: true,
-          voteId: voteId,
-          transId: fapshiData.transId || fapshiData.id,
-          link: fapshiData.link,
-          message: 'Paiement initialisé avec succès.'
-        });
-      }
     }
 
     // Fallback response for instant demo simulation (saves vote immediately)
@@ -92,7 +56,8 @@ export async function POST(request: Request) {
       voteId,
       transId: `sim_${voteId}`,
       paymentMethod,
-      amount
+      amount,
+      email
     });
 
     return NextResponse.json({
