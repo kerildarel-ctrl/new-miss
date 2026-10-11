@@ -61,8 +61,15 @@ CREATE TABLE IF NOT EXISTS public.votes (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Si la table existait déjà sans cette colonne, l'ajouter automatiquement :
+ALTER TABLE public.votes ADD COLUMN IF NOT EXISTS voter_email TEXT;
+ALTER TABLE public.votes ADD COLUMN IF NOT EXISTS payment_method TEXT DEFAULT 'email_vote';
+ALTER TABLE public.votes ADD COLUMN IF NOT EXISTS candidate_name TEXT;
+ALTER TABLE public.votes ADD COLUMN IF NOT EXISTS competition_slug TEXT;
+
 CREATE INDEX IF NOT EXISTS idx_votes_candidate_id ON public.votes(candidate_id);
 CREATE INDEX IF NOT EXISTS idx_votes_voter_email ON public.votes(voter_email);
+
 
 -- 4. TABLE DE LA BILLETTERIE (ÉVÉNEMENTS PUBLIÉS PAR L'ADMIN)
 CREATE TABLE IF NOT EXISTS public.events (
