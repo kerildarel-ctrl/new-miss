@@ -1,0 +1,40 @@
+[
+  {
+    "id": "evt_1791679351041",
+    "slug": "soiree-de-paraiange",
+    "title": "soiree de paraiange",
+    "subtitle": "jj",
+    "date": "12 decmbre 2025",
+    "venue": "venice hall",
+    "city": "Yaounde",
+    "bannerImage": "/images/hero_bg.png",
+    "passes": [
+      {
+        "id": "pass-template-std",
+        "name": "Pass Standard",
+        "price": 100,
+        "description": "Accès général à l’événement + 1 boisson offerte."
+      },
+      {
+        "id": "pass-template-vip",
+        "name": "Pass VIP",
+        "price": 5000,
+        "description": "Place réservée premier rang + cocktail de bienvenue + photo souvenir.",
+        "badge": "Plus Populaire"
+      },
+      {
+        "id": "pass-template-vvip",
+        "name": "Table VVIP (5 Personnes)",
+        "price": 25000,
+        "description": "Table privée VIP pour 5 personnes + Bouteille prestige offerte + Service dédié.",
+        "badge": "VIP Prestige"
+      },
+      {
+        "id": "pass-template-after",
+        "name": "Pass After-Party Club",
+        "price": 1500,
+        "description": "Accès au club et à la fête d’après-élection toute la nuit."
+      }
+    ]
+  }
+]

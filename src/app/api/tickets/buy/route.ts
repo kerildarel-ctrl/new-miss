@@ -26,6 +26,7 @@ export async function POST(request: Request) {
     const randomSuffix = Math.random().toString(36).substring(2, 7).toUpperCase();
     const ticketCode = `TCK-${randomSuffix}-2026`;
     const ticketId = `tck_${Date.now()}_${randomSuffix}`;
+    const orderRef = `CMD-2026-${randomSuffix}`;
     const totalPrice = (unitPrice || 2000) * (quantity || 1);
 
     const newTicket: IssuedTicket = {
@@ -40,6 +41,8 @@ export async function POST(request: Request) {
       buyerName: buyerName,
       buyerEmail: buyerEmail,
       buyerPhone: buyerPhone,
+      orderRef,
+      paymentStatus: 'PAID',
       status: 'VALID',
       purchasedAt: new Date().toISOString()
     };
@@ -60,12 +63,15 @@ export async function POST(request: Request) {
           buyer_name: buyerName,
           buyer_email: buyerEmail,
           buyer_phone: buyerPhone,
+          order_ref: orderRef,
+          payment_status: 'PAID',
           status: 'VALID',
           purchased_at: newTicket.purchasedAt
         }
       ]);
     } catch {
       // Continue with in-memory / local fallback
+
     }
 
     return NextResponse.json({

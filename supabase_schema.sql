@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS public.events (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 5. TABLE DES BILLETS ÉMIS & SCAN UNIQUE (QR CODE)
+-- 5. TABLE DES BILLETS ÉMIS & SCAN SÉCURISÉ
 CREATE TABLE IF NOT EXISTS public.tickets (
   id TEXT PRIMARY KEY,
   ticket_code TEXT UNIQUE NOT NULL,
@@ -98,16 +98,138 @@ CREATE TABLE IF NOT EXISTS public.tickets (
   buyer_name TEXT NOT NULL,
   buyer_email TEXT NOT NULL,
   buyer_phone TEXT,
-  status TEXT DEFAULT 'VALID', -- 'VALID' ou 'USED'
+  order_ref TEXT,
+  payment_status TEXT DEFAULT 'PAID', -- 'PAID', 'PENDING', 'FAILED', 'CONFIRMED'
+  status TEXT DEFAULT 'VALID',        -- 'VALID' ou 'USED'
   purchased_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   scanned_at TIMESTAMP WITH TIME ZONE,
+  scanned_by_agent_id TEXT,
+  scanned_by_agent_name TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Si la table tickets existait déjà, ajouter les nouvelles colonnes :
+ALTER TABLE public.tickets ADD COLUMN IF NOT EXISTS order_ref TEXT;
+ALTER TABLE public.tickets ADD COLUMN IF NOT EXISTS payment_status TEXT DEFAULT 'PAID';
+ALTER TABLE public.tickets ADD COLUMN IF NOT EXISTS scanned_by_agent_id TEXT;
+ALTER TABLE public.tickets ADD COLUMN IF NOT EXISTS scanned_by_agent_name TEXT;
+ALTER TABLE public.tickets ADD COLUMN IF NOT EXISTS scanned_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE public.tickets ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'VALID';
+
 CREATE INDEX IF NOT EXISTS idx_tickets_code ON public.tickets(ticket_code);
 CREATE INDEX IF NOT EXISTS idx_tickets_buyer_email ON public.tickets(buyer_email);
+CREATE INDEX IF NOT EXISTS idx_tickets_status ON public.tickets(status);
 
--- 6. TABLE DES DEMANDES DE CRÉATION D'ÉVÉNEMENTS
+-- 6. TABLE DES LOGS DE VALIDATION DES BILLETS (HISTORIQUE DES ENTRÉES)
+CREATE TABLE IF NOT EXISTS public.ticket_validation_logs (
+  id TEXT PRIMARY KEY,
+  ticket_code TEXT NOT NULL,
+  event_id TEXT,
+  event_title TEXT,
+  action TEXT NOT NULL, -- 'VALIDATED', 'ATTEMPT_ALREADY_USED', 'ATTEMPT_UNPAID', 'RESET_BY_ADMIN'
+  agent_id TEXT DEFAULT 'admin',
+  agent_name TEXT DEFAULT 'Admin /keril',
+  timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_validation_logs_code ON public.ticket_validation_logs(ticket_code);
+CREATE INDEX IF NOT EXISTS idx_validation_logs_time ON public.ticket_validation_logs(timestamp DESC);
+
+-- 7. FONCTION POSTGRESQL ATOMIQUE DE VALIDATION D'ENTRÉE (ANTI-DOUBLON CONCURRENT)
+CREATE OR REPLACE FUNCTION public.validate_ticket_entry(
+  p_ticket_code TEXT,
+  p_agent_id TEXT DEFAULT 'admin',
+  p_agent_name TEXT DEFAULT 'Admin /keril'
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  v_ticket RECORD;
+  v_updated RECORD;
+BEGIN
+  -- 1. Recherche du billet
+  SELECT * INTO v_ticket 
+  FROM public.tickets 
+  WHERE UPPER(ticket_code) = UPPER(p_ticket_code) OR UPPER(id) = UPPER(p_ticket_code);
+
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object(
+      'success', false,
+      'code', 'INVALID',
+      'message', 'BILLET INVALIDE — Entrée refusée.'
+    );
+  END IF;
+
+  -- 2. Vérification paiement
+  IF v_ticket.payment_status NOT IN ('PAID', 'SUCCESSFUL', 'CONFIRMED') THEN
+    RETURN jsonb_build_object(
+      'success', false,
+      'code', 'UNPAID',
+      'message', 'PAIEMENT NON CONFIRMÉ — Entrée refusée.',
+      'ticket', row_to_json(v_ticket)
+    );
+  END IF;
+
+  -- 3. Vérification si déjà utilisé
+  IF v_ticket.status = 'USED' THEN
+    RETURN jsonb_build_object(
+      'success', false,
+      'code', 'ALREADY_USED',
+      'message', 'BILLET DÉJÀ UTILISÉ — Entrée refusée.',
+      'scanned_at', v_ticket.scanned_at,
+      'scanned_by_agent_name', v_ticket.scanned_by_agent_name,
+      'ticket', row_to_json(v_ticket)
+    );
+  END IF;
+
+  -- 4. Verrouillage et validation atomique
+  UPDATE public.tickets
+  SET 
+    status = 'USED',
+    scanned_at = NOW(),
+    scanned_by_agent_id = p_agent_id,
+    scanned_by_agent_name = p_agent_name
+  WHERE id = v_ticket.id AND status = 'VALID'
+  RETURNING * INTO v_updated;
+
+  IF NOT FOUND THEN
+    -- Cas où un autre contrôleur a validé dans la même milliseconde
+    SELECT * INTO v_ticket FROM public.tickets WHERE id = v_ticket.id;
+    RETURN jsonb_build_object(
+      'success', false,
+      'code', 'ALREADY_USED',
+      'message', 'BILLET DÉJÀ UTILISÉ — Entrée refusée.',
+      'scanned_at', v_ticket.scanned_at,
+      'scanned_by_agent_name', v_ticket.scanned_by_agent_name,
+      'ticket', row_to_json(v_ticket)
+    );
+  END IF;
+
+  -- 5. Enregistrement du log de validation
+  INSERT INTO public.ticket_validation_logs (
+    id, ticket_code, event_id, event_title, action, agent_id, agent_name, timestamp
+  ) VALUES (
+    'log_' || floor(extract(epoch from now())*1000)::text,
+    v_updated.ticket_code,
+    v_updated.event_id,
+    v_updated.event_title,
+    'VALIDATED',
+    p_agent_id,
+    p_agent_name,
+    NOW()
+  );
+
+  RETURN jsonb_build_object(
+    'success', true,
+    'code', 'VALIDATED',
+    'message', 'ENTRÉE VALIDÉE — Billet accepté.',
+    'ticket', row_to_json(v_updated)
+  );
+END;
+$$;
+
+-- 8. TABLE DES DEMANDES DE CRÉATION D'ÉVÉNEMENTS
 CREATE TABLE IF NOT EXISTS public.event_requests (
   id TEXT PRIMARY KEY,
   event_name TEXT NOT NULL,
@@ -130,6 +252,7 @@ ALTER TABLE public.candidates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.votes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tickets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.ticket_validation_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.event_requests ENABLE ROW LEVEL SECURITY;
 
 -- Autoriser la lecture publique
@@ -147,6 +270,9 @@ CREATE POLICY "Public read events" ON public.events FOR SELECT USING (true);
 
 DROP POLICY IF EXISTS "Public read tickets" ON public.tickets;
 CREATE POLICY "Public read tickets" ON public.tickets FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Public read validation_logs" ON public.ticket_validation_logs;
+CREATE POLICY "Public read validation_logs" ON public.ticket_validation_logs FOR SELECT USING (true);
 
 DROP POLICY IF EXISTS "Public read event_requests" ON public.event_requests;
 CREATE POLICY "Public read event_requests" ON public.event_requests FOR SELECT USING (true);
@@ -167,5 +293,9 @@ CREATE POLICY "Public insert events" ON public.events FOR ALL USING (true) WITH 
 DROP POLICY IF EXISTS "Public insert tickets" ON public.tickets;
 CREATE POLICY "Public insert tickets" ON public.tickets FOR ALL USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Public insert validation_logs" ON public.ticket_validation_logs;
+CREATE POLICY "Public insert validation_logs" ON public.ticket_validation_logs FOR ALL USING (true) WITH CHECK (true);
+
 DROP POLICY IF EXISTS "Public insert event_requests" ON public.event_requests;
 CREATE POLICY "Public insert event_requests" ON public.event_requests FOR ALL USING (true) WITH CHECK (true);
+

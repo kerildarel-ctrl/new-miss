@@ -30,10 +30,15 @@ export interface IssuedTicket {
   buyerName: string;
   buyerEmail: string;
   buyerPhone?: string;
+  orderRef?: string;
+  paymentStatus?: 'PAID' | 'PENDING' | 'FAILED' | 'CONFIRMED';
   status: 'VALID' | 'USED';
   purchasedAt: string;
   scannedAt?: string;
+  scannedByAgentId?: string;
+  scannedByAgentName?: string;
 }
+
 
 // REUSABLE TICKET TEMPLATES FOR ADMIN TO SELECT WHEN CREATING EVENTS
 export const TICKET_PASS_TEMPLATES: TicketPassCategory[] = [

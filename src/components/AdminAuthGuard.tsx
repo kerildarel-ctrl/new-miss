@@ -23,12 +23,18 @@ export const AdminAuthGuard: React.FC<AdminAuthGuardProps> = ({ children }) => {
     e.preventDefault();
     if (password === 'Arielle74#') {
       sessionStorage.setItem('keril_admin_auth', 'true');
+      sessionStorage.setItem('keril_admin_key', 'Arielle74#');
+      if (typeof document !== 'undefined') {
+        document.cookie = 'keril_admin_auth=true; path=/; max-age=86400; SameSite=Lax';
+        document.cookie = 'keril_admin_key=Arielle74#; path=/; max-age=86400; SameSite=Lax';
+      }
       setIsAuthenticated(true);
       setError(false);
     } else {
       setError(true);
     }
   };
+
 
   if (isAuthenticated === null) {
     return null; // Loading state
