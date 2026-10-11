@@ -37,12 +37,12 @@ export const VoteModal: React.FC<VoteModalProps> = ({
   const [phone, setPhone] = useState('');
 
   // Payment Flow States
-  const [step, setStep] = useState<'FORM' | 'SUCCESS' | 'FAILED'>('FORM');
+  const [step, setStep] = useState<'FORM' | 'REDIRECTING' | 'SUCCESS' | 'FAILED'>('FORM');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [unitVotePrice, setUnitVotePrice] = useState<number>(100);
 
-  // Fetch custom votePrice per competition
+  // Fetch custom votePrice per competition (défaut : 100 FCFA)
   useEffect(() => {
     async function loadVotePrice() {
       if (candidate?.competitionSlug) {
@@ -65,8 +65,8 @@ export const VoteModal: React.FC<VoteModalProps> = ({
   const handleVoteSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!email || !email.includes('@')) {
-      setErrorMessage('Veuillez entrer une adresse email valide.');
+    if (email && !email.includes('@')) {
+      setErrorMessage('Si vous indiquez une adresse email, veuillez entrer une adresse valide.');
       return;
     }
 
@@ -74,6 +74,8 @@ export const VoteModal: React.FC<VoteModalProps> = ({
     setErrorMessage(null);
 
     try {
+      const returnUrl = typeof window !== 'undefined' ? window.location.href : undefined;
+
       const response = await fetch('/api/pay/initiate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -83,14 +85,20 @@ export const VoteModal: React.FC<VoteModalProps> = ({
           competitionSlug: candidate.competitionSlug,
           voteCount: voteCount,
           amount: totalPrice,
-          email: email,
+          email: email || undefined,
           phone: phone || undefined,
+          returnUrl: returnUrl,
         }),
       });
 
       const data = await response.json();
 
-      if (data.success) {
+      if (data.success && data.link) {
+        // REDIRECTION OFFICIELLE VERS LA PAGE DE PAIEMENT FAPSHI (OM & MOMO)
+        setStep('REDIRECTING');
+        window.location.href = data.link;
+        return;
+      } else if (data.success) {
         setIsSubmitting(false);
         setStep('SUCCESS');
         onConfirmVote(candidate.id, voteCount);
@@ -239,10 +247,10 @@ export const VoteModal: React.FC<VoteModalProps> = ({
               })}
             </div>
 
-            {/* EMAIL INPUT FIELD */}
+            {/* EMAIL INPUT FIELD (OPTIONNEL) */}
             <div className="mt-4">
               <label htmlFor="inpEmail" className="block text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 mb-1.5">
-                Votre adresse email
+                Adresse email (optionnel)
               </label>
               <div className="flex items-center rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40 focus-within:bg-white dark:focus-within:bg-slate-800 focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all overflow-hidden">
                 <div className="pl-4 pr-1 text-slate-400 dark:text-slate-500 flex items-center justify-center flex-shrink-0">
@@ -251,7 +259,6 @@ export const VoteModal: React.FC<VoteModalProps> = ({
                 <input
                   type="email"
                   id="inpEmail"
-                  required
                   placeholder="ex. votre.email@exemple.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -259,14 +266,14 @@ export const VoteModal: React.FC<VoteModalProps> = ({
                 />
               </div>
               <span className="block text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-medium">
-                Un récapitulatif officiel de votre vote sera enregistré avec cette adresse.
+                Pour recevoir votre reçu officiel de vote si vous le souhaitez.
               </span>
             </div>
 
             {/* WHATSAPP / MOBILE MONEY PHONE INPUT (OPTIONAL) */}
             <div className="mt-3">
               <label htmlFor="inpPhone" className="block text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 mb-1.5">
-                Numéro WhatsApp / Mobile Money (optionnel)
+                Numéro Orange Money ou MTN MoMo (optionnel)
               </label>
               <div className="flex items-center rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40 focus-within:bg-white dark:focus-within:bg-slate-800 focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all overflow-hidden">
                 <div className="pl-4 pr-1 text-slate-400 dark:text-slate-500 flex items-center justify-center flex-shrink-0">
@@ -275,7 +282,7 @@ export const VoteModal: React.FC<VoteModalProps> = ({
                 <input
                   type="tel"
                   id="inpPhone"
-                  placeholder="6XX XXX XXX"
+                  placeholder="6XX XXX XXX (préremplit Fapshi)"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   className="w-full py-3.5 px-3 bg-transparent text-slate-900 dark:text-white text-xs sm:text-sm font-semibold outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 placeholder:font-normal"
@@ -290,26 +297,63 @@ export const VoteModal: React.FC<VoteModalProps> = ({
               </div>
             )}
 
-            {/* SUBMIT BUTTON */}
+            {/* SUBMIT BUTTON : REDIRECTION FAPSHI (OM & MOMO) */}
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full mt-5 py-4 px-6 rounded-2xl font-bold text-sm sm:text-base text-white bg-gradient-to-r from-indigo-600 via-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 transition-all active:scale-[0.99] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full mt-5 py-4 px-6 rounded-2xl font-black text-sm sm:text-base text-white bg-gradient-to-r from-indigo-600 via-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 transition-all active:scale-[0.99] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <span>
                 {isSubmitting
-                  ? 'Validation en cours...'
-                  : `Valider mon vote (${totalPrice.toLocaleString('fr-FR')} FCFA)`}
+                  ? 'Connexion sécurisée à Fapshi...'
+                  : `Payer ${totalPrice.toLocaleString('fr-FR')} FCFA via OM / MoMo →`}
               </span>
               {!isSubmitting && <ArrowRight className="w-4 h-4" />}
             </button>
 
+            {/* BADGES OPÉRATEURS OFFICIELS FAPSHI */}
+            <div className="mt-3 flex items-center justify-center gap-2">
+              <span className="text-[10px] sm:text-[11px] font-extrabold px-2.5 py-1 rounded-lg bg-orange-50 dark:bg-orange-950/50 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-900/40">
+                Orange Money
+              </span>
+              <span className="text-[10px] sm:text-[11px] font-extrabold px-2.5 py-1 rounded-lg bg-yellow-50 dark:bg-yellow-950/50 text-yellow-700 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-900/40">
+                MTN MoMo
+              </span>
+              <span className="text-[10px] sm:text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                Fapshi 100% Sécurisé
+              </span>
+            </div>
+
             {/* SECURITY FOOTER */}
-            <div className="mt-4 flex items-center justify-center gap-2 text-[11px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 text-center">
-              <ShieldCheck className="w-4 h-4 text-indigo-500 flex-shrink-0" />
-              <span>Vote officiel instantané • Confirmation sécurisée par email</span>
+            <div className="mt-3 flex items-center justify-center gap-1.5 text-[10px] sm:text-[11px] font-medium text-slate-400 text-center">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+              <span>Paiement chiffré SSL • Débit direct après validation USSD</span>
             </div>
           </form>
+        )}
+
+        {/* STEP REDIRECTING TO FAPSHI */}
+        {step === 'REDIRECTING' && (
+          <div className="text-center py-8">
+            <div className="w-14 h-14 rounded-full border-4 border-indigo-600 border-t-transparent animate-spin mx-auto mb-4" />
+            <span className="text-xs font-extrabold text-indigo-600 uppercase tracking-wider">
+              REDIRECTION VERS FAPSHI
+            </span>
+            <h3 className="mt-1 text-xl font-black text-slate-900 dark:text-white">
+              Ouverture de la passerelle de paiement...
+            </h3>
+            <p className="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-sm mx-auto leading-relaxed">
+              Vous êtes redirigé vers la page officielle sécurisée pour régler <b>{totalPrice.toLocaleString('fr-FR')} FCFA</b> par <b>Orange Money</b> ou <b>MTN Mobile Money</b>.
+            </p>
+            <div className="mt-5 flex items-center justify-center gap-2">
+              <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-orange-50 text-orange-600 border border-orange-200">
+                Orange Money
+              </span>
+              <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-yellow-50 text-yellow-700 border border-yellow-200">
+                MTN Mobile Money
+              </span>
+            </div>
+          </div>
         )}
 
         {step === 'SUCCESS' && (

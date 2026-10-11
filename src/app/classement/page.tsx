@@ -34,6 +34,44 @@ export default function ClassementPage() {
     loadData();
   }, []);
 
+  // GESTION DU RETOUR APRÈS PAIEMENT FAPSHI (OM & MOMO)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const voteSuccess = urlParams.get('voteSuccess');
+    const voteId = urlParams.get('voteId');
+    const transId = urlParams.get('transId');
+    const candidateId = urlParams.get('candidateId');
+
+    if (voteSuccess === 'true' || voteId || transId) {
+      const verifyPayment = async () => {
+        try {
+          const res = await fetch(
+            `/api/pay/status?transId=${transId || ''}&voteId=${voteId || ''}&candidateId=${candidateId || ''}`,
+            { cache: 'no-store' }
+          );
+          const data = await res.json();
+          if (data.isSuccess) {
+            const addedVotes = data.voteCount || 1;
+            const targetId = data.candidateId || candidateId;
+            if (targetId) {
+              setCandidates((prev) =>
+                prev.map((c) =>
+                  c.id === targetId
+                    ? { ...c, voteCount: (c.voteCount || 0) + (data.alreadyProcessed ? 0 : addedVotes) }
+                    : c
+                )
+              );
+            }
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        } catch {}
+      };
+      verifyPayment();
+    }
+  }, []);
+
   // When competition tab changes
   const handleSelectComp = async (slug: string) => {
     setSelectedSlug(slug);

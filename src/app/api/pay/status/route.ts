@@ -40,11 +40,25 @@ export async function GET(request: Request) {
 
     let paymentStatus = 'PENDING';
     let fapshiUserId = queryCandidateId;
+    let activeTransId = transId;
+
+    // Look up transId from vote record if not in query params
+    if (!activeTransId && voteId) {
+      try {
+        const supabase = getSupabaseAdmin();
+        const { data } = await supabase.from('votes').select('fapshi_trans_id').eq('id', voteId).maybeSingle();
+        if (data?.fapshi_trans_id) {
+          activeTransId = data.fapshi_trans_id;
+        }
+      } catch {
+        // Continue
+      }
+    }
 
     // 1. STRICT PAYMENT VERIFICATION WITH FAPSHI GATEWAY
-    if (transId && !transId.startsWith('sim_') && fapshiApiUser && fapshiApiKey) {
+    if (activeTransId && !activeTransId.startsWith('sim_') && fapshiApiUser && fapshiApiKey) {
       try {
-        const fapshiResponse = await fetch(`${fapshiBaseUrl}/payment-status/${transId}`, {
+        const fapshiResponse = await fetch(`${fapshiBaseUrl}/payment-status/${activeTransId}`, {
           method: 'GET',
           headers: {
             'apiuser': fapshiApiUser,
