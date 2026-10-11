@@ -127,8 +127,8 @@ export default function OrganisateurDashboardPage() {
     if (!data) return;
 
     const amountNum = Number(payoutAmount);
-    if (isNaN(amountNum) || amountNum < 1000) {
-      alert('Le montant minimum de retrait est de 1 000 FCFA.');
+    if (isNaN(amountNum) || amountNum < 2000) {
+      alert('Le montant minimum de retrait est de 2 000 FCFA.');
       return;
     }
     if (amountNum > data.financials.availableBalance) {
@@ -259,7 +259,7 @@ export default function OrganisateurDashboardPage() {
                     expirationDate={cardExpiration}
                     variant={data.financials.currentTierNumber === 3 ? 'gold' : 'violet'}
                     showWithdrawButton={true}
-                    canWithdraw={data.financials.availableBalance >= 1000}
+                    canWithdraw={data.financials.availableBalance >= 2000}
                     onWithdrawClick={() => setIsPayoutModalOpen(true)}
                     className="mx-auto shadow-xl"
                   />
@@ -600,14 +600,17 @@ export default function OrganisateurDashboardPage() {
                   </div>
                   <input
                     type="number"
-                    min="1000"
+                    min="2000"
                     max={data.financials.availableBalance}
                     required
-                    placeholder="Montant en FCFA"
+                    placeholder="Min. 2 000 FCFA"
                     value={payoutAmount}
                     onChange={(e) => setPayoutAmount(e.target.value)}
                     className="w-full py-3 px-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40 text-slate-900 dark:text-white text-sm font-black outline-none focus:border-indigo-500"
                   />
+                  <p className="text-[11px] text-slate-400 mt-1 font-medium">
+                    Montant minimum de retrait : 2 000 FCFA
+                  </p>
                 </div>
 
                 {/* SUBMIT BUTTON */}

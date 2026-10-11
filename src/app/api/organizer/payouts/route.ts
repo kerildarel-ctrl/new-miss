@@ -111,6 +111,14 @@ export async function POST(request: Request) {
       );
     }
 
+    const amountNum = Number(body.amount);
+    if (isNaN(amountNum) || amountNum < 2000) {
+      return NextResponse.json(
+        { success: false, error: 'Le montant minimum de retrait est de 2 000 FCFA.' },
+        { status: 400 }
+      );
+    }
+
     let compSlug = body.competitionSlug;
     let compTitle = body.competitionTitle || 'Compétition';
 
