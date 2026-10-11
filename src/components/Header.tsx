@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useLanguage } from '@/context/LanguageContext';
 
@@ -30,11 +31,7 @@ export const Header: React.FC = () => {
       <div className="wd" style={{ position: 'relative' }}>
         {/* LOGO */}
         <Link href="/" className="logo" onClick={() => setMobileMenuOpen(false)}>
-          <i aria-hidden="true">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2l2.4 6.9 7.1.3-5.5 4.6 1.8 7.2L12 17l-5.8 4 1.8-7.2L2.5 9.2l7.1-.3L12 2z" />
-            </svg>
-          </i>
+          <Image src="/images/logo.png" alt="VoteMoi" width={32} height={32} style={{ width: '32px', height: '32px', borderRadius: '8px', objectFit: 'contain' }} />
           <span>VoteMoi</span>
         </Link>
 

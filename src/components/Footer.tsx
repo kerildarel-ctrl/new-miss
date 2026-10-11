@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export const Footer: React.FC = () => {
   return (
@@ -10,11 +11,7 @@ export const Footer: React.FC = () => {
         <div className="fg">
           <div>
             <Link href="/" className="logo">
-              <i aria-hidden="true">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2l2.4 6.9 7.1.3-5.5 4.6 1.8 7.2L12 17l-5.8 4 1.8-7.2L2.5 9.2l7.1-.3L12 2z" />
-                </svg>
-              </i>
+              <Image src="/images/logo.png" alt="VoteMoi" width={32} height={32} style={{ width: '32px', height: '32px', borderRadius: '8px', objectFit: 'contain' }} />
               <span>VoteMoi</span>
             </Link>
             <p>La plateforme officielle de vote pour vos élections universitaires et concours d&apos;élégance.</p>

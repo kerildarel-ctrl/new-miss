@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
@@ -58,7 +59,7 @@ export const AdminSidebar: React.FC = () => {
         style={{ borderColor: 'var(--line)' }}
       >
         <Link href="/" className="logo" style={{ textDecoration: 'none' }}>
-          <i>★</i>
+          <Image src="/images/logo.png" alt="VoteMoi" width={28} height={28} style={{ width: '28px', height: '28px', borderRadius: '6px', objectFit: 'contain' }} />
           <span>VoteMoi</span>
           <span
             className="chip"
@@ -91,7 +92,7 @@ export const AdminSidebar: React.FC = () => {
         {/* Brand Header */}
         <div style={{ paddingBottom: '20px', borderBottom: '1px solid var(--line)' }}>
           <Link href="/" className="logo" style={{ fontSize: '1.15rem' }}>
-            <i>★</i>
+            <Image src="/images/logo.png" alt="VoteMoi" width={28} height={28} style={{ width: '28px', height: '28px', borderRadius: '6px', objectFit: 'contain' }} />
             <span>VoteMoi</span>
           </Link>
           <div style={{ marginTop: '10px' }}>
@@ -282,7 +283,7 @@ export const AdminSidebar: React.FC = () => {
                   style={{ borderBottom: '1px solid var(--line)' }}
                 >
                   <Link href="/" className="logo">
-                    <i>★</i>
+                    <Image src="/images/logo.png" alt="VoteMoi" width={28} height={28} style={{ width: '28px', height: '28px', borderRadius: '6px', objectFit: 'contain' }} />
                     <span>VoteMoi</span>
                   </Link>
                   <button

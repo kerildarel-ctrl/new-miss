@@ -13,6 +13,11 @@ export const metadata: Metadata = {
   title: 'VoteMoi — Votre vote, votre choix, votre champion',
   description: 'Plateforme web professionnelle de vote pour compétitions, concours de beauté, événements campus et élections. Tarif unique : 100 FCFA.',
   keywords: ['VoteMoi', 'Vote', 'Compétition', 'COPA AHN', 'COPA MSP LSI', 'Élection', 'Concours', '100 FCFA'],
+  icons: {
+    icon: '/images/logo.png',
+    shortcut: '/images/logo.png',
+    apple: '/images/logo.png',
+  },
   openGraph: {
     title: 'VoteMoi — Plateforme de Vote',
     description: 'Votre vote, votre choix, votre champion. 100 FCFA le vote.',
