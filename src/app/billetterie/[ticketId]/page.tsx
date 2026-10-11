@@ -10,17 +10,11 @@ import {
   ShieldCheck,
   CheckCircle2,
   XCircle,
-  AlertTriangle,
   RotateCcw,
-  Sparkles,
   Ticket,
-  User,
-  Calendar,
-  CreditCard,
-  QrCode,
   ArrowLeft,
   KeyRound,
-  ExternalLink,
+  Download,
 } from 'lucide-react';
 
 interface TicketFullData {
@@ -53,7 +47,6 @@ export default function SingleTicketPage() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [ticket, setTicket] = useState<TicketFullData | null>(null);
   const [publicEventTitle, setPublicEventTitle] = useState('');
-  const [publicMessage, setPublicMessage] = useState('');
 
   // Admin login popup / inline form
   const [showLoginForm, setShowLoginForm] = useState(false);
@@ -105,7 +98,6 @@ export default function SingleTicketPage() {
       } else {
         setIsAuthorized(false);
         setPublicEventTitle(data.eventTitle || '');
-        setPublicMessage(data.message || '');
       }
     } catch {
       setTicketExists(false);
@@ -133,7 +125,6 @@ export default function SingleTicketPage() {
       const data = await res.json();
 
       if (data.success) {
-        // Store in sessionStorage to sync with /keril
         sessionStorage.setItem('keril_admin_auth', 'true');
         setShowLoginForm(false);
         setLoginPassword('');
@@ -148,7 +139,7 @@ export default function SingleTicketPage() {
     }
   };
 
-  // Handle Entrance Validation (Action explicite de l'agent connecté)
+  // Handle Entrance Validation
   const handleValidateEntry = async () => {
     setIsValidating(true);
     setValidationResult(null);
@@ -168,7 +159,6 @@ export default function SingleTicketPage() {
         scannedByAgentName: data.ticket?.scanned_by_agent_name || data.scannedByAgentName,
       });
 
-      // Update local ticket view
       if (data.ticket) {
         setTicket((prev) =>
           prev
@@ -191,7 +181,7 @@ export default function SingleTicketPage() {
     }
   };
 
-  // Handle Reset to VALID (Admin Principal only)
+  // Handle Reset to VALID
   const handleResetTicket = async () => {
     if (!confirm('Voulez-vous réinitialiser ce billet pour le marquer à nouveau comme VALIDE ?')) {
       return;
@@ -227,8 +217,8 @@ export default function SingleTicketPage() {
       <Header />
 
       <main style={{ minHeight: '80vh', padding: '40px 20px', background: 'var(--soft)' }}>
-        <div style={{ maxWidth: '580px', margin: '0 auto' }}>
-          {/* TOP BACK LINK */}
+        <div style={{ maxWidth: '560px', margin: '0 auto' }}>
+          {/* BACK BREADCRUMB */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
             <Link
               href="/billetterie"
@@ -238,36 +228,35 @@ export default function SingleTicketPage() {
                 gap: '6px',
                 color: 'var(--p)',
                 fontWeight: 700,
-                fontSize: '0.9rem',
+                fontSize: '0.88rem',
                 textDecoration: 'none',
               }}
             >
-              <ArrowLeft className="w-4 h-4" /> Billetterie
+              <ArrowLeft className="w-4 h-4" /> Retour à la Billetterie
             </Link>
 
             {isAuthorized && (
-              <Link
-                href="/keril/scan"
+              <span
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '6px',
-                  color: '#10b981',
+                  color: 'var(--p)',
                   fontWeight: 700,
-                  fontSize: '0.86rem',
-                  textDecoration: 'none',
-                  background: 'rgba(16, 185, 129, 0.1)',
-                  padding: '6px 12px',
+                  fontSize: '0.82rem',
+                  background: 'rgba(91, 61, 245, 0.1)',
+                  padding: '4px 12px',
                   borderRadius: '99px',
                 }}
               >
-                <QrCode className="w-3.5 h-3.5" /> Ouvrir Scanner Caméra
-              </Link>
+                <ShieldCheck className="w-3.5 h-3.5" /> Espace /keril
+              </span>
             )}
           </div>
 
           {loading ? (
             <div
+              className="db"
               style={{
                 textAlign: 'center',
                 padding: '60px 20px',
@@ -276,93 +265,70 @@ export default function SingleTicketPage() {
                 border: '1.5px solid var(--line)',
               }}
             >
-              <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>🎟️</div>
-              <p style={{ fontWeight: 700, color: 'var(--ink)' }}>Vérification du Billet...</p>
+              <p className="mute">Vérification du Billet...</p>
             </div>
           ) : !ticketExists ? (
             <div
+              className="db"
               style={{
                 textAlign: 'center',
                 padding: '48px 24px',
                 background: 'var(--bg)',
                 borderRadius: '24px',
-                border: '1.5px solid #ef4444',
-                boxShadow: '0 10px 25px rgba(239, 68, 68, 0.1)',
+                border: '1.5px solid var(--a)',
               }}
             >
-              <div style={{ fontSize: '3rem', marginBottom: '8px' }}>⛔</div>
-              <h2 style={{ fontSize: '1.5rem', color: '#ef4444', fontWeight: 900 }}>BILLET INVALIDE</h2>
-              <p style={{ color: 'var(--mute)', marginTop: '8px', fontSize: '0.92rem' }}>
+              <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>⛔</div>
+              <h2 style={{ fontSize: '1.4rem', color: 'var(--a)', fontWeight: 800 }}>BILLET INVALIDE</h2>
+              <p className="mute sm" style={{ marginTop: '8px' }}>
                 Le code <b>{cleanCode}</b> ne correspond à aucun billet officiel enregistré.
               </p>
-              <div
-                style={{
-                  marginTop: '16px',
-                  padding: '10px 14px',
-                  borderRadius: '12px',
-                  background: 'rgba(239, 68, 68, 0.1)',
-                  color: '#ef4444',
-                  fontSize: '0.85rem',
-                  fontWeight: 700,
-                }}
-              >
-                Entrée refusée — Billet inexistant ou falsifié.
-              </div>
             </div>
           ) : !isAuthorized ? (
             /* =========================================================================
-               VUE PUBLIQUE ANONYMISÉE (VISITEUR NON CONNECTÉ / SCAN PUBLIC)
-               Message neutre officiel - Aucune fuite de données personnelles ou de statut
+               VUE PUBLIQUE ANONYMISÉE — PALETTE HARMONISÉE SITE
                ========================================================================= */
             <div
+              className="db"
               style={{
-                background: '#0f1526',
-                color: '#ffffff',
-                borderRadius: '28px',
-                border: '1.5px solid rgba(255, 255, 255, 0.12)',
-                boxShadow: '0 25px 60px rgba(0, 0, 0, 0.4), 0 0 30px rgba(129, 140, 248, 0.15)',
+                background: 'var(--bg)',
+                borderRadius: '24px',
+                border: '1.5px solid var(--line)',
+                boxShadow: 'var(--shadow)',
                 overflow: 'hidden',
+                padding: 0,
               }}
             >
-              {/* HEADER */}
+              {/* HEADER WITH HERO PALETTE */}
               <div
                 style={{
-                  background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)',
-                  padding: '24px 20px',
+                  background: 'var(--hero)',
+                  color: '#ffffff',
+                  padding: '28px 20px',
                   textAlign: 'center',
-                  borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
                 }}
               >
-                <span
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.15)',
-                    color: '#c7d2fe',
-                    padding: '3px 12px',
-                    borderRadius: '99px',
-                    fontSize: '0.76rem',
-                    fontWeight: 800,
-                    letterSpacing: '0.05em',
-                  }}
-                >
-                  🔒 BILLET OFFICIEL SÉCURISÉ
-                </span>
-                <h1 style={{ fontSize: '1.4rem', fontWeight: 900, marginTop: '8px' }}>
-                  {publicEventTitle || 'Événement Officiel'}
+                <p className="eb" style={{ color: 'rgba(255, 255, 255, 0.85)', fontSize: '0.76rem' }}>
+                  Billet Officiel Identifié
+                </p>
+                <h1 style={{ fontSize: '1.4rem', fontWeight: 800, marginTop: '6px' }}>
+                  {publicEventTitle || 'Événement Miss & Mister'}
                 </h1>
-                <p style={{ fontSize: '0.84rem', color: '#94a3b8', marginTop: '4px', fontFamily: 'monospace' }}>
-                  Identifiant : {cleanCode}
+                <p style={{ fontSize: '0.84rem', opacity: 0.85, marginTop: '4px', fontFamily: 'monospace' }}>
+                  Code : {cleanCode}
                 </p>
               </div>
 
-              {/* QR CODE CARD */}
+              {/* QR CODE & NEUTRAL NOTICE */}
               <div style={{ padding: '28px 24px', textAlign: 'center' }}>
                 <div
                   style={{
                     padding: '16px',
                     background: '#ffffff',
-                    borderRadius: '22px',
+                    borderRadius: '20px',
                     display: 'inline-block',
-                    boxShadow: '0 12px 30px rgba(0, 0, 0, 0.4)',
+                    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.08)',
+                    border: '1px solid var(--line)',
                   }}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -377,8 +343,8 @@ export default function SingleTicketPage() {
                     style={{
                       marginTop: '8px',
                       fontSize: '0.85rem',
-                      fontWeight: 900,
-                      color: '#0f172a',
+                      fontWeight: 800,
+                      color: 'var(--ink)',
                       letterSpacing: '0.05em',
                       fontFamily: 'monospace',
                     }}
@@ -387,33 +353,33 @@ export default function SingleTicketPage() {
                   </div>
                 </div>
 
-                {/* NEUTRAL PUBLIC NOTICE (EXIGENCE 2) */}
+                {/* NEUTRAL NOTICE */}
                 <div
                   style={{
                     marginTop: '24px',
-                    padding: '18px',
+                    padding: '16px',
                     borderRadius: '16px',
-                    background: 'rgba(129, 140, 248, 0.1)',
-                    border: '1.5px solid rgba(129, 140, 248, 0.25)',
+                    background: 'var(--soft)',
+                    border: '1px solid var(--line)',
                     textAlign: 'left',
                     display: 'flex',
                     gap: '12px',
                     alignItems: 'flex-start',
                   }}
                 >
-                  <Lock className="w-5 h-5 text-indigo-400 flex-shrink-0" style={{ marginTop: '2px' }} />
+                  <Lock className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--p)', marginTop: '2px' }} />
                   <div>
-                    <h3 style={{ fontSize: '0.92rem', fontWeight: 800, color: '#c7d2fe' }}>
+                    <h3 style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--ink)' }}>
                       Billet identifié
                     </h3>
-                    <p style={{ fontSize: '0.84rem', color: '#cbd5e1', marginTop: '4px', lineHeight: 1.45 }}>
+                    <p className="mute sm" style={{ marginTop: '4px', lineHeight: 1.5 }}>
                       Connectez-vous avec un compte administrateur autorisé pour consulter les informations et
                       vérifier son statut.
                     </p>
                   </div>
                 </div>
 
-                {/* ADMIN LOGIN TOGGLE */}
+                {/* ADMIN LOGIN */}
                 {!showLoginForm ? (
                   <button
                     type="button"
@@ -421,11 +387,11 @@ export default function SingleTicketPage() {
                     style={{
                       width: '100%',
                       marginTop: '20px',
-                      padding: '13px',
-                      borderRadius: '99px',
-                      background: 'rgba(255, 255, 255, 0.08)',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
-                      color: '#ffffff',
+                      padding: '12px',
+                      borderRadius: '12px',
+                      background: 'var(--soft)',
+                      border: '1px solid var(--line)',
+                      color: 'var(--ink)',
                       fontWeight: 700,
                       fontSize: '0.88rem',
                       cursor: 'pointer',
@@ -435,7 +401,7 @@ export default function SingleTicketPage() {
                       gap: '8px',
                     }}
                   >
-                    <KeyRound className="w-4 h-4 text-indigo-400" />
+                    <KeyRound className="w-4 h-4" style={{ color: 'var(--p)' }} />
                     <span>Accès Contrôleur / Administrateur (/keril)</span>
                   </button>
                 ) : (
@@ -445,12 +411,12 @@ export default function SingleTicketPage() {
                       marginTop: '20px',
                       padding: '18px',
                       borderRadius: '16px',
-                      background: '#161e33',
-                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      background: 'var(--soft)',
+                      border: '1px solid var(--line)',
                       textAlign: 'left',
                     }}
                   >
-                    <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#cbd5e1', display: 'block' }}>
+                    <label style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--ink)', display: 'block' }}>
                       Mot de passe administrateur /keril :
                     </label>
                     <input
@@ -462,11 +428,11 @@ export default function SingleTicketPage() {
                       style={{
                         width: '100%',
                         height: '42px',
-                        background: '#0f1526',
-                        border: '1.5px solid rgba(255, 255, 255, 0.2)',
+                        background: 'var(--bg)',
+                        border: '1.5px solid var(--line)',
                         borderRadius: '10px',
                         padding: '0 12px',
-                        color: '#ffffff',
+                        color: 'var(--ink)',
                         fontSize: '0.9rem',
                         marginTop: '6px',
                         outline: 'none',
@@ -474,7 +440,7 @@ export default function SingleTicketPage() {
                     />
 
                     {loginError && (
-                      <div style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '6px', fontWeight: 600 }}>
+                      <div style={{ color: 'var(--err)', fontSize: '0.8rem', marginTop: '6px', fontWeight: 600 }}>
                         ⚠️ {loginError}
                       </div>
                     )}
@@ -483,17 +449,8 @@ export default function SingleTicketPage() {
                       <button
                         type="submit"
                         disabled={isLoggingIn}
-                        style={{
-                          flex: 1,
-                          padding: '10px',
-                          borderRadius: '10px',
-                          background: '#818cf8',
-                          color: '#0f172a',
-                          fontWeight: 800,
-                          fontSize: '0.85rem',
-                          border: 'none',
-                          cursor: 'pointer',
-                        }}
+                        className="btn"
+                        style={{ flex: 1, height: '40px', fontSize: '0.85rem' }}
                       >
                         {isLoggingIn ? 'Connexion...' : 'Se connecter'}
                       </button>
@@ -501,13 +458,13 @@ export default function SingleTicketPage() {
                         type="button"
                         onClick={() => setShowLoginForm(false)}
                         style={{
-                          padding: '10px 14px',
+                          padding: '0 14px',
                           borderRadius: '10px',
-                          background: 'rgba(255, 255, 255, 0.1)',
-                          color: '#ffffff',
+                          background: 'var(--bg)',
+                          border: '1px solid var(--line)',
+                          color: 'var(--ink)',
                           fontWeight: 600,
                           fontSize: '0.85rem',
-                          border: 'none',
                           cursor: 'pointer',
                         }}
                       >
@@ -520,41 +477,42 @@ export default function SingleTicketPage() {
             </div>
           ) : ticket ? (
             /* =========================================================================
-               VUE ADMINISTRATEUR / CONTRÔLEUR CONNECTÉ (/keril)
-               Détails complets + Action explicite de validation d'entrée
+               VUE ADMINISTRATEUR / CONTRÔLEUR CONNECTÉ — PALETTE HARMONISÉE
                ========================================================================= */
             <div
+              className="db"
               style={{
-                background: '#0f1526',
-                color: '#ffffff',
-                borderRadius: '28px',
-                border: '1.5px solid rgba(255, 255, 255, 0.15)',
-                boxShadow: '0 25px 60px rgba(0, 0, 0, 0.5), 0 0 35px rgba(129, 140, 248, 0.15)',
+                background: 'var(--bg)',
+                borderRadius: '24px',
+                border: '1.5px solid var(--line)',
+                boxShadow: 'var(--shadow)',
                 overflow: 'hidden',
+                padding: 0,
               }}
             >
-              {/* ADMIN BAR */}
+              {/* TOP SESSION NOTICE */}
               <div
                 style={{
-                  background: 'rgba(16, 185, 129, 0.15)',
-                  borderBottom: '1px solid rgba(16, 185, 129, 0.3)',
-                  padding: '8px 16px',
+                  background: 'rgba(91, 61, 245, 0.08)',
+                  borderBottom: '1px solid var(--line)',
+                  padding: '10px 16px',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   fontSize: '0.78rem',
                 }}
               >
-                <span style={{ color: '#10b981', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <ShieldCheck className="w-3.5 h-3.5" /> Session Administrateur /keril Active
+                <span style={{ color: 'var(--p)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <ShieldCheck className="w-3.5 h-3.5" /> Session Administrateur /keril
                 </span>
-                <span style={{ color: '#94a3b8' }}>Mode Contrôleur d&apos;Entrée</span>
+                <span className="mute">Contrôle d&apos;Entrée</span>
               </div>
 
               {/* TICKET HEADER */}
               <div
                 style={{
-                  background: 'linear-gradient(135deg, #3730a3 0%, #4f46e5 100%)',
+                  background: 'var(--hero)',
+                  color: '#ffffff',
                   padding: '24px 20px',
                   textAlign: 'center',
                 }}
@@ -565,16 +523,16 @@ export default function SingleTicketPage() {
                     color: '#ffffff',
                     padding: '3px 12px',
                     borderRadius: '99px',
-                    fontSize: '0.78rem',
+                    fontSize: '0.76rem',
                     fontWeight: 800,
                   }}
                 >
                   🎟️ {ticket.passName}
                 </span>
-                <h1 style={{ fontSize: '1.45rem', fontWeight: 900, marginTop: '8px' }}>
+                <h1 style={{ fontSize: '1.4rem', fontWeight: 800, marginTop: '8px' }}>
                   {ticket.eventTitle}
                 </h1>
-                <p style={{ fontSize: '0.88rem', color: '#c7d2fe', marginTop: '2px', fontFamily: 'monospace' }}>
+                <p style={{ fontSize: '0.86rem', opacity: 0.9, marginTop: '2px', fontFamily: 'monospace' }}>
                   N° {ticket.ticketCode}
                 </p>
               </div>
@@ -588,14 +546,14 @@ export default function SingleTicketPage() {
                     justifyContent: 'center',
                     gap: '8px',
                     padding: '10px 16px',
-                    borderRadius: '14px',
-                    fontWeight: 900,
-                    fontSize: '0.9rem',
+                    borderRadius: '12px',
+                    fontWeight: 800,
+                    fontSize: '0.88rem',
                     background:
-                      ticket.status === 'VALID' ? 'rgba(16, 185, 129, 0.18)' : 'rgba(239, 68, 68, 0.18)',
+                      ticket.status === 'VALID' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(255, 90, 126, 0.12)',
                     border:
-                      ticket.status === 'VALID' ? '2px solid #10b981' : '2px solid #ef4444',
-                    color: ticket.status === 'VALID' ? '#10b981' : '#f87171',
+                      ticket.status === 'VALID' ? '1.5px solid #10b981' : '1.5px solid var(--a)',
+                    color: ticket.status === 'VALID' ? '#10b981' : 'var(--a)',
                     textAlign: 'center',
                   }}
                 >
@@ -625,21 +583,19 @@ export default function SingleTicketPage() {
                     style={{
                       marginTop: '16px',
                       padding: '14px',
-                      borderRadius: '14px',
+                      borderRadius: '12px',
                       textAlign: 'center',
                       background:
                         validationResult.code === 'VALIDATED'
-                          ? 'rgba(16, 185, 129, 0.25)'
-                          : 'rgba(239, 68, 68, 0.25)',
+                          ? 'rgba(16, 185, 129, 0.15)'
+                          : 'rgba(255, 90, 126, 0.15)',
                       border:
                         validationResult.code === 'VALIDATED'
-                          ? '2px solid #10b981'
-                          : '2px solid #ef4444',
-                      color:
-                        validationResult.code === 'VALIDATED' ? '#10b981' : '#fca5a5',
-                      fontWeight: 900,
-                      fontSize: '0.95rem',
-                      lineHeight: 1.4,
+                          ? '1.5px solid #10b981'
+                          : '1.5px solid var(--a)',
+                      color: validationResult.code === 'VALIDATED' ? '#10b981' : 'var(--a)',
+                      fontWeight: 800,
+                      fontSize: '0.92rem',
                     }}
                   >
                     {validationResult.code === 'VALIDATED'
@@ -649,34 +605,26 @@ export default function SingleTicketPage() {
                       : validationResult.code === 'UNPAID'
                       ? '⚠️ PAIEMENT NON CONFIRMÉ — Entrée refusée.'
                       : '⛔ BILLET INVALIDE — Entrée refusée.'}
-                    <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#e2e8f0', marginTop: '4px' }}>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--ink)', marginTop: '4px', fontWeight: 600 }}>
                       {validationResult.message}
                     </div>
                   </div>
                 )}
 
-                {/* ACTION BUTTON: VALIDATE ENTRY (EXIGENCE 4 & 5) */}
+                {/* ACTION BUTTON: VALIDATE ENTRY */}
                 {ticket.status === 'VALID' ? (
                   <button
                     type="button"
                     onClick={handleValidateEntry}
                     disabled={isValidating}
+                    className="btn full"
                     style={{
-                      width: '100%',
                       marginTop: '20px',
-                      padding: '15px',
-                      borderRadius: '99px',
-                      background: '#10b981',
-                      color: '#ffffff',
-                      border: 'none',
-                      fontWeight: 900,
-                      fontSize: '1.05rem',
-                      cursor: isValidating ? 'not-allowed' : 'pointer',
-                      boxShadow: '0 10px 25px rgba(16, 185, 129, 0.4)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
+                      height: '48px',
+                      fontSize: '1rem',
+                      fontWeight: 800,
                       gap: '8px',
+                      cursor: isValidating ? 'not-allowed' : 'pointer',
                     }}
                   >
                     <CheckCircle2 className="w-5 h-5" />
@@ -689,29 +637,27 @@ export default function SingleTicketPage() {
                         flex: 1,
                         padding: '12px',
                         borderRadius: '12px',
-                        background: 'rgba(239, 68, 68, 0.15)',
-                        border: '1px solid rgba(239, 68, 68, 0.3)',
+                        background: 'rgba(255, 90, 126, 0.1)',
+                        border: '1px solid var(--a)',
                         textAlign: 'center',
-                        fontSize: '0.85rem',
+                        fontSize: '0.84rem',
                         fontWeight: 700,
-                        color: '#f87171',
+                        color: 'var(--a)',
                       }}
                     >
                       Entrée refusée — Billet déjà consommé
                     </div>
 
-                    {/* ADMIN RESET BUTTON (EXIGENCE 7) */}
                     <button
                       type="button"
                       onClick={handleResetTicket}
                       disabled={isResetting}
-                      title="Réinitialiser l'état du billet (Admin uniquement)"
                       style={{
-                        padding: '12px 14px',
+                        padding: '0 14px',
                         borderRadius: '12px',
-                        background: 'rgba(255, 255, 255, 0.1)',
-                        border: '1px solid rgba(255, 255, 255, 0.2)',
-                        color: '#ffffff',
+                        background: 'var(--soft)',
+                        border: '1px solid var(--line)',
+                        color: 'var(--ink)',
                         fontSize: '0.8rem',
                         fontWeight: 700,
                         cursor: 'pointer',
@@ -726,92 +672,77 @@ export default function SingleTicketPage() {
                   </div>
                 )}
 
-                {/* DETAILED INFORMATION TABLE (EXIGENCE 3) */}
+                {/* DETAILS TABLE */}
                 <div
                   style={{
                     marginTop: '24px',
-                    padding: '16px',
-                    borderRadius: '18px',
-                    background: '#161e33',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    padding: '18px',
+                    borderRadius: '16px',
+                    background: 'var(--soft)',
+                    border: '1px solid var(--line)',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '10px',
                     fontSize: '0.88rem',
                   }}
                 >
-                  <h4 style={{ fontSize: '0.8rem', fontWeight: 800, color: '#818cf8', textTransform: 'uppercase' }}>
-                    Informations Détaillées du Billet :
-                  </h4>
+                  <p className="eb" style={{ color: 'var(--p)', fontSize: '0.74rem' }}>
+                    Détails du Billet :
+                  </p>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.06)', paddingBottom: '6px' }}>
-                    <span style={{ color: '#94a3b8' }}>Numéro unique :</span>
-                    <span style={{ fontFamily: 'monospace', fontWeight: 800, color: '#fbbf24' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--line)', paddingBottom: '6px' }}>
+                    <span className="mute">Numéro unique :</span>
+                    <span style={{ fontFamily: 'monospace', fontWeight: 800, color: 'var(--p)' }}>
                       {ticket.ticketCode}
                     </span>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.06)', paddingBottom: '6px' }}>
-                    <span style={{ color: '#94a3b8' }}>Participant :</span>
-                    <span style={{ fontWeight: 800, color: '#ffffff' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--line)', paddingBottom: '6px' }}>
+                    <span className="mute">Participant :</span>
+                    <span style={{ fontWeight: 700, color: 'var(--ink)' }}>
                       {ticket.buyerName || 'Non renseigné'}
                     </span>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.06)', paddingBottom: '6px' }}>
-                    <span style={{ color: '#94a3b8' }}>Événement :</span>
-                    <span style={{ fontWeight: 700, color: '#ffffff', textAlign: 'right', maxWidth: '60%' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--line)', paddingBottom: '6px' }}>
+                    <span className="mute">Événement :</span>
+                    <span style={{ fontWeight: 600, color: 'var(--ink)', textAlign: 'right', maxWidth: '60%' }}>
                       {ticket.eventTitle}
                     </span>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.06)', paddingBottom: '6px' }}>
-                    <span style={{ color: '#94a3b8' }}>Catégorie de Pass :</span>
-                    <span style={{ fontWeight: 800, color: '#818cf8' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--line)', paddingBottom: '6px' }}>
+                    <span className="mute">Catégorie :</span>
+                    <span style={{ fontWeight: 700, color: 'var(--p)' }}>
                       {ticket.passName} ({ticket.quantity || 1})
                     </span>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.06)', paddingBottom: '6px' }}>
-                    <span style={{ color: '#94a3b8' }}>Réf. Commande :</span>
-                    <span style={{ fontFamily: 'monospace', color: '#cbd5e1' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--line)', paddingBottom: '6px' }}>
+                    <span className="mute">Réf. Commande :</span>
+                    <span style={{ fontFamily: 'monospace', color: 'var(--ink)' }}>
                       {ticket.orderRef || `CMD-${ticket.id.slice(-6)}`}
                     </span>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.06)', paddingBottom: '6px' }}>
-                    <span style={{ color: '#94a3b8' }}>Statut Paiement :</span>
-                    <span
-                      style={{
-                        fontWeight: 800,
-                        color:
-                          (ticket.paymentStatus || 'PAID') === 'PAID'
-                            ? '#10b981'
-                            : '#f59e0b',
-                      }}
-                    >
-                      {(ticket.paymentStatus || 'PAID') === 'PAID'
-                        ? 'CONFIRMÉ (Payé)'
-                        : ticket.paymentStatus}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--line)', paddingBottom: '6px' }}>
+                    <span className="mute">Paiement :</span>
+                    <span style={{ fontWeight: 800, color: '#10b981' }}>
+                      {(ticket.paymentStatus || 'PAID') === 'PAID' ? 'CONFIRMÉ' : ticket.paymentStatus}
                     </span>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.06)', paddingBottom: '6px' }}>
-                    <span style={{ color: '#94a3b8' }}>Statut Validation :</span>
-                    <span
-                      style={{
-                        fontWeight: 800,
-                        color: ticket.status === 'VALID' ? '#10b981' : '#ef4444',
-                      }}
-                    >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--line)', paddingBottom: '6px' }}>
+                    <span className="mute">Statut Validation :</span>
+                    <span style={{ fontWeight: 800, color: ticket.status === 'VALID' ? '#10b981' : 'var(--a)' }}>
                       {ticket.status === 'VALID' ? 'NON UTILISÉ' : 'UTILISÉ'}
                     </span>
                   </div>
 
                   {ticket.status === 'USED' && ticket.scannedAt && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.06)', paddingBottom: '6px' }}>
-                      <span style={{ color: '#94a3b8' }}>Date & Heure validation :</span>
-                      <span style={{ color: '#ffffff', fontWeight: 600 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--line)', paddingBottom: '6px' }}>
+                      <span className="mute">Date & Heure :</span>
+                      <span style={{ color: 'var(--ink)', fontWeight: 600 }}>
                         {new Date(ticket.scannedAt).toLocaleDateString('fr-FR')} à{' '}
                         {new Date(ticket.scannedAt).toLocaleTimeString('fr-FR')}
                       </span>
@@ -820,8 +751,8 @@ export default function SingleTicketPage() {
 
                   {ticket.status === 'USED' && (
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: '#94a3b8' }}>Agent responsable :</span>
-                      <span style={{ fontWeight: 700, color: '#818cf8' }}>
+                      <span className="mute">Agent responsable :</span>
+                      <span style={{ fontWeight: 700, color: 'var(--p)' }}>
                         {ticket.scannedByAgentName || 'Admin /keril'}
                       </span>
                     </div>

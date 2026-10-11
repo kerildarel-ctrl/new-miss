@@ -12,11 +12,8 @@ import {
   ArrowLeft,
   Camera,
   RefreshCw,
-  Search,
   History,
   ShieldCheck,
-  Check,
-  RotateCcw,
 } from 'lucide-react';
 import { Html5Qrcode } from 'html5-qrcode';
 
@@ -76,7 +73,7 @@ function ScannerContent() {
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
 
-  // Auto-validate toggle (Instant vs Inspection + Validation)
+  // Auto-validate toggle
   const [autoValidate, setAutoValidate] = useState(false);
 
   // Inspected ticket data
@@ -114,7 +111,7 @@ function ScannerContent() {
     }
   };
 
-  // Inspect ticket (Consultation only, does NOT consume the ticket)
+  // Inspect ticket (Consultation only)
   const inspectCode = async (rawCode: string, andAutoValidate = false) => {
     const code = extractTicketCode(rawCode);
     if (!code) return;
@@ -173,7 +170,6 @@ function ScannerContent() {
 
       addToHistory(ticketCode, buyerName || inspectedTicket?.buyerName, data.code, data.message);
 
-      // Update inspected ticket status
       if (inspectedTicket) {
         setInspectedTicket({
           ...inspectedTicket,
@@ -207,7 +203,7 @@ function ScannerContent() {
       time: new Date().toLocaleTimeString('fr-FR'),
       agentName: 'Admin /keril',
     };
-    setHistory((prev) => [item, ...prev.slice(0, 19)]); // Keep last 20
+    setHistory((prev) => [item, ...prev.slice(0, 19)]);
   };
 
   // Start Camera
@@ -276,7 +272,7 @@ function ScannerContent() {
   };
 
   return (
-    <div style={{ width: '100%', maxWidth: '520px', margin: '0 auto', color: '#ffffff' }}>
+    <div style={{ width: '100%', maxWidth: '520px', margin: '0 auto', color: 'var(--ink)' }}>
       {/* TOP BAR */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
         <Link
@@ -285,7 +281,7 @@ function ScannerContent() {
             display: 'inline-flex',
             alignItems: 'center',
             gap: '6px',
-            color: '#818cf8',
+            color: 'var(--p)',
             fontSize: '0.88rem',
             fontWeight: 700,
             textDecoration: 'none',
@@ -301,7 +297,7 @@ function ScannerContent() {
             alignItems: 'center',
             gap: '6px',
             fontSize: '0.78rem',
-            color: autoValidate ? '#10b981' : '#94a3b8',
+            color: autoValidate ? '#10b981' : 'var(--mute)',
             cursor: 'pointer',
             fontWeight: 700,
           }}
@@ -312,25 +308,31 @@ function ScannerContent() {
             onChange={(e) => setAutoValidate(e.target.checked)}
             style={{ accentColor: '#10b981' }}
           />
-          Validation Directe au Scan
+          Validation Directe
         </label>
       </div>
 
-      <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-        <h1 style={{ fontSize: '1.6rem', fontWeight: 900 }}>Poste de Contrôle des Entrées</h1>
-        <p style={{ color: '#94a3b8', fontSize: '0.84rem', marginTop: '2px' }}>
+      <div style={{ textAlign: 'center', marginBottom: '18px' }}>
+        <p className="eb" style={{ color: 'var(--p)', fontSize: '0.76rem' }}>
+          Contrôle d&apos;Entrée Officiel
+        </p>
+        <h1 style={{ fontSize: '1.5rem', fontWeight: 800, marginTop: '2px', color: 'var(--ink)' }}>
+          Scanner Caméra Billetterie
+        </h1>
+        <p className="mute sm" style={{ marginTop: '2px' }}>
           Scannez le QR Code ou saisissez le code pour inspecter et valider l&apos;accès.
         </p>
       </div>
 
-      {/* CAMERA VIEWPORT */}
+      {/* CAMERA VIEWPORT CARD */}
       <div
+        className="db"
         style={{
-          background: '#12182b',
+          background: 'var(--bg)',
           borderRadius: '24px',
           padding: '16px',
-          border: '1.5px solid rgba(255, 255, 255, 0.15)',
-          boxShadow: '0 15px 35px rgba(0, 0, 0, 0.4)',
+          border: '1.5px solid var(--line)',
+          boxShadow: 'var(--shadow)',
           marginBottom: '20px',
         }}
       >
@@ -341,8 +343,8 @@ function ScannerContent() {
             minHeight: '260px',
             borderRadius: '16px',
             overflow: 'hidden',
-            background: '#0a0e1a',
-            border: '2px dashed rgba(129, 140, 248, 0.4)',
+            background: '#0a0a0a',
+            border: '2px dashed var(--line)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -355,9 +357,10 @@ function ScannerContent() {
               marginTop: '12px',
               padding: '10px 14px',
               borderRadius: '12px',
-              background: 'rgba(239, 68, 68, 0.2)',
-              color: '#fca5a5',
+              background: 'rgba(255, 90, 126, 0.12)',
+              color: 'var(--a)',
               fontSize: '0.82rem',
+              fontWeight: 600,
             }}
           >
             ⚠️ {cameraError}
@@ -369,16 +372,13 @@ function ScannerContent() {
             <button
               type="button"
               onClick={startCamera}
+              className="btn full"
               style={{
-                flex: 1,
-                padding: '11px',
-                borderRadius: '12px',
+                height: '42px',
+                fontSize: '0.86rem',
+                fontWeight: 700,
                 background: '#10b981',
-                color: '#ffffff',
-                fontWeight: 800,
-                fontSize: '0.88rem',
-                border: 'none',
-                cursor: 'pointer',
+                borderRadius: '12px',
               }}
             >
               📷 Réactiver la Caméra
@@ -389,13 +389,13 @@ function ScannerContent() {
               onClick={stopCamera}
               style={{
                 flex: 1,
-                padding: '11px',
+                height: '42px',
                 borderRadius: '12px',
-                background: 'rgba(255, 255, 255, 0.1)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                color: '#ffffff',
+                background: 'var(--soft)',
+                border: '1px solid var(--line)',
+                color: 'var(--ink)',
                 fontWeight: 700,
-                fontSize: '0.88rem',
+                fontSize: '0.86rem',
                 cursor: 'pointer',
               }}
             >
@@ -408,46 +408,47 @@ function ScannerContent() {
       {/* MANUAL SEARCH INPUT */}
       <form
         onSubmit={handleManualSearch}
+        className="db"
         style={{
-          background: '#12182b',
-          padding: '14px',
-          borderRadius: '18px',
-          border: '1px solid rgba(255, 255, 255, 0.12)',
+          background: 'var(--bg)',
+          padding: '12px 14px',
+          borderRadius: '16px',
+          border: '1px solid var(--line)',
           marginBottom: '20px',
+          boxShadow: 'var(--shadow)',
         }}
       >
         <div style={{ display: 'flex', gap: '8px' }}>
           <input
             type="text"
-            placeholder="Rechercher par code (ex. TCK-89A2F-2026)"
+            placeholder="Rechercher code (ex. TCK-89A2F-2026)"
             value={inputCode}
             onChange={(e) => setInputCode(e.target.value)}
             style={{
               flex: 1,
               height: '42px',
-              background: '#1a233b',
-              border: '1.5px solid rgba(255, 255, 255, 0.2)',
+              background: 'var(--soft)',
+              border: '1.5px solid var(--line)',
               borderRadius: '12px',
               padding: '0 14px',
-              color: '#ffffff',
-              fontSize: '0.9rem',
+              color: 'var(--ink)',
+              fontSize: '0.88rem',
               fontWeight: 700,
               outline: 'none',
+              marginTop: 0,
             }}
           />
           <button
             type="submit"
             disabled={loading}
+            className="btn"
             style={{
-              padding: '0 16px',
+              padding: '0 18px',
               height: '42px',
               borderRadius: '12px',
-              background: '#818cf8',
-              color: '#0f172a',
-              fontWeight: 800,
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '0.88rem',
+              fontWeight: 700,
+              fontSize: '0.86rem',
+              flexShrink: 0,
             }}
           >
             {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : 'Inspecter'}
@@ -458,32 +459,33 @@ function ScannerContent() {
       {/* INSPECTED TICKET CARD */}
       {inspectedTicket && (
         <div
+          className="db"
           style={{
-            background: '#12182b',
-            borderRadius: '24px',
+            background: 'var(--bg)',
+            borderRadius: '20px',
             padding: '20px',
-            border: '1.5px solid rgba(255, 255, 255, 0.15)',
+            border: '1.5px solid var(--line)',
             marginBottom: '20px',
-            boxShadow: '0 15px 35px rgba(0, 0, 0, 0.4)',
+            boxShadow: 'var(--shadow)',
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
-              <span style={{ fontSize: '0.78rem', color: '#818cf8', fontWeight: 800 }}>
+              <span style={{ fontSize: '0.78rem', color: 'var(--p)', fontWeight: 800 }}>
                 {inspectedTicket.passName}
               </span>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 900, marginTop: '2px' }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 800, marginTop: '2px', color: 'var(--ink)' }}>
                 {inspectedTicket.buyerName || 'Participant'}
               </h2>
-              <p style={{ color: '#94a3b8', fontSize: '0.84rem' }}>{inspectedTicket.eventTitle}</p>
+              <p className="mute sm">{inspectedTicket.eventTitle}</p>
             </div>
             <span
               style={{
                 fontFamily: 'monospace',
                 fontSize: '0.85rem',
                 fontWeight: 800,
-                color: '#fbbf24',
-                background: 'rgba(251, 191, 36, 0.1)',
+                color: 'var(--p)',
+                background: 'rgba(91, 61, 245, 0.1)',
                 padding: '4px 10px',
                 borderRadius: '8px',
               }}
@@ -505,13 +507,13 @@ function ScannerContent() {
               fontWeight: 800,
               background:
                 inspectedTicket.status === 'VALID'
-                  ? 'rgba(16, 185, 129, 0.15)'
-                  : 'rgba(239, 68, 68, 0.15)',
+                  ? 'rgba(16, 185, 129, 0.12)'
+                  : 'rgba(255, 90, 126, 0.12)',
               border:
                 inspectedTicket.status === 'VALID'
                   ? '1px solid #10b981'
-                  : '1px solid #ef4444',
-              color: inspectedTicket.status === 'VALID' ? '#10b981' : '#f87171',
+                  : '1px solid var(--a)',
+              color: inspectedTicket.status === 'VALID' ? '#10b981' : 'var(--a)',
             }}
           >
             <span>
@@ -519,7 +521,7 @@ function ScannerContent() {
                 ? '🟢 Statut : NON UTILISÉ'
                 : '🔴 Statut : DÉJÀ UTILISÉ'}
             </span>
-            <span style={{ fontSize: '0.78rem', color: '#cbd5e1' }}>
+            <span style={{ fontSize: '0.76rem', color: 'var(--mute)' }}>
               Paiement : {inspectedTicket.paymentStatus || 'CONFIRMÉ'}
             </span>
           </div>
@@ -532,18 +534,18 @@ function ScannerContent() {
                 padding: '12px',
                 borderRadius: '12px',
                 textAlign: 'center',
-                fontWeight: 900,
-                fontSize: '0.92rem',
+                fontWeight: 800,
+                fontSize: '0.9rem',
                 background:
                   validationResult.code === 'VALIDATED'
-                    ? 'rgba(16, 185, 129, 0.25)'
-                    : 'rgba(239, 68, 68, 0.25)',
+                    ? 'rgba(16, 185, 129, 0.15)'
+                    : 'rgba(255, 90, 126, 0.15)',
                 border:
                   validationResult.code === 'VALIDATED'
-                    ? '2px solid #10b981'
-                    : '2px solid #ef4444',
+                    ? '1.5px solid #10b981'
+                    : '1.5px solid var(--a)',
                 color:
-                  validationResult.code === 'VALIDATED' ? '#10b981' : '#fca5a5',
+                  validationResult.code === 'VALIDATED' ? '#10b981' : 'var(--a)',
               }}
             >
               {validationResult.code === 'VALIDATED'
@@ -562,22 +564,15 @@ function ScannerContent() {
               type="button"
               onClick={() => validateTicket(inspectedTicket.ticketCode, inspectedTicket.buyerName)}
               disabled={isValidating}
+              className="btn full"
               style={{
-                width: '100%',
                 marginTop: '16px',
-                padding: '14px',
-                borderRadius: '99px',
+                height: '46px',
+                fontSize: '0.95rem',
+                fontWeight: 800,
                 background: '#10b981',
-                color: '#ffffff',
-                border: 'none',
-                fontWeight: 900,
-                fontSize: '0.98rem',
-                cursor: isValidating ? 'not-allowed' : 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
                 gap: '8px',
-                boxShadow: '0 8px 20px rgba(16, 185, 129, 0.35)',
+                cursor: isValidating ? 'not-allowed' : 'pointer',
               }}
             >
               <CheckCircle2 className="w-5 h-5" />
@@ -588,8 +583,8 @@ function ScannerContent() {
               style={{
                 marginTop: '14px',
                 textAlign: 'center',
-                color: '#f87171',
-                fontSize: '0.85rem',
+                color: 'var(--a)',
+                fontSize: '0.84rem',
                 fontWeight: 700,
               }}
             >
@@ -602,14 +597,15 @@ function ScannerContent() {
       {inspectError && (
         <div
           style={{
-            background: 'rgba(239, 68, 68, 0.15)',
-            border: '1.5px solid #ef4444',
-            color: '#fca5a5',
-            padding: '16px',
-            borderRadius: '16px',
+            background: 'rgba(255, 90, 126, 0.12)',
+            border: '1.5px solid var(--a)',
+            color: 'var(--a)',
+            padding: '14px',
+            borderRadius: '14px',
             textAlign: 'center',
             marginBottom: '20px',
-            fontWeight: 800,
+            fontWeight: 700,
+            fontSize: '0.9rem',
           }}
         >
           {inspectError}
@@ -619,16 +615,20 @@ function ScannerContent() {
       {/* SESSION SCAN HISTORY */}
       {history.length > 0 && (
         <div
+          className="db"
           style={{
-            background: '#12182b',
+            background: 'var(--bg)',
             borderRadius: '20px',
             padding: '18px',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
+            border: '1px solid var(--line)',
+            boxShadow: 'var(--shadow)',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-            <History className="w-4 h-4 text-indigo-400" />
-            <h3 style={{ fontSize: '0.95rem', fontWeight: 800 }}>Historique de la Session</h3>
+            <History className="w-4 h-4" style={{ color: 'var(--p)' }} />
+            <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--ink)' }}>
+              Historique de la Session
+            </h3>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -641,18 +641,18 @@ function ScannerContent() {
                   alignItems: 'center',
                   padding: '8px 12px',
                   borderRadius: '10px',
-                  background: 'rgba(255, 255, 255, 0.04)',
+                  background: 'var(--soft)',
                   fontSize: '0.82rem',
                 }}
               >
                 <div>
-                  <b style={{ color: item.status === 'VALIDATED' ? '#10b981' : '#f87171' }}>
+                  <b style={{ color: item.status === 'VALIDATED' ? '#10b981' : 'var(--a)' }}>
                     {item.status === 'VALIDATED' ? '🟢 Accepté' : '🔴 Refusé'}
                   </b>{' '}
                   — <span style={{ fontFamily: 'monospace' }}>{item.ticketCode}</span>
-                  {item.buyerName && <span style={{ color: '#94a3b8' }}> ({item.buyerName})</span>}
+                  {item.buyerName && <span className="mute"> ({item.buyerName})</span>}
                 </div>
-                <div style={{ color: '#94a3b8', fontSize: '0.78rem' }}>{item.time}</div>
+                <div className="mute" style={{ fontSize: '0.76rem' }}>{item.time}</div>
               </div>
             ))}
           </div>
@@ -668,14 +668,14 @@ export default function KerilScanPage() {
       <div
         style={{
           minHeight: '100vh',
-          background: '#0a0e1a',
-          padding: '24px 16px',
+          background: 'var(--soft)',
+          padding: '28px 16px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
         }}
       >
-        <Suspense fallback={<div style={{ padding: '40px', color: '#818cf8' }}>Chargement du Contrôleur...</div>}>
+        <Suspense fallback={<div style={{ padding: '40px', color: 'var(--p)' }}>Chargement du Contrôleur...</div>}>
           <ScannerContent />
         </Suspense>
       </div>

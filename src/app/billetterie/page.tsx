@@ -6,15 +6,13 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import {
   Ticket,
-  Sparkles,
-  Bell,
   Clock,
-  ShieldCheck,
-  QrCode,
-  ArrowRight,
+  Bell,
   CheckCircle2,
-  Calendar,
-  Lock,
+  QrCode,
+  ShieldCheck,
+  CreditCard,
+  ArrowRight,
 } from 'lucide-react';
 
 export default function BilletteriePage() {
@@ -27,7 +25,6 @@ export default function BilletteriePage() {
     if (!notifyEmail || !notifyEmail.includes('@')) return;
 
     setIsSubmitting(true);
-    // Simulate save or submit to database
     try {
       await new Promise((res) => setTimeout(res, 600));
       setIsNotified(true);
@@ -42,126 +39,78 @@ export default function BilletteriePage() {
     <>
       <Header />
 
-      <main
-        style={{
-          minHeight: '82vh',
-          background: 'var(--soft)',
-          position: 'relative',
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '40px 20px 80px',
-        }}
-      >
-        {/* BACKGROUND GLOW ACCENTS */}
-        <div
-          style={{
-            position: 'absolute',
-            top: '-10%',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: '600px',
-            height: '400px',
-            background: 'radial-gradient(circle, rgba(129, 140, 248, 0.18) 0%, rgba(99, 102, 241, 0.04) 60%, transparent 100%)',
-            filter: 'blur(70px)',
-            pointerEvents: 'none',
-          }}
-        />
+      <main className="flex-1" style={{ background: 'var(--soft)' }}>
+        {/* ========================================================================= */}
+        {/* HERO SECTION — EXACT HOME PAGE PALETTE (--hero, Poppins) */}
+        {/* ========================================================================= */}
+        <section className="hero" id="billetterie-hero">
+          <div className="wd">
+            <div className="ht" style={{ maxWidth: '780px' }}>
+              <p className="eb" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <Clock className="w-4 h-4" />
+                Coming Soon • Bientôt Disponible
+              </p>
+              <h1>Billetterie Officielle</h1>
+              <p className="tg">Vos billets et Pass d&apos;événements en ligne.</p>
+              <p>
+                La billetterie pour les soirées de gala, élections et grands événements arrive très prochainement.
+                Restez connectés pour réserver vos pass exclusifs.
+              </p>
 
-        <div style={{ maxWidth: '820px', width: '100%', margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 1 }}>
-          
-          {/* BADGE COMING SOON */}
-          <div style={{ marginBottom: '20px' }}>
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '8px 20px',
-                borderRadius: '99px',
-                background: 'rgba(129, 140, 248, 0.15)',
-                border: '1.5px solid rgba(129, 140, 248, 0.35)',
-                color: 'var(--p)',
-                fontWeight: 900,
-                fontSize: '0.86rem',
-                letterSpacing: '0.06em',
-                textTransform: 'uppercase',
-                boxShadow: '0 4px 20px rgba(129, 140, 248, 0.15)',
-              }}
-            >
-              <Clock className="w-4 h-4 animate-pulse" />
-              <span>Coming Soon • Bientôt Disponible</span>
-            </span>
+              <div className="row" style={{ marginTop: '20px' }}>
+                <Link href="/" className="btn wh">
+                  Explorer les compétitions
+                </Link>
+                <Link href="/classement" className="btn ow">
+                  Voir les classements
+                </Link>
+              </div>
+            </div>
           </div>
+        </section>
 
-          {/* MAIN HERO TITLE */}
-          <h1
-            style={{
-              fontSize: 'clamp(2.4rem, 6vw, 3.8rem)',
-              fontWeight: 900,
-              lineHeight: 1.12,
-              letterSpacing: '-0.02em',
-              color: 'var(--ink)',
-            }}
-          >
-            La Billetterie Officielle <br />
-            <span
-              style={{
-                background: 'linear-gradient(135deg, #4f46e5 0%, #ec4899 50%, #f59e0b 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}
-            >
-              Arrive Très Prochainement !
-            </span>
-          </h1>
-
-          <p
-            style={{
-              fontSize: 'clamp(1rem, 2.5vw, 1.2rem)',
-              color: 'var(--mute)',
-              maxWidth: '640px',
-              margin: '18px auto 0',
-              lineHeight: 1.6,
-            }}
-          >
-            Le service de réservation et d&apos;émission de billets électroniques pour les soirées de gala,
-            élections et concerts prestigieux est en cours de finalisation. Restez à l&apos;affût !
-          </p>
-
-          {/* COMING SOON CARD WITH PRE-REGISTRATION EMAIL */}
+        {/* ========================================================================= */}
+        {/* MAIN BODY CONTENT — EXACT SITE DESIGN SYSTEM */}
+        {/* ========================================================================= */}
+        <div className="wd" style={{ padding: '40px clamp(16px, 3vw, 32px) 80px' }}>
+          
+          {/* PRE-REGISTRATION / ALERT CARD */}
           <div
+            className="db"
             style={{
-              marginTop: '40px',
+              maxWidth: '680px',
+              margin: '0 auto',
+              textAlign: 'center',
+              padding: 'clamp(28px, 4vw, 44px)',
               background: 'var(--bg)',
-              borderRadius: '28px',
-              padding: 'clamp(24px, 4vw, 36px)',
               border: '1.5px solid var(--line)',
-              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.08), 0 0 40px rgba(129, 140, 248, 0.06)',
+              borderRadius: '24px',
+              boxShadow: 'var(--shadow)',
             }}
           >
             <div
               style={{
-                width: '64px',
-                height: '64px',
-                borderRadius: '20px',
-                background: 'linear-gradient(135deg, rgba(129, 140, 248, 0.2) 0%, rgba(236, 72, 153, 0.2) 100%)',
+                width: '60px',
+                height: '60px',
+                borderRadius: '50%',
+                background: 'rgba(91, 61, 245, 0.12)',
                 color: 'var(--p)',
                 display: 'grid',
                 placeItems: 'center',
                 margin: '0 auto 16px',
               }}
             >
-              <Ticket className="w-8 h-8" />
+              <Ticket className="w-7 h-7" />
             </div>
 
-            <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--ink)' }}>
-              Soyez le premier informé de l&apos;ouverture des ventes 🎟️
+            <p className="eb" style={{ color: 'var(--p)', fontSize: '0.8rem', fontWeight: 700 }}>
+              Accès Prioritaire
+            </p>
+            <h2 style={{ fontSize: 'clamp(1.3rem, 3vw, 1.6rem)', color: 'var(--ink)', marginTop: '4px', fontWeight: 800 }}>
+              Soyez averti dès l&apos;ouverture des ventes
             </h2>
-            <p style={{ fontSize: '0.92rem', color: 'var(--mute)', marginTop: '6px', maxWidth: '480px', margin: '6px auto 0' }}>
-              Laissez votre adresse email pour recevoir votre invitation prioritaire et réserver vos Pass dès le lancement officiel.
+            <p className="mute sm" style={{ maxWidth: '460px', margin: '8px auto 0', lineHeight: 1.5 }}>
+              Laissez votre adresse email pour recevoir votre notification prioritaire dès la mise en ligne des premiers billets d&apos;événements.
             </p>
 
             {!isNotified ? (
@@ -173,198 +122,200 @@ export default function BilletteriePage() {
                   flexWrap: 'wrap',
                   gap: '10px',
                   justifyContent: 'center',
-                  maxWidth: '500px',
+                  maxWidth: '480px',
                   margin: '24px auto 0',
                 }}
               >
                 <input
                   type="email"
                   required
-                  placeholder="Entrez votre adresse email..."
+                  placeholder="Votre adresse email..."
                   value={notifyEmail}
                   onChange={(e) => setNotifyEmail(e.target.value)}
                   style={{
-                    flex: '1 1 260px',
-                    height: '48px',
+                    flex: '1 1 240px',
+                    height: '46px',
                     background: 'var(--soft)',
                     border: '1.5px solid var(--line)',
-                    borderRadius: '14px',
+                    borderRadius: '12px',
                     padding: '0 16px',
-                    fontSize: '0.95rem',
+                    fontSize: '0.92rem',
                     color: 'var(--ink)',
                     outline: 'none',
+                    marginTop: 0,
                   }}
                 />
                 <button
                   type="submit"
                   disabled={isSubmitting}
+                  className="btn"
                   style={{
-                    height: '48px',
+                    height: '46px',
                     padding: '0 24px',
-                    borderRadius: '14px',
-                    background: 'var(--p)',
-                    color: '#ffffff',
-                    fontWeight: 800,
-                    fontSize: '0.92rem',
-                    border: 'none',
-                    cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                    borderRadius: '12px',
+                    flexShrink: 0,
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '8px',
-                    boxShadow: '0 8px 20px rgba(124, 58, 237, 0.35)',
+                    fontWeight: 700,
+                    fontSize: '0.9rem',
+                    cursor: isSubmitting ? 'not-allowed' : 'pointer',
                   }}
                 >
                   <Bell className="w-4 h-4" />
-                  <span>{isSubmitting ? 'Enregistrement...' : 'M’avertir'}</span>
+                  <span>{isSubmitting ? 'Envoi...' : 'M’avertir'}</span>
                 </button>
               </form>
             ) : (
               <div
                 style={{
                   marginTop: '24px',
-                  padding: '16px',
-                  borderRadius: '16px',
+                  padding: '14px',
+                  borderRadius: '12px',
                   background: 'rgba(16, 185, 129, 0.12)',
-                  border: '1.5px solid #10b981',
+                  border: '1px solid #10b981',
                   color: '#10b981',
                   fontWeight: 700,
-                  fontSize: '0.95rem',
+                  fontSize: '0.92rem',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '8px',
                 }}
               >
-                <CheckCircle2 className="w-5 h-5" />
-                <span>Merci ! Vous serez le premier averti dès l’ouverture de la billetterie.</span>
+                <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
+                <span>Merci ! Vous serez le premier averti lors du lancement.</span>
               </div>
             )}
           </div>
 
-          {/* FEATURE PREVIEWS GRID */}
+          {/* 3 PREVIEWS CARDS — SAME CARD STYLE AS HOMEPAGE */}
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-              gap: '16px',
-              marginTop: '32px',
-              textAlign: 'left',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+              gap: '20px',
+              marginTop: '36px',
+              maxWidth: '960px',
+              margin: '36px auto 0',
             }}
           >
             <div
+              className="db"
               style={{
                 background: 'var(--bg)',
-                padding: '20px',
-                borderRadius: '20px',
                 border: '1px solid var(--line)',
+                borderRadius: '20px',
+                padding: '24px',
+                boxShadow: 'var(--shadow)',
               }}
             >
               <div
                 style={{
-                  width: '40px',
-                  height: '40px',
+                  width: '44px',
+                  height: '44px',
                   borderRadius: '12px',
-                  background: 'rgba(129, 140, 248, 0.15)',
+                  background: 'rgba(91, 61, 245, 0.12)',
                   color: 'var(--p)',
                   display: 'grid',
                   placeItems: 'center',
-                  marginBottom: '12px',
+                  marginBottom: '14px',
                 }}
               >
                 <Ticket className="w-5 h-5" />
               </div>
-              <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--ink)' }}>
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--ink)' }}>
                 Pass Standard & VIP
               </h3>
-              <p style={{ fontSize: '0.84rem', color: 'var(--mute)', marginTop: '4px', lineHeight: 1.45 }}>
-                Des formules adaptées pour chaque expérience : places numérotées, carrés VIP et loges exclusives.
+              <p className="mute sm" style={{ marginTop: '6px', lineHeight: 1.5 }}>
+                Des formules diversifiées : accès général, places privilégiées premier rang et tables d&apos;honneur VVIP.
               </p>
             </div>
 
             <div
+              className="db"
               style={{
                 background: 'var(--bg)',
-                padding: '20px',
-                borderRadius: '20px',
                 border: '1px solid var(--line)',
+                borderRadius: '20px',
+                padding: '24px',
+                boxShadow: 'var(--shadow)',
               }}
             >
               <div
                 style={{
-                  width: '40px',
-                  height: '40px',
+                  width: '44px',
+                  height: '44px',
                   borderRadius: '12px',
-                  background: 'rgba(16, 185, 129, 0.15)',
-                  color: '#10b981',
+                  background: 'rgba(91, 61, 245, 0.12)',
+                  color: 'var(--p)',
                   display: 'grid',
                   placeItems: 'center',
-                  marginBottom: '12px',
+                  marginBottom: '14px',
                 }}
               >
                 <QrCode className="w-5 h-5" />
               </div>
-              <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--ink)' }}>
-                QR Code Sécurisé Unique
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--ink)' }}>
+                E-Billet & QR Code Sécurisé
               </h3>
-              <p style={{ fontSize: '0.84rem', color: 'var(--mute)', marginTop: '4px', lineHeight: 1.45 }}>
-                Billet numérique haute sécurité validé à l’entrée avec contrôle d’accès strict à usage unique.
+              <p className="mute sm" style={{ marginTop: '6px', lineHeight: 1.5 }}>
+                QR code unique scannable à l&apos;entrée avec contrôle en temps réel par les agents autorisés.
               </p>
             </div>
 
             <div
+              className="db"
               style={{
                 background: 'var(--bg)',
-                padding: '20px',
-                borderRadius: '20px',
                 border: '1px solid var(--line)',
+                borderRadius: '20px',
+                padding: '24px',
+                boxShadow: 'var(--shadow)',
               }}
             >
               <div
                 style={{
-                  width: '40px',
-                  height: '40px',
+                  width: '44px',
+                  height: '44px',
                   borderRadius: '12px',
-                  background: 'rgba(245, 158, 11, 0.15)',
-                  color: '#f59e0b',
+                  background: 'rgba(255, 90, 126, 0.12)',
+                  color: 'var(--a)',
                   display: 'grid',
                   placeItems: 'center',
-                  marginBottom: '12px',
+                  marginBottom: '14px',
                 }}
               >
-                <ShieldCheck className="w-5 h-5" />
+                <CreditCard className="w-5 h-5" />
               </div>
-              <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--ink)' }}>
-                Paiement Mobile Sécurisé
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--ink)' }}>
+                Paiement Mobile 100% Sécurisé
               </h3>
-              <p style={{ fontSize: '0.84rem', color: 'var(--mute)', marginTop: '4px', lineHeight: 1.45 }}>
-                Règlement simple et instantané via Orange Money, MTN Mobile Money et cartes bancaires.
+              <p className="mute sm" style={{ marginTop: '6px', lineHeight: 1.5 }}>
+                Achat immédiat via Orange Money et MTN Mobile Money avec confirmation instantanée.
               </p>
             </div>
           </div>
 
-          {/* ACTION BUTTON TO RETURN TO CURRENT ELECTIONS / HOME */}
-          <div style={{ marginTop: '36px' }}>
+          {/* REDIRECT ACTION LINK */}
+          <div style={{ textAlign: 'center', marginTop: '40px' }}>
             <Link
               href="/"
+              className="btn"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '8px',
-                padding: '14px 28px',
+                padding: '12px 28px',
                 borderRadius: '99px',
-                background: 'var(--ink)',
-                color: 'var(--bg)',
-                fontWeight: 800,
+                fontWeight: 700,
                 fontSize: '0.95rem',
-                textDecoration: 'none',
-                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
               }}
             >
               <span>Découvrir les Compétitions en Cours</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
-
         </div>
       </main>
 
