@@ -59,7 +59,7 @@ export const AdminSidebar: React.FC = () => {
         style={{ borderColor: 'var(--line)' }}
       >
         <Link href="/" className="logo" style={{ textDecoration: 'none' }}>
-          <Image src="/images/logo.png" alt="VoteMoi" width={140} height={40} style={{ height: '36px', width: 'auto', objectFit: 'contain' }} />
+          <Image src="/images/logo.png" alt="VoteMoi" width={120} height={32} style={{ height: '30px', width: 'auto', objectFit: 'contain' }} />
           <span
             className="chip"
             style={{ fontSize: '0.65rem', padding: '2px 8px', marginLeft: '6px' }}
@@ -91,7 +91,7 @@ export const AdminSidebar: React.FC = () => {
         {/* Brand Header */}
         <div style={{ paddingBottom: '20px', borderBottom: '1px solid var(--line)' }}>
           <Link href="/" className="logo" style={{ fontSize: '1.15rem' }}>
-            <Image src="/images/logo.png" alt="VoteMoi" width={140} height={40} style={{ height: '38px', width: 'auto', objectFit: 'contain' }} />
+            <Image src="/images/logo.png" alt="VoteMoi" width={120} height={32} style={{ height: '30px', width: 'auto', objectFit: 'contain' }} />
           </Link>
           <div style={{ marginTop: '10px' }}>
             <span
@@ -281,7 +281,7 @@ export const AdminSidebar: React.FC = () => {
                   style={{ borderBottom: '1px solid var(--line)' }}
                 >
                   <Link href="/" className="logo">
-                    <Image src="/images/logo.png" alt="VoteMoi" width={140} height={40} style={{ height: '38px', width: 'auto', objectFit: 'contain' }} />
+                    <Image src="/images/logo.png" alt="VoteMoi" width={120} height={32} style={{ height: '30px', width: 'auto', objectFit: 'contain' }} />
                   </Link>
                   <button
                     type="button"

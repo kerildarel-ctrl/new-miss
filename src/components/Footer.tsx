@@ -14,9 +14,9 @@ export const Footer: React.FC = () => {
               <Image
                 src="/images/logo.png"
                 alt="VoteMoi"
-                width={160}
-                height={48}
-                style={{ height: '44px', width: 'auto', objectFit: 'contain' }}
+                width={130}
+                height={36}
+                style={{ height: '34px', width: 'auto', objectFit: 'contain' }}
               />
             </Link>
             <p>La plateforme officielle de vote pour vos élections universitaires et concours d&apos;élégance.</p>
