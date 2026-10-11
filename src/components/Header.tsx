@@ -31,8 +31,14 @@ export const Header: React.FC = () => {
       <div className="wd" style={{ position: 'relative' }}>
         {/* LOGO */}
         <Link href="/" className="logo" onClick={() => setMobileMenuOpen(false)}>
-          <Image src="/images/logo.png" alt="VoteMoi" width={32} height={32} style={{ width: '32px', height: '32px', borderRadius: '8px', objectFit: 'contain' }} />
-          <span>VoteMoi</span>
+          <Image
+            src="/images/logo.png"
+            alt="VoteMoi"
+            width={160}
+            height={48}
+            style={{ height: '44px', width: 'auto', objectFit: 'contain' }}
+            priority
+          />
         </Link>
 
         {/* DESKTOP NAVIGATION */}

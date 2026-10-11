@@ -11,8 +11,13 @@ export const Footer: React.FC = () => {
         <div className="fg">
           <div>
             <Link href="/" className="logo">
-              <Image src="/images/logo.png" alt="VoteMoi" width={32} height={32} style={{ width: '32px', height: '32px', borderRadius: '8px', objectFit: 'contain' }} />
-              <span>VoteMoi</span>
+              <Image
+                src="/images/logo.png"
+                alt="VoteMoi"
+                width={160}
+                height={48}
+                style={{ height: '44px', width: 'auto', objectFit: 'contain' }}
+              />
             </Link>
             <p>La plateforme officielle de vote pour vos élections universitaires et concours d&apos;élégance.</p>
             <p className="sm mute" style={{ marginTop: '14px' }}>
