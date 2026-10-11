@@ -22,6 +22,7 @@ import {
   AlertCircle,
   X,
 } from 'lucide-react';
+import { VoteMoiCard } from '@/components/VoteMoiCard';
 
 interface StatsData {
   competition: {
@@ -78,6 +79,19 @@ export default function OrganisateurDashboardPage() {
   const [payoutOwnerName, setPayoutOwnerName] = useState('');
   const [isSubmittingPayout, setIsSubmittingPayout] = useState(false);
   const [payoutSuccessMessage, setPayoutSuccessMessage] = useState<string | null>(null);
+
+  const cardExpiration = React.useMemo(() => {
+    if (!data?.competition?.endDate) return '12/26';
+    try {
+      const d = new Date(data.competition.endDate);
+      if (isNaN(d.getTime())) return '12/26';
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = String(d.getFullYear()).slice(-2);
+      return `${month}/${year}`;
+    } catch {
+      return '12/26';
+    }
+  }, [data?.competition?.endDate]);
 
   const fetchStats = async () => {
     try {
@@ -230,82 +244,108 @@ export default function OrganisateurDashboardPage() {
             </div>
           ) : (
             <>
-              {/* 4 CARDS: FINANCIAL KPI METRICS */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+              {/* SECTION CARTE BANCAIRE VOTEMOI & SYNTHÈSE DES GAINS */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
                 
-                {/* CARD 1: TOTAL VOTES */}
-                <div className="bg-white dark:bg-[#111827] rounded-[26px] p-5 sm:p-6 border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden">
-                  <div className="flex items-center justify-between text-slate-500 text-xs font-bold mb-3">
-                    <span>Votes Enregistrés</span>
-                    <div className="w-9 h-9 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 flex items-center justify-center">
-                      <Vote className="w-4 h-4" />
-                    </div>
-                  </div>
-                  <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
-                    {data.financials.totalVotes.toLocaleString('fr-FR')}
-                  </div>
-                  <p className="text-[11px] text-slate-400 font-medium mt-1">
-                    {data.competition.candidatesCount} candidat(s) en compétition
-                  </p>
+                {/* COLONNE GAUCHE : CARTE BANCAIRE VOTEMOI (DESIGN LUXE AVEC PUCE EMV ET INFOS CONCOURS) */}
+                <div className="lg:col-span-5 flex flex-col justify-center items-center">
+                  <VoteMoiCard
+                    competitionTitle={data.competition.title}
+                    organizerName="ORGANISATEUR OFFICIEL"
+                    balance={data.financials.availableBalance}
+                    secondaryBalance={data.financials.organizerEarnings}
+                    tierName={data.financials.currentTierName}
+                    tierRate={data.financials.currentRateFCFA}
+                    expirationDate={cardExpiration}
+                    variant={data.financials.currentTierNumber === 3 ? 'gold' : 'violet'}
+                    showWithdrawButton={true}
+                    canWithdraw={data.financials.availableBalance >= 1000}
+                    onWithdrawClick={() => setIsPayoutModalOpen(true)}
+                    className="mx-auto shadow-xl"
+                  />
                 </div>
 
-                {/* CARD 2: GAINS TOTAUX ORGANISATEUR */}
-                <div className="bg-white dark:bg-[#111827] rounded-[26px] p-5 sm:p-6 border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden">
-                  <div className="flex items-center justify-between text-slate-500 text-xs font-bold mb-3">
-                    <span>Gains Cumulés</span>
-                    <div className="w-9 h-9 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 flex items-center justify-center">
-                      <DollarSign className="w-4 h-4" />
+                {/* COLONNE DROITE : 4 CARTES MÉTRIQUES ORGANISATEUR */}
+                <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* CARD 1: TOTAL VOTES */}
+                  <div className="bg-white dark:bg-[#111827] rounded-[24px] p-5 sm:p-6 border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between text-slate-500 text-xs font-bold mb-3">
+                        <span>Votes Enregistrés</span>
+                        <div className="w-9 h-9 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 flex items-center justify-center">
+                          <Vote className="w-4 h-4" />
+                        </div>
+                      </div>
+                      <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+                        {data.financials.totalVotes.toLocaleString('fr-FR')}
+                      </div>
                     </div>
+                    <p className="text-[11px] text-slate-400 font-medium mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/80">
+                      {data.competition.candidatesCount} candidat(s) en compétition
+                    </p>
                   </div>
-                  <div className="text-2xl sm:text-3xl font-black text-indigo-600 dark:text-indigo-400">
-                    {data.financials.organizerEarnings.toLocaleString('fr-FR')} <span className="text-base font-bold">F</span>
-                  </div>
-                  <p className="text-[11px] text-indigo-500 font-medium mt-1">
-                    Votre part totale acquise
-                  </p>
-                </div>
 
-                {/* CARD 3: SOLDE DISPONIBLE & RETRAIT */}
-                <div className="bg-gradient-to-br from-indigo-600 to-purple-700 text-white rounded-[26px] p-5 sm:p-6 shadow-lg shadow-indigo-500/20 relative overflow-hidden">
-                  <div className="flex items-center justify-between text-indigo-100 text-xs font-bold mb-3">
-                    <span>Solde Disponible</span>
-                    <div className="w-9 h-9 rounded-2xl bg-white/15 text-white flex items-center justify-center">
-                      <Wallet className="w-4 h-4" />
+                  {/* CARD 2: GAINS CUMULÉS ORGANISATEUR */}
+                  <div className="bg-white dark:bg-[#111827] rounded-[24px] p-5 sm:p-6 border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between text-slate-500 text-xs font-bold mb-3">
+                        <span>Gains Cumulés</span>
+                        <div className="w-9 h-9 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 flex items-center justify-center">
+                          <DollarSign className="w-4 h-4" />
+                        </div>
+                      </div>
+                      <div className="text-2xl sm:text-3xl font-black text-indigo-600 dark:text-indigo-400">
+                        {data.financials.organizerEarnings.toLocaleString('fr-FR')} <span className="text-base font-bold">F</span>
+                      </div>
                     </div>
+                    <p className="text-[11px] text-indigo-500 font-medium mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/80">
+                      Part totale acquise selon la grille
+                    </p>
                   </div>
-                  <div className="text-2xl sm:text-3xl font-black">
-                    {data.financials.availableBalance.toLocaleString('fr-FR')} <span className="text-base font-bold">FCFA</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setIsPayoutModalOpen(true)}
-                    disabled={data.financials.availableBalance < 1000}
-                    className="mt-3 w-full py-2.5 px-3 rounded-xl bg-white text-indigo-950 font-black text-xs hover:bg-indigo-50 transition-all shadow-sm flex items-center justify-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
-                  >
-                    <span>Demander un retrait</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
 
-                {/* CARD 4: PALIER ACTUEL */}
-                <div className="bg-white dark:bg-[#111827] rounded-[26px] p-5 sm:p-6 border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden">
-                  <div className="flex items-center justify-between text-slate-500 text-xs font-bold mb-3">
-                    <span>Votre Palier Actuel</span>
-                    <div className="w-9 h-9 rounded-2xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 flex items-center justify-center">
-                      <Sparkles className="w-4 h-4" />
+                  {/* CARD 3: PALIER ACTUEL */}
+                  <div className="bg-white dark:bg-[#111827] rounded-[24px] p-5 sm:p-6 border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between text-slate-500 text-xs font-bold mb-3">
+                        <span>Palier de Commission</span>
+                        <div className="w-9 h-9 rounded-2xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 flex items-center justify-center">
+                          <Sparkles className="w-4 h-4" />
+                        </div>
+                      </div>
+                      <div className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+                        {data.financials.currentRateFCFA} FCFA <span className="text-xs font-semibold text-slate-400">/ vote</span>
+                      </div>
+                    </div>
+                    <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/80">
+                      <span className="text-[11px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-950/50 px-2.5 py-1 rounded-lg border border-amber-200 dark:border-amber-900/40">
+                        {data.financials.currentTierName}
+                      </span>
                     </div>
                   </div>
-                  <div className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
-                    {data.financials.currentRateFCFA} FCFA <span className="text-xs font-semibold text-slate-400">/ vote</span>
-                  </div>
-                  <div className="mt-1">
-                    <span className="text-[11px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-950/50 px-2 py-0.5 rounded-md border border-amber-200 dark:border-amber-900/40">
-                      {data.financials.currentTierName}
-                    </span>
+
+                  {/* CARD 4: RETRAITS VERSÉS */}
+                  <div className="bg-white dark:bg-[#111827] rounded-[24px] p-5 sm:p-6 border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between text-slate-500 text-xs font-bold mb-3">
+                        <span>Total Déjà Versé</span>
+                        <div className="w-9 h-9 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center">
+                          <CheckCircle2 className="w-4 h-4" />
+                        </div>
+                      </div>
+                      <div className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400">
+                        {data.financials.totalPaid.toLocaleString('fr-FR')} <span className="text-base font-bold">F</span>
+                      </div>
+                    </div>
+                    <p className="text-[11px] text-slate-400 font-medium mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/80">
+                      {data.financials.pendingPayout > 0
+                        ? `${data.financials.pendingPayout.toLocaleString('fr-FR')} F en cours de transfert`
+                        : 'Aucun virement en attente'}
+                    </p>
                   </div>
                 </div>
 
               </div>
+
 
               {/* PROGRESSION PALIER SUPERIEUR (MOTIVATION SECTION) */}
               <div className="bg-white dark:bg-[#111827] rounded-[28px] p-6 sm:p-8 border border-slate-100 dark:border-slate-800 shadow-sm space-y-4">

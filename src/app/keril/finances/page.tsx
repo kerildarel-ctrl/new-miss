@@ -22,7 +22,9 @@ import {
   RefreshCw,
   Search,
   Zap,
+  X,
 } from 'lucide-react';
+import { VoteMoiCard } from '@/components/VoteMoiCard';
 
 export default function KerilFinancesPage() {
   const [competitions, setCompetitions] = useState<Competition[]>([]);
@@ -33,6 +35,13 @@ export default function KerilFinancesPage() {
   const [processingPayoutId, setProcessingPayoutId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [fapshiBalance, setFapshiBalance] = useState<number | null>(null);
+  const [previewCompCard, setPreviewCompCard] = useState<{
+    comp: Competition;
+    votes: number;
+    tierData: ReturnType<typeof calculateTierRevenue>;
+    paidAmount: number;
+    remainingToPay: number;
+  } | null>(null);
 
   const loadAllFinancials = async () => {
     setIsLoading(true);
@@ -232,74 +241,85 @@ export default function KerilFinancesPage() {
             </button>
           </div>
 
-          {/* 4 GLOBAL FINANCIAL METRICS CARDS */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* SECTION HÉROS : CARTE BANCAIRE TRÉSORERIE & SYNTHÈSE GLOBALE */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
             
-            {/* CARD 1: BENEFICE NET VOTEMOI */}
-            <div className="bg-gradient-to-br from-indigo-600 to-purple-700 text-white rounded-[24px] p-6 shadow-xl shadow-indigo-500/20 relative overflow-hidden">
-              <div className="flex items-center justify-between text-indigo-100 text-xs font-bold mb-3">
-                <span>BÉNÉFICE NET VOTEMOI</span>
-                <div className="w-8 h-8 rounded-xl bg-white/20 text-white flex items-center justify-center">
-                  <DollarSign className="w-4 h-4" />
-                </div>
-              </div>
-              <div className="text-2xl sm:text-3xl font-black">
-                {globalVoteMoiNet.toLocaleString('fr-FR')} <span className="text-sm font-bold">FCFA</span>
-              </div>
-              <p className="text-[11px] text-indigo-100 mt-1 font-medium">
-                Marge nette de la plateforme (13% à 21%)
-              </p>
+            {/* CARTE BANCAIRE TRÉSORERIE VOTEMOI (BLACK EDITION) */}
+            <div className="lg:col-span-5 flex flex-col justify-center items-center">
+              <VoteMoiCard
+                competitionTitle="TRÉSORERIE CENTRALE VOTEMOI"
+                organizerName="COMPTE SUPER-ADMINISTRATEUR"
+                balance={globalVoteMoiNet}
+                secondaryBalance={globalGross}
+                cardNumber="4580  ••••  ••••  2026"
+                expirationDate="12/28"
+                tierName={fapshiBalance !== null ? `Fapshi: ${fapshiBalance.toLocaleString('fr-FR')} F` : 'Compte Central'}
+                variant="black"
+                className="mx-auto shadow-2xl"
+              />
             </div>
 
-            {/* CARD 2: VOLUME BRUT COLLECTE (GMV) */}
-            <div className="bg-[var(--bg)] rounded-[24px] p-6 border border-[var(--line)] shadow-[var(--shadow)]">
-              <div className="flex items-center justify-between text-slate-500 text-xs font-bold mb-3">
-                <span>VOLUME BRUT COLLECTÉ (GMV)</span>
-                <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                  <TrendingUp className="w-4 h-4" />
+            {/* LES 3 AUTRES CARDS DE SYNTHÈSE GLOBALE */}
+            <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-3 gap-4">
+              
+              {/* CARD 1: VOLUME BRUT COLLECTÉ (GMV) */}
+              <div className="bg-[var(--bg)] rounded-[24px] p-6 border border-[var(--line)] shadow-[var(--shadow)] flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between text-slate-500 text-xs font-bold mb-3">
+                    <span>VOLUME BRUT GMV</span>
+                    <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                      <TrendingUp className="w-4 h-4" />
+                    </div>
+                  </div>
+                  <div className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+                    {globalGross.toLocaleString('fr-FR')} <span className="text-xs font-bold text-slate-400">FCFA</span>
+                  </div>
                 </div>
+                <p className="text-[11px] text-slate-400 mt-3 pt-3 border-t border-[var(--line)] font-medium">
+                  {globalTotalVotes.toLocaleString('fr-FR')} vote(s) validé(s)
+                </p>
               </div>
-              <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
-                {globalGross.toLocaleString('fr-FR')} <span className="text-sm font-bold">FCFA</span>
-              </div>
-              <p className="text-[11px] text-slate-400 mt-1 font-medium">
-                Sur {globalTotalVotes.toLocaleString('fr-FR')} vote(s) validé(s)
-              </p>
-            </div>
 
-            {/* CARD 3: REVERSEMENTS ORGANISATEURS */}
-            <div className="bg-[var(--bg)] rounded-[24px] p-6 border border-[var(--line)] shadow-[var(--shadow)]">
-              <div className="flex items-center justify-between text-slate-500 text-xs font-bold mb-3">
-                <span>TOTAL DÛ AUX ORGANISATEURS</span>
-                <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                  <Wallet className="w-4 h-4" />
+              {/* CARD 2: REVERSEMENTS ORGANISATEURS */}
+              <div className="bg-[var(--bg)] rounded-[24px] p-6 border border-[var(--line)] shadow-[var(--shadow)] flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between text-slate-500 text-xs font-bold mb-3">
+                    <span>DÛ ORGANISATEURS</span>
+                    <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                      <Wallet className="w-4 h-4" />
+                    </div>
+                  </div>
+                  <div className="text-xl sm:text-2xl font-black text-emerald-600">
+                    {globalOrganizerDue.toLocaleString('fr-FR')} <span className="text-xs font-bold text-emerald-500">FCFA</span>
+                  </div>
                 </div>
+                <p className="text-[11px] text-slate-400 mt-3 pt-3 border-t border-[var(--line)] font-medium">
+                  Reste : {(globalOrganizerDue - totalPaidOut).toLocaleString('fr-FR')} F
+                </p>
               </div>
-              <div className="text-2xl sm:text-3xl font-black text-emerald-600">
-                {globalOrganizerDue.toLocaleString('fr-FR')} <span className="text-sm font-bold">FCFA</span>
-              </div>
-              <p className="text-[11px] text-slate-400 mt-1 font-medium">
-                Déjà versé : {totalPaidOut.toLocaleString('fr-FR')} F · Reste : {(globalOrganizerDue - totalPaidOut).toLocaleString('fr-FR')} F
-              </p>
-            </div>
 
-            {/* CARD 4: FRAIS PASSERELLE API (4%) */}
-            <div className="bg-[var(--bg)] rounded-[24px] p-6 border border-[var(--line)] shadow-[var(--shadow)]">
-              <div className="flex items-center justify-between text-slate-500 text-xs font-bold mb-3">
-                <span>FRAIS API PASSERELLE (4%)</span>
-                <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center">
-                  <CreditCard className="w-4 h-4" />
+              {/* CARD 3: FRAIS PASSERELLE API (4%) */}
+              <div className="bg-[var(--bg)] rounded-[24px] p-6 border border-[var(--line)] shadow-[var(--shadow)] flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between text-slate-500 text-xs font-bold mb-3">
+                    <span>FRAIS API 4%</span>
+                    <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 flex items-center justify-center">
+                      <CreditCard className="w-4 h-4" />
+                    </div>
+                  </div>
+                  <div className="text-xl sm:text-2xl font-black text-slate-700 dark:text-slate-300">
+                    {globalApiFees.toLocaleString('fr-FR')} <span className="text-xs font-bold text-slate-400">FCFA</span>
+                  </div>
                 </div>
+                <p className="text-[11px] text-slate-400 mt-3 pt-3 border-t border-[var(--line)] font-medium">
+                  Frais de transaction
+                </p>
               </div>
-              <div className="text-2xl sm:text-3xl font-black text-slate-700 dark:text-slate-300">
-                {globalApiFees.toLocaleString('fr-FR')} <span className="text-sm font-bold">FCFA</span>
-              </div>
-              <p className="text-[11px] text-slate-400 mt-1 font-medium">
-                Prélèvement opérateur Fapshi / MoMo
-              </p>
+
             </div>
 
           </div>
+
 
           {/* TABLEAU PAR COMPETITION AVEC LIENS CONFIDENTIELS */}
           <div className="bg-[var(--bg)] rounded-[24px] border border-[var(--line)] shadow-[var(--shadow)] overflow-hidden">
@@ -391,6 +411,15 @@ export default function KerilFinancesPage() {
                                     <span>Copier lien secret</span>
                                   </>
                                 )}
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => setPreviewCompCard({ comp, votes, tierData, paidAmount, remainingToPay })}
+                                className="p-1.5 rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/60 dark:bg-indigo-950/40 hover:bg-indigo-100 text-indigo-600 transition-colors cursor-pointer"
+                                title="Aperçu de la Carte Bancaire VoteMoi de cette élection"
+                              >
+                                <CreditCard className="w-3.5 h-3.5" />
                               </button>
 
                               <Link
@@ -568,6 +597,68 @@ export default function KerilFinancesPage() {
               </table>
             </div>
           </div>
+
+          {/* MODAL APERÇU CARTE BANCAIRE DE LA COMPÉTITION */}
+          {previewCompCard && (
+            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="bg-white dark:bg-[#111827] rounded-[32px] p-6 sm:p-8 max-w-lg w-full shadow-2xl border border-slate-100 dark:border-slate-800 relative">
+                <button
+                  type="button"
+                  onClick={() => setPreviewCompCard(null)}
+                  className="absolute top-5 right-5 p-2 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+
+                <div className="text-center mb-6">
+                  <span className="text-[11px] font-extrabold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider bg-indigo-50 dark:bg-indigo-950/60 px-3 py-1 rounded-full border border-indigo-100 dark:border-indigo-900/40">
+                    CARTE BANCAIRE VIRTUELLE ORGANISATEUR
+                  </span>
+                  <h3 className="text-xl font-black text-slate-900 dark:text-white mt-2">
+                    {previewCompCard.comp.title}
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Aperçu exact de la carte bancaire affichée sur l&apos;espace confidentiel de cet organisateur.
+                  </p>
+                </div>
+
+                <div className="flex justify-center mb-6">
+                  <VoteMoiCard
+                    competitionTitle={previewCompCard.comp.title}
+                    organizerName="ORGANISATEUR OFFICIEL"
+                    balance={previewCompCard.remainingToPay}
+                    secondaryBalance={previewCompCard.tierData.organizerEarnings}
+                    tierName={previewCompCard.tierData.currentTierName}
+                    tierRate={previewCompCard.tierData.currentRateFCFA}
+                    variant={previewCompCard.tierData.currentTierNumber === 3 ? 'gold' : 'violet'}
+                    showWithdrawButton={false}
+                    className="shadow-2xl"
+                  />
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleCopyLink(previewCompCard.comp.organizerToken || previewCompCard.comp.slug, previewCompCard.comp.slug);
+                    }}
+                    className="flex-1 py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-indigo-500/20"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>Copier lien secret</span>
+                  </button>
+                  <Link
+                    href={`/organisateur/${previewCompCard.comp.organizerToken || previewCompCard.comp.slug}`}
+                    target="_blank"
+                    className="py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 text-slate-700 dark:text-slate-200 font-bold text-xs flex items-center gap-1.5"
+                  >
+                    <span>Ouvrir l&apos;espace</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
 
         </main>
       </div>
