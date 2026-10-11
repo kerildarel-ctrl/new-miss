@@ -1,9 +1,22 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { Candidate } from '@/data/mockData';
 import { getCompetitions } from '@/services/dbService';
 import { useLanguage } from '@/context/LanguageContext';
+import {
+  Sparkles,
+  X,
+  Mail,
+  Phone,
+  ShieldCheck,
+  ArrowRight,
+  CheckCircle2,
+  AlertCircle,
+  Plus,
+  Minus,
+} from 'lucide-react';
 
 interface VoteModalProps {
   isOpen: boolean;
@@ -21,6 +34,7 @@ export const VoteModal: React.FC<VoteModalProps> = ({
   const { t } = useLanguage();
   const [voteCount, setVoteCount] = useState<number>(1);
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
 
   // Payment Flow States
   const [step, setStep] = useState<'FORM' | 'SUCCESS' | 'FAILED'>('FORM');
@@ -48,7 +62,6 @@ export const VoteModal: React.FC<VoteModalProps> = ({
 
   const totalPrice = voteCount * unitVotePrice;
 
-  // Submit Vote with Email
   const handleVoteSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -71,6 +84,7 @@ export const VoteModal: React.FC<VoteModalProps> = ({
           voteCount: voteCount,
           amount: totalPrice,
           email: email,
+          phone: phone || undefined,
         }),
       });
 
@@ -96,139 +110,86 @@ export const VoteModal: React.FC<VoteModalProps> = ({
     setStep('FORM');
     setVoteCount(1);
     setEmail('');
+    setPhone('');
     setErrorMessage(null);
     onClose();
   };
 
   return (
     <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 100,
-        display: 'grid',
-        placeItems: 'center',
-        background: 'rgba(8, 12, 24, 0.85)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        padding: '16px',
-        overflowY: 'auto',
-      }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md overflow-y-auto font-poppins"
       onClick={handleCloseAll}
     >
       <div
-        style={{
-          margin: 'auto',
-          position: 'relative',
-          width: '100%',
-          maxWidth: '460px',
-          background: '#0f1526',
-          color: '#ffffff',
-          borderRadius: '24px',
-          padding: '28px 24px',
-          border: '1px solid rgba(255, 255, 255, 0.12)',
-          boxShadow: '0 25px 60px rgba(0, 0, 0, 0.7), 0 0 40px rgba(129, 140, 248, 0.15)',
-        }}
+        className="w-full max-w-[480px] bg-white dark:bg-[#111827] rounded-[32px] p-6 sm:p-8 shadow-2xl shadow-indigo-500/10 border border-slate-100 dark:border-slate-800 relative transition-all my-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* CLOSE BUTTON */}
         <button
           type="button"
           onClick={handleCloseAll}
-          aria-label="Fermer la fenêtre"
-          style={{
-            position: 'absolute',
-            top: '20px',
-            right: '20px',
-            width: '32px',
-            height: '32px',
-            background: 'none',
-            border: 'none',
-            color: '#94a3b8',
-            display: 'grid',
-            placeItems: 'center',
-            cursor: 'pointer',
-            fontSize: '1.2rem',
-            fontWeight: 500,
-            transition: 'color 0.2s',
-          }}
+          className="absolute top-5 right-5 w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          title="Fermer"
         >
-          ✕
+          <X className="w-5 h-5" />
         </button>
 
         {step === 'FORM' && (
           <form onSubmit={handleVoteSubmit}>
             {/* BADGE */}
-            <div style={{ color: '#818cf8', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-              {t('vote.badge', 'VOTE OFFICIEL SÉCURISÉ')}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center p-2.5 border border-indigo-100 dark:border-indigo-900/40">
+                <Sparkles className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+              </div>
+              <span className="text-[11px] sm:text-xs font-extrabold text-indigo-600 dark:text-indigo-400 tracking-wider uppercase">
+                {t('vote.badge', 'ESPACE VOTANT')}
+              </span>
             </div>
 
-            {/* TITLE & SUBTITLE */}
-            <h2 style={{ marginTop: '6px', fontSize: '1.5rem', fontWeight: 800, color: '#ffffff', lineHeight: 1.25 }}>
-              {t('vote.title', 'Voter pour')} {candidate.firstName} {candidate.lastName}
-            </h2>
-            <p style={{ marginTop: '4px', fontSize: '0.84rem', color: '#94a3b8', fontWeight: 400 }}>
-              {t('vote.candidate', 'Candidat')} #{candidate.candidateNumber.replace('#', '')} · {unitVotePrice} FCFA par vote
-            </p>
+            {/* CANDIDATE HEADER */}
+            <div className="flex items-center gap-3.5 pb-4 border-b border-slate-100 dark:border-slate-800">
+              <div className="relative w-14 h-14 rounded-2xl overflow-hidden border-2 border-indigo-500/20 shadow-sm flex-shrink-0 bg-slate-100">
+                <Image
+                  src={candidate.photoUrl || '/images/candidate_1.png'}
+                  alt={`${candidate.firstName} ${candidate.lastName}`}
+                  fill
+                  className="object-cover object-top"
+                />
+              </div>
+              <div>
+                <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
+                  Voter pour {candidate.firstName} {candidate.lastName}
+                </h2>
+                <p className="mt-0.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+                  Candidat #{candidate.candidateNumber.replace('#', '')} · {unitVotePrice} FCFA par vote
+                </p>
+              </div>
+            </div>
 
-            {/* TOTAL PRICE LINE CARD */}
-            <div
-              style={{
-                marginTop: '16px',
-                padding: '12px 16px',
-                borderRadius: '14px',
-                background: '#161e33',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <div style={{ fontSize: '0.92rem', color: '#e2e8f0', fontWeight: 600 }}>
+            {/* TOTAL PRICE SUMMARY LINE CARD */}
+            <div className="mt-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/80 flex items-center justify-between">
+              <span className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">
                 {voteCount} vote{voteCount > 1 ? 's' : ''} ({unitVotePrice} FCFA / vote)
-              </div>
-              <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.01em' }}>
+              </span>
+              <span className="text-lg sm:text-xl font-black text-indigo-600 dark:text-indigo-400">
                 {totalPrice.toLocaleString('fr-FR')} FCFA
-              </div>
+              </span>
             </div>
 
             {/* STEPPER LABEL */}
-            <label
-              htmlFor="inpQte"
-              style={{ display: 'block', marginTop: '18px', fontSize: '0.88rem', fontWeight: 700, color: '#ffffff' }}
-            >
+            <label className="block text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 mt-4 mb-2">
               {t('vote.countLabel', 'Nombre de votes')}
             </label>
 
             {/* STEPPER ROW */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                marginTop: '8px',
-              }}
-            >
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => setVoteCount((prev) => Math.max(1, prev - 1))}
                 aria-label="Diminuer"
-                style={{
-                  width: '48px',
-                  height: '46px',
-                  borderRadius: '12px',
-                  background: '#161e33',
-                  border: '1.5px solid rgba(255, 255, 255, 0.15)',
-                  color: '#ffffff',
-                  fontSize: '1.3rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'grid',
-                  placeItems: 'center',
-                  transition: 'all 0.15s',
-                }}
+                className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-extrabold text-xl flex items-center justify-center cursor-pointer border border-slate-200 dark:border-slate-700 transition-all active:scale-95"
               >
-                -
+                <Minus className="w-5 h-5" />
               </button>
               <input
                 type="number"
@@ -237,51 +198,20 @@ export const VoteModal: React.FC<VoteModalProps> = ({
                 max="5000"
                 value={voteCount}
                 onChange={(e) => setVoteCount(Math.max(1, parseInt(e.target.value) || 1))}
-                style={{
-                  flex: 1,
-                  height: '46px',
-                  background: '#161e33',
-                  border: '1.5px solid rgba(255, 255, 255, 0.15)',
-                  borderRadius: '12px',
-                  color: '#ffffff',
-                  fontSize: '1.25rem',
-                  fontWeight: 800,
-                  textAlign: 'center',
-                  outline: 'none',
-                }}
+                className="flex-1 h-12 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-black text-lg text-center outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all"
               />
               <button
                 type="button"
                 onClick={() => setVoteCount((prev) => prev + 1)}
                 aria-label="Augmenter"
-                style={{
-                  width: '48px',
-                  height: '46px',
-                  borderRadius: '12px',
-                  background: '#161e33',
-                  border: '1.5px solid rgba(255, 255, 255, 0.15)',
-                  color: '#ffffff',
-                  fontSize: '1.3rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'grid',
-                  placeItems: 'center',
-                  transition: 'all 0.15s',
-                }}
+                className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-extrabold text-xl flex items-center justify-center cursor-pointer border border-slate-200 dark:border-slate-700 transition-all active:scale-95"
               >
-                +
+                <Plus className="w-5 h-5" />
               </button>
             </div>
 
             {/* QUICK PACK PILLS */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: '8px',
-                marginTop: '12px',
-              }}
-            >
+            <div className="grid grid-cols-3 gap-2 mt-3">
               {[
                 { qty: 1, label: '1 vote', price: `${unitVotePrice} F` },
                 { qty: 5, label: '5 votes', price: `${unitVotePrice * 5} F` },
@@ -296,75 +226,67 @@ export const VoteModal: React.FC<VoteModalProps> = ({
                     key={qty}
                     type="button"
                     onClick={() => setVoteCount(qty)}
-                    style={{
-                      padding: '8px 4px',
-                      borderRadius: '10px',
-                      border: isActive
-                        ? '1.5px solid #818cf8'
-                        : '1px solid rgba(255, 255, 255, 0.1)',
-                      background: isActive
-                        ? 'rgba(129, 140, 248, 0.2)'
-                        : '#161e33',
-                      color: isActive ? '#ffffff' : '#cbd5e1',
-                      cursor: 'pointer',
-                      textAlign: 'center',
-                      fontSize: '0.82rem',
-                      fontWeight: isActive ? 700 : 500,
-                      transition: 'all 0.15s',
-                    }}
+                    className={`py-2 px-2.5 rounded-xl border text-xs transition-all text-center font-medium cursor-pointer ${
+                      isActive
+                        ? 'bg-indigo-50 dark:bg-indigo-950/80 border-2 border-indigo-600 dark:border-indigo-500 text-indigo-600 dark:text-indigo-400 font-bold shadow-sm'
+                        : 'border-slate-200 dark:border-slate-700/80 bg-slate-50/50 dark:bg-slate-800/40 text-slate-700 dark:text-slate-300 hover:border-indigo-400'
+                    }`}
                   >
-                    {label} ({price})
+                    <div>{label}</div>
+                    <div className="text-[10px] opacity-75 font-mono">{price}</div>
                   </button>
                 );
               })}
             </div>
 
             {/* EMAIL INPUT FIELD */}
-            <label
-              htmlFor="inpEmail"
-              style={{ display: 'block', marginTop: '20px', fontSize: '0.88rem', fontWeight: 700, color: '#ffffff' }}
-            >
-              ✉️ Votre adresse email
-            </label>
-            <input
-              type="email"
-              id="inpEmail"
-              required
-              placeholder="ex. votre.email@exemple.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              style={{
-                width: '100%',
-                marginTop: '8px',
-                height: '48px',
-                background: '#161e33',
-                border: '1.5px solid rgba(255, 255, 255, 0.15)',
-                borderRadius: '12px',
-                padding: '0 16px',
-                color: '#ffffff',
-                fontSize: '0.95rem',
-                fontWeight: 600,
-                outline: 'none',
-              }}
-            />
-            <span style={{ display: 'block', fontSize: '0.78rem', color: '#94a3b8', marginTop: '6px', fontWeight: 400 }}>
-              Un récapitulatif de votre vote sera enregistré avec cette adresse.
-            </span>
+            <div className="mt-4">
+              <label htmlFor="inpEmail" className="block text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 mb-1.5">
+                Votre adresse email
+              </label>
+              <div className="flex items-center rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40 focus-within:bg-white dark:focus-within:bg-slate-800 focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all overflow-hidden">
+                <div className="pl-4 pr-1 text-slate-400 dark:text-slate-500 flex items-center justify-center flex-shrink-0">
+                  <Mail className="w-4 h-4" />
+                </div>
+                <input
+                  type="email"
+                  id="inpEmail"
+                  required
+                  placeholder="ex. votre.email@exemple.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full py-3.5 px-3 bg-transparent text-slate-900 dark:text-white text-xs sm:text-sm font-semibold outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 placeholder:font-normal"
+                />
+              </div>
+              <span className="block text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-medium">
+                Un récapitulatif officiel de votre vote sera enregistré avec cette adresse.
+              </span>
+            </div>
+
+            {/* WHATSAPP / MOBILE MONEY PHONE INPUT (OPTIONAL) */}
+            <div className="mt-3">
+              <label htmlFor="inpPhone" className="block text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 mb-1.5">
+                Numéro WhatsApp / Mobile Money (optionnel)
+              </label>
+              <div className="flex items-center rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40 focus-within:bg-white dark:focus-within:bg-slate-800 focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all overflow-hidden">
+                <div className="pl-4 pr-1 text-slate-400 dark:text-slate-500 flex items-center justify-center flex-shrink-0">
+                  <Phone className="w-4 h-4 text-emerald-500" />
+                </div>
+                <input
+                  type="tel"
+                  id="inpPhone"
+                  placeholder="6XX XXX XXX"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full py-3.5 px-3 bg-transparent text-slate-900 dark:text-white text-xs sm:text-sm font-semibold outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 placeholder:font-normal"
+                />
+              </div>
+            </div>
 
             {errorMessage && (
-              <div
-                style={{
-                  background: 'rgba(239, 68, 68, 0.2)',
-                  border: '1px solid rgba(239, 68, 68, 0.4)',
-                  color: '#fca5a5',
-                  borderRadius: '12px',
-                  padding: '12px 14px',
-                  fontSize: '0.85rem',
-                  marginTop: '14px',
-                  fontWeight: 500,
-                }}
-              >
-                {errorMessage}
+              <div className="mt-3 p-3 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-xs font-semibold flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <span>{errorMessage}</span>
               </div>
             )}
 
@@ -372,150 +294,72 @@ export const VoteModal: React.FC<VoteModalProps> = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              style={{
-                width: '100%',
-                marginTop: '22px',
-                padding: '15px 20px',
-                borderRadius: '99px',
-                border: 'none',
-                background: '#818cf8',
-                color: '#0f172a',
-                fontSize: '1rem',
-                fontWeight: 800,
-                cursor: isSubmitting ? 'not-allowed' : 'pointer',
-                boxShadow: '0 8px 24px rgba(129, 140, 248, 0.35)',
-                transition: 'all 0.2s ease',
-                opacity: isSubmitting ? 0.7 : 1,
-              }}
+              className="w-full mt-5 py-4 px-6 rounded-2xl font-bold text-sm sm:text-base text-white bg-gradient-to-r from-indigo-600 via-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 transition-all active:scale-[0.99] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {isSubmitting
-                ? 'Validation du vote...'
-                : `Valider mon vote (${totalPrice.toLocaleString('fr-FR')} FCFA)`}
+              <span>
+                {isSubmitting
+                  ? 'Validation en cours...'
+                  : `Valider mon vote (${totalPrice.toLocaleString('fr-FR')} FCFA)`}
+              </span>
+              {!isSubmitting && <ArrowRight className="w-4 h-4" />}
             </button>
 
             {/* SECURITY FOOTER */}
-            <p
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
-                fontSize: '0.78rem',
-                color: '#94a3b8',
-                marginTop: '14px',
-                textAlign: 'center',
-                fontWeight: 400,
-              }}
-            >
-              <span>🔒</span>
-              <span>Vote officiel instantané & confirmation par email.</span>
-            </p>
+            <div className="mt-4 flex items-center justify-center gap-2 text-[11px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 text-center">
+              <ShieldCheck className="w-4 h-4 text-indigo-500 flex-shrink-0" />
+              <span>Vote officiel instantané • Confirmation sécurisée par email</span>
+            </div>
           </form>
         )}
 
         {step === 'SUCCESS' && (
-          <div style={{ textAlign: 'center', padding: '24px 0' }}>
-            <div
-              style={{
-                width: '64px',
-                height: '64px',
-                borderRadius: '50%',
-                background: 'rgba(16, 185, 129, 0.2)',
-                color: '#10b981',
-                display: 'grid',
-                placeItems: 'center',
-                margin: '0 auto 16px',
-                fontSize: '2.2rem',
-                border: '1.5px solid rgba(16, 185, 129, 0.4)',
-              }}
-            >
-              ✓
+          <div className="text-center py-6">
+            <div className="w-16 h-16 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-500 flex items-center justify-center mx-auto mb-3 border border-emerald-200 dark:border-emerald-800">
+              <CheckCircle2 className="w-8 h-8" />
             </div>
-            <p style={{ color: '#10b981', fontWeight: 800, fontSize: '0.95rem' }}>Vote confirmé !</p>
-            <h2 style={{ marginTop: '6px', fontSize: '1.4rem', fontWeight: 800, color: '#ffffff' }}>Merci pour votre soutien !</h2>
-            <p style={{ color: '#cbd5e1', marginTop: '10px', fontSize: '0.92rem', lineHeight: 1.5 }}>
-              Vos <b style={{ color: '#ffffff' }}>{voteCount} vote{voteCount > 1 ? 's' : ''}</b> pour{' '}
-              <b style={{ color: '#818cf8' }}>{candidate.firstName} {candidate.lastName}</b> ont bien été comptabilisés.
+            <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider">Vote confirmé !</p>
+            <h2 className="mt-1 text-2xl font-black text-slate-900 dark:text-white">Merci pour votre soutien !</h2>
+            <p className="mt-3 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+              Vos <b className="text-slate-900 dark:text-white">{voteCount} vote{voteCount > 1 ? 's' : ''}</b> pour{' '}
+              <b className="text-indigo-600 dark:text-indigo-400">{candidate.firstName} {candidate.lastName}</b> ont bien été enregistrés.
             </p>
-            <p style={{ color: '#94a3b8', marginTop: '8px', fontSize: '0.82rem' }}>
-              Confirmé avec l&apos;adresse : <b style={{ color: '#818cf8' }}>{email}</b>
+            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+              Confirmation envoyée à : <b className="text-slate-800 dark:text-slate-200">{email}</b>
             </p>
             <button
               type="button"
               onClick={handleCloseAll}
-              style={{
-                width: '100%',
-                marginTop: '24px',
-                padding: '15px',
-                borderRadius: '99px',
-                border: 'none',
-                background: '#10b981',
-                color: '#ffffff',
-                fontSize: '1rem',
-                fontWeight: 800,
-                cursor: 'pointer',
-              }}
+              className="w-full mt-6 py-3.5 px-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm transition-all shadow-md shadow-indigo-500/20"
             >
-              Fermer
+              Fermer la fenêtre
             </button>
           </div>
         )}
 
         {step === 'FAILED' && (
-          <div style={{ textAlign: 'center', padding: '24px 0' }}>
-            <div
-              style={{
-                width: '64px',
-                height: '64px',
-                borderRadius: '50%',
-                background: 'rgba(239, 68, 68, 0.2)',
-                color: '#ef4444',
-                display: 'grid',
-                placeItems: 'center',
-                margin: '0 auto 16px',
-                fontSize: '2.2rem',
-                border: '1.5px solid rgba(239, 68, 68, 0.4)',
-              }}
-            >
-              ✕
+          <div className="text-center py-6">
+            <div className="w-16 h-16 rounded-full bg-red-50 dark:bg-red-950/50 text-red-500 flex items-center justify-center mx-auto mb-3 border border-red-200 dark:border-red-800">
+              <AlertCircle className="w-8 h-8" />
             </div>
-            <p style={{ color: '#ef4444', fontWeight: 800, fontSize: '0.95rem' }}>Échec de la validation</p>
-            <h2 style={{ marginTop: '6px', fontSize: '1.4rem', fontWeight: 800, color: '#ffffff' }}>Une erreur est survenue</h2>
-            <p style={{ color: '#cbd5e1', marginTop: '10px', fontSize: '0.9rem' }}>
+            <p className="text-xs font-bold text-red-600 uppercase tracking-wider">Erreur lors de la validation</p>
+            <h2 className="mt-1 text-xl font-black text-slate-900 dark:text-white">Impossible de valider</h2>
+            <p className="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300">
               {errorMessage || 'Une erreur est survenue lors de l’enregistrement de votre vote.'}
             </p>
-            <div style={{ display: 'flex', gap: '12px', marginTop: '24px', justifyContent: 'center' }}>
-              <button
-                type="button"
-                onClick={() => setStep('FORM')}
-                style={{
-                  flex: 1,
-                  padding: '14px',
-                  borderRadius: '99px',
-                  border: 'none',
-                  background: '#818cf8',
-                  color: '#0f172a',
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                }}
-              >
-                Réessayer
-              </button>
+            <div className="mt-6 flex gap-3">
               <button
                 type="button"
                 onClick={handleCloseAll}
-                style={{
-                  flex: 1,
-                  padding: '14px',
-                  borderRadius: '99px',
-                  border: '1.5px solid rgba(255, 255, 255, 0.2)',
-                  background: 'transparent',
-                  color: '#ffffff',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                }}
+                className="flex-1 py-3 px-4 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs transition-all"
               >
                 Annuler
+              </button>
+              <button
+                type="button"
+                onClick={() => setStep('FORM')}
+                className="flex-1 py-3 px-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition-all shadow-md shadow-indigo-500/20"
+              >
+                Réessayer
               </button>
             </div>
           </div>
