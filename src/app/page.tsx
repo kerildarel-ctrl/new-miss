@@ -41,7 +41,7 @@ export default function HomePage() {
           <div className="wd">
             <div className="ht">
               <p className="eb">La plateforme officielle de vote en ligne</p>
-              <h1>Miss Mister</h1>
+              <h1>VoteMoi</h1>
               <p className="tg">Votre vote, votre choix, votre champion.</p>
               <p>
                 Soutenez vos candidats favoris en quelques secondes. Simple, transparent et sécurisé par Mobile Money.

@@ -10,11 +10,11 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: 'MISS MISTER — Votre vote, votre choix, votre champion',
+  title: 'VoteMoi — Votre vote, votre choix, votre champion',
   description: 'Plateforme web professionnelle de vote pour compétitions, concours de beauté, événements campus et élections. Tarif unique : 100 FCFA.',
-  keywords: ['Miss Mister', 'Vote', 'Compétition', 'COPA AHN', 'COPA MSP LSI', 'Élection', 'Concours', '100 FCFA'],
+  keywords: ['VoteMoi', 'Vote', 'Compétition', 'COPA AHN', 'COPA MSP LSI', 'Élection', 'Concours', '100 FCFA'],
   openGraph: {
-    title: 'MISS MISTER — Plateforme de Vote',
+    title: 'VoteMoi — Plateforme de Vote',
     description: 'Votre vote, votre choix, votre champion. 100 FCFA le vote.',
     type: 'website',
   },

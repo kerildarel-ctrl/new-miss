@@ -59,7 +59,7 @@ export const AdminSidebar: React.FC = () => {
       >
         <Link href="/" className="logo" style={{ textDecoration: 'none' }}>
           <i>★</i>
-          <span>MISS MISTER</span>
+          <span>VoteMoi</span>
           <span
             className="chip"
             style={{ fontSize: '0.65rem', padding: '2px 8px', marginLeft: '6px' }}
@@ -92,7 +92,7 @@ export const AdminSidebar: React.FC = () => {
         <div style={{ paddingBottom: '20px', borderBottom: '1px solid var(--line)' }}>
           <Link href="/" className="logo" style={{ fontSize: '1.15rem' }}>
             <i>★</i>
-            <span>MISS MISTER</span>
+            <span>VoteMoi</span>
           </Link>
           <div style={{ marginTop: '10px' }}>
             <span
@@ -283,7 +283,7 @@ export const AdminSidebar: React.FC = () => {
                 >
                   <Link href="/" className="logo">
                     <i>★</i>
-                    <span>MISS MISTER</span>
+                    <span>VoteMoi</span>
                   </Link>
                   <button
                     type="button"

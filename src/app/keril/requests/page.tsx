@@ -264,7 +264,7 @@ export default function AdminRequestsPage() {
 
                   {/* WhatsApp Action */}
                   <a
-                    href={`https://wa.me/237692886326?text=${encodeURIComponent(`Bonjour, concernant votre demande pour "${req.eventName}" sur Miss Mister :`)}`}
+                    href={`https://wa.me/237692886326?text=${encodeURIComponent(`Bonjour, concernant votre demande pour "${req.eventName}" sur VoteMoi :`)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="btn full"

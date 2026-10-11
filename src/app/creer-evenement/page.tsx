@@ -67,7 +67,7 @@ export default function CreerEvenementPage() {
     await saveEventRequest(formData);
 
     const waText =
-      `Bonjour MISS MISTER, nouvelle demande de création d'élection :\n\n` +
+      `Bonjour VoteMoi, nouvelle demande de création d'élection :\n\n` +
       `🏆 Élection : ${formData.eventName}\n` +
       `🏛️ Établissement/Campus : ${formData.campus || 'Non spécifié'}\n` +
       `👤 Responsable : ${formData.organizerName || 'Organisateur'}\n` +
@@ -357,7 +357,7 @@ export default function CreerEvenementPage() {
               <h2 className="mt-1 text-2xl font-black text-slate-900 dark:text-white">Merci pour votre initiative !</h2>
               <p className="mt-3 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                 Votre demande pour <b className="text-slate-900 dark:text-white">&quot;{formData.eventName}&quot;</b> a été prise en compte.
-                Un conseiller de l&apos;équipe MISS MISTER vous contactera sous 24h sur WhatsApp pour finaliser l&apos;ouverture officielle.
+                Un conseiller de l&apos;équipe VoteMoi vous contactera sous 24h sur WhatsApp pour finaliser l&apos;ouverture officielle.
               </p>
 
               <div className="mt-6 flex flex-col sm:flex-row gap-3">

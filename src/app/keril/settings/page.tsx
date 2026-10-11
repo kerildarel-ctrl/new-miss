@@ -6,7 +6,7 @@ import { AdminAuthGuard } from '@/components/AdminAuthGuard';
 import { Save, ShieldCheck, Database, RotateCcw, Trash2 } from 'lucide-react';
 
 export default function KerilSettingsPage() {
-  const [platformName, setPlatformName] = useState('MISS MISTER');
+  const [platformName, setPlatformName] = useState('VoteMoi');
   const [slogan, setSlogan] = useState('Votre vote, votre choix, votre champion.');
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [isResetting, setIsResetting] = useState(false);

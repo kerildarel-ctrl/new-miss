@@ -35,7 +35,7 @@ export const Header: React.FC = () => {
               <path d="M12 2l2.4 6.9 7.1.3-5.5 4.6 1.8 7.2L12 17l-5.8 4 1.8-7.2L2.5 9.2l7.1-.3L12 2z" />
             </svg>
           </i>
-          <span>MISS MISTER</span>
+          <span>VoteMoi</span>
         </Link>
 
         {/* DESKTOP NAVIGATION */}

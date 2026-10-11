@@ -69,7 +69,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
     await saveEventRequest(formData);
 
     const waText =
-      `Bonjour MISS MISTER, nouvelle demande de création d'élection :\n\n` +
+      `Bonjour VoteMoi, nouvelle demande de création d'élection :\n\n` +
       `🏆 Élection : ${formData.eventName}\n` +
       `🏛️ Établissement/Campus : ${formData.campus || 'Non spécifié'}\n` +
       `👤 Responsable : ${formData.organizerName || 'Organisateur'}\n` +

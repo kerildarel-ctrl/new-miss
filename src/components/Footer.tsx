@@ -15,7 +15,7 @@ export const Footer: React.FC = () => {
                   <path d="M12 2l2.4 6.9 7.1.3-5.5 4.6 1.8 7.2L12 17l-5.8 4 1.8-7.2L2.5 9.2l7.1-.3L12 2z" />
                 </svg>
               </i>
-              <span>MISS MISTER</span>
+              <span>VoteMoi</span>
             </Link>
             <p>La plateforme officielle de vote pour vos élections universitaires et concours d&apos;élégance.</p>
             <p className="sm mute" style={{ marginTop: '14px' }}>
@@ -55,14 +55,14 @@ export const Footer: React.FC = () => {
                 </a>
               </li>
               <li>
-                <a href="mailto:contact@missmister.cm">contact@missmister.cm</a>
+                <a href="mailto:contact@votemoi.cm">contact@votemoi.cm</a>
               </li>
             </ul>
           </div>
         </div>
 
         <div className="cp">
-          <div>© {new Date().getFullYear()} MISS MISTER. Tous droits réservés.</div>
+          <div>© {new Date().getFullYear()} VoteMoi. Tous droits réservés.</div>
           <div className="sg">
             Conçu et développé par{' '}
             <a
