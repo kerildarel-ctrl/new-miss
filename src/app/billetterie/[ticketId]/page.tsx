@@ -312,7 +312,7 @@ export default function SingleTicketPage() {
                   Billet Officiel Identifié
                 </p>
                 <h1 style={{ fontSize: '1.4rem', fontWeight: 800, marginTop: '6px' }}>
-                  {publicEventTitle || 'Événement Miss & Mister'}
+                  {publicEventTitle || 'Événement VoteMoi'}
                 </h1>
                 <p style={{ fontSize: '0.84rem', opacity: 0.85, marginTop: '4px', fontFamily: 'monospace' }}>
                   Code : {cleanCode}

@@ -33,7 +33,7 @@ export async function POST(request: Request) {
       id: ticketId,
       ticketCode,
       eventId: eventId || 'evt-1',
-      eventTitle: eventTitle || 'Événement Miss & Mister',
+      eventTitle: eventTitle || 'Événement VoteMoi',
       passName: passName || 'Pass Standard',
       unitPrice: unitPrice,
       quantity: quantity,
