@@ -60,7 +60,7 @@ export async function getCompetitions(): Promise<Competition[]> {
     const res = await fetch(`/api/competitions?_t=${Date.now()}`, { cache: 'no-store' });
     if (res.ok) {
       const data = await res.json();
-      if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+      if (data.success && Array.isArray(data.data)) {
         return data.data;
       }
     }
@@ -109,7 +109,7 @@ export async function createCompetition(compData: Partial<Competition>): Promise
 
 export async function deleteCompetition(id: string, slug?: string): Promise<boolean> {
   try {
-    await fetch(`/api/competitions?id=${id || ''}&slug=${slug || ''}`, {
+    await fetch(`/api/competitions?id=${encodeURIComponent(id || '')}&slug=${encodeURIComponent(slug || '')}`, {
       method: 'DELETE'
     });
   } catch {
@@ -130,7 +130,7 @@ export async function getCandidates(competitionSlug?: string): Promise<Candidate
     const res = await fetch(url, { cache: 'no-store' });
     if (res.ok) {
       const data = await res.json();
-      if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+      if (data.success && Array.isArray(data.data)) {
         return data.data;
       }
     }
@@ -139,6 +139,7 @@ export async function getCandidates(competitionSlug?: string): Promise<Candidate
   }
   return INITIAL_CANDIDATES;
 }
+
 
 export async function createCandidate(candidateData: Partial<Candidate>): Promise<Candidate> {
   const newCandidate: Candidate = {
