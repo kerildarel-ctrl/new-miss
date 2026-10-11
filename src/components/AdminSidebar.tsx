@@ -16,6 +16,8 @@ import {
   ShieldCheck,
   LogOut,
   Inbox,
+  Calendar,
+  Ticket,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -26,6 +28,8 @@ export const AdminSidebar: React.FC = () => {
 
   const links = [
     { href: '/keril', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/keril/events', label: 'Événements', icon: Calendar },
+    { href: '/keril/tickets', label: 'Billetterie', icon: Ticket },
     { href: '/keril/competitions', label: 'Compétitions', icon: Trophy },
     { href: '/keril/candidates', label: 'Candidats', icon: Users },
     { href: '/keril/requests', label: 'Demandes', icon: Inbox },

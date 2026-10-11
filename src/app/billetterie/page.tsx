@@ -1,14 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
-import { INITIAL_TICKET_EVENTS, TicketEvent, TicketPassCategory, IssuedTicket } from '@/data/mockTickets';
+import { TicketEvent, TicketPassCategory, IssuedTicket } from '@/data/mockTickets';
 
 export default function BilletteriePage() {
-  const [events] = useState<TicketEvent[]>(INITIAL_TICKET_EVENTS);
+  const [events, setEvents] = useState<TicketEvent[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<TicketEvent | null>(null);
   const [selectedPass, setSelectedPass] = useState<TicketPassCategory | null>(null);
   const [quantity, setQuantity] = useState(1);
@@ -19,6 +20,25 @@ export default function BilletteriePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [purchasedTicket, setPurchasedTicket] = useState<IssuedTicket | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Load Admin Created Events
+  useEffect(() => {
+    async function fetchEvents() {
+      try {
+        const res = await fetch('/api/tickets/events');
+        const data = await res.json();
+        if (data.success && Array.isArray(data.data)) {
+          setEvents(data.data);
+        }
+      } catch {
+        // Fallback empty
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchEvents();
+  }, []);
 
   const handleOpenBuyModal = (event: TicketEvent, pass: TicketPassCategory) => {
     setSelectedEvent(event);
@@ -131,158 +151,184 @@ export default function BilletteriePage() {
         {/* EVENTS SHOWCASE LIST */}
         <section style={{ maxWidth: '1100px', margin: '40px auto 0', padding: '0 20px' }}>
           <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--ink)' }}>
-            Événements à la une
+            Événements disponibles
           </h2>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', marginTop: '20px' }}>
-            {events.map((evt) => (
-              <div
-                key={evt.id}
-                style={{
-                  background: 'var(--bg)',
-                  borderRadius: '24px',
-                  border: '1.5px solid var(--line)',
-                  boxShadow: '0 12px 30px rgba(0, 0, 0, 0.08)',
-                  overflow: 'hidden',
-                }}
-              >
-                {/* EVENT HEADER WITH BANNER */}
-                <div style={{ position: 'relative', height: '220px', width: '100%' }}>
-                  <Image
-                    src={evt.bannerImage}
-                    alt={evt.title}
-                    fill
-                    style={{ objectFit: 'cover' }}
-                  />
-                  <div
-                    style={{
-                      position: 'absolute',
-                      inset: 0,
-                      background: 'linear-gradient(to top, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.2) 100%)',
-                      display: 'flex',
-                      alignItems: 'flex-end',
-                      padding: '24px',
-                    }}
-                  >
-                    <div>
-                      <span
-                        style={{
-                          background: '#818cf8',
-                          color: '#0f172a',
-                          padding: '3px 10px',
-                          borderRadius: '99px',
-                          fontSize: '0.78rem',
-                          fontWeight: 800,
-                        }}
-                      >
-                        📍 {evt.venue}, {evt.city}
-                      </span>
-                      <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#ffffff', marginTop: '6px' }}>
-                        {evt.title}
-                      </h3>
-                      <p style={{ color: '#cbd5e1', fontSize: '0.9rem', marginTop: '2px' }}>
-                        📅 {evt.date}
-                      </p>
+          {loading ? (
+            <div style={{ padding: '40px', textAlign: 'center', color: 'var(--mute)' }}>
+              Chargement des événements de billetterie...
+            </div>
+          ) : events.length === 0 ? (
+            <div
+              style={{
+                background: 'var(--bg)',
+                borderRadius: '24px',
+                padding: '48px 24px',
+                textAlign: 'center',
+                marginTop: '20px',
+                border: '1.5px solid var(--line)',
+                boxShadow: '0 10px 25px rgba(0, 0, 0, 0.05)',
+              }}
+            >
+              <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🎟️</div>
+              <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--ink)' }}>
+                Aucun événement disponible pour le moment
+              </h3>
+              <p style={{ color: 'var(--mute)', maxWidth: '480px', margin: '8px auto 20px', lineHeight: 1.5 }}>
+                La billetterie n&apos;a pas encore d&apos;événement publié par l&apos;organisateur. Revenez très bientôt pour réserver vos Pass !
+              </p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', marginTop: '20px' }}>
+              {events.map((evt) => (
+                <div
+                  key={evt.id}
+                  style={{
+                    background: 'var(--bg)',
+                    borderRadius: '24px',
+                    border: '1.5px solid var(--line)',
+                    boxShadow: '0 12px 30px rgba(0, 0, 0, 0.08)',
+                    overflow: 'hidden',
+                  }}
+                >
+                  {/* EVENT HEADER WITH BANNER */}
+                  <div style={{ position: 'relative', height: '220px', width: '100%' }}>
+                    <Image
+                      src={evt.bannerImage || '/images/hero_bg.png'}
+                      alt={evt.title}
+                      fill
+                      style={{ objectFit: 'cover' }}
+                    />
+                    <div
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: 'linear-gradient(to top, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.2) 100%)',
+                        display: 'flex',
+                        alignItems: 'flex-end',
+                        padding: '24px',
+                      }}
+                    >
+                      <div>
+                        <span
+                          style={{
+                            background: '#818cf8',
+                            color: '#0f172a',
+                            padding: '3px 10px',
+                            borderRadius: '99px',
+                            fontSize: '0.78rem',
+                            fontWeight: 800,
+                          }}
+                        >
+                          📍 {evt.venue}, {evt.city}
+                        </span>
+                        <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#ffffff', marginTop: '6px' }}>
+                          {evt.title}
+                        </h3>
+                        <p style={{ color: '#cbd5e1', fontSize: '0.9rem', marginTop: '2px' }}>
+                          📅 {evt.date}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* PASS CATEGORIES */}
+                  <div style={{ padding: '24px' }}>
+                    <h4 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--mute)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Choix du Pass & Tarifs :
+                    </h4>
+
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                        gap: '16px',
+                        marginTop: '14px',
+                      }}
+                    >
+                      {evt.passes.map((pass) => (
+                        <div
+                          key={pass.name}
+                          style={{
+                            padding: '18px',
+                            borderRadius: '16px',
+                            border: '1.5px solid var(--line)',
+                            background: 'var(--soft)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'space-between',
+                            position: 'relative',
+                          }}
+                        >
+                          {pass.badge && (
+                            <span
+                              style={{
+                                position: 'absolute',
+                                top: '12px',
+                                right: '12px',
+                                background: 'rgba(129, 140, 248, 0.15)',
+                                border: '1px solid #818cf8',
+                                color: 'var(--p)',
+                                fontSize: '0.72rem',
+                                fontWeight: 700,
+                                padding: '2px 8px',
+                                borderRadius: '99px',
+                              }}
+                            >
+                              {pass.badge}
+                            </span>
+                          )}
+
+                          <div>
+                            <h5 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--ink)' }}>
+                              {pass.name}
+                            </h5>
+                            <p style={{ fontSize: '0.85rem', color: 'var(--mute)', marginTop: '4px', lineHeight: 1.4 }}>
+                              {pass.description}
+                            </p>
+                          </div>
+
+                          <div
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              marginTop: '18px',
+                              paddingTop: '12px',
+                              borderTop: '1px solid var(--line)',
+                            }}
+                          >
+                            <div style={{ fontSize: '1.3rem', fontWeight: 900, color: 'var(--p)' }}>
+                              {pass.price.toLocaleString('fr-FR')}{' '}
+                              <span style={{ fontSize: '0.82rem', fontWeight: 700 }}>FCFA</span>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => handleOpenBuyModal(evt, pass)}
+                              style={{
+                                padding: '10px 18px',
+                                borderRadius: '99px',
+                                background: 'var(--p)',
+                                color: '#ffffff',
+                                border: 'none',
+                                fontWeight: 800,
+                                fontSize: '0.88rem',
+                                cursor: 'pointer',
+                                boxShadow: '0 4px 12px rgba(129, 140, 248, 0.3)',
+                              }}
+                            >
+                              Réserver 🎟️
+                            </button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
-
-                {/* PASS CATEGORIES */}
-                <div style={{ padding: '24px' }}>
-                  <h4 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--mute)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Choix du Pass & Tarifs :
-                  </h4>
-
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                      gap: '16px',
-                      marginTop: '14px',
-                    }}
-                  >
-                    {evt.passes.map((pass) => (
-                      <div
-                        key={pass.id}
-                        style={{
-                          padding: '18px',
-                          borderRadius: '16px',
-                          border: '1.5px solid var(--line)',
-                          background: 'var(--soft)',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          justifyContent: 'space-between',
-                          position: 'relative',
-                        }}
-                      >
-                        {pass.badge && (
-                          <span
-                            style={{
-                              position: 'absolute',
-                              top: '12px',
-                              right: '12px',
-                              background: 'rgba(129, 140, 248, 0.15)',
-                              border: '1px solid #818cf8',
-                              color: 'var(--p)',
-                              fontSize: '0.72rem',
-                              fontWeight: 700,
-                              padding: '2px 8px',
-                              borderRadius: '99px',
-                            }}
-                          >
-                            {pass.badge}
-                          </span>
-                        )}
-
-                        <div>
-                          <h5 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--ink)' }}>
-                            {pass.name}
-                          </h5>
-                          <p style={{ fontSize: '0.85rem', color: 'var(--mute)', marginTop: '4px', lineHeight: 1.4 }}>
-                            {pass.description}
-                          </p>
-                        </div>
-
-                        <div
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            marginTop: '18px',
-                            paddingTop: '12px',
-                            borderTop: '1px solid var(--line)',
-                          }}
-                        >
-                          <div style={{ fontSize: '1.3rem', fontWeight: 900, color: 'var(--p)' }}>
-                            {pass.price.toLocaleString('fr-FR')}{' '}
-                            <span style={{ fontSize: '0.82rem', fontWeight: 700 }}>FCFA</span>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => handleOpenBuyModal(evt, pass)}
-                            style={{
-                              padding: '10px 18px',
-                              borderRadius: '99px',
-                              background: 'var(--p)',
-                              color: '#ffffff',
-                              border: 'none',
-                              fontWeight: 800,
-                              fontSize: '0.88rem',
-                              cursor: 'pointer',
-                              boxShadow: '0 4px 12px rgba(129, 140, 248, 0.3)',
-                            }}
-                          >
-                            Réserver 🎟️
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </section>
       </main>
 
