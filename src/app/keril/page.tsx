@@ -1,12 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { AdminAuthGuard } from '@/components/AdminAuthGuard';
 import { StatisticsCard } from '@/components/StatisticsCard';
 import { getCompetitions, getCandidates } from '@/services/dbService';
 import { Competition, Candidate } from '@/data/mockData';
-import { Trophy, Users, Vote, UserCheck, TrendingUp, Sparkles, Activity } from 'lucide-react';
+import { Trophy, Users, Vote, UserCheck, TrendingUp, Sparkles, Activity, DollarSign, ArrowRight, ShieldCheck, Wallet } from 'lucide-react';
+import { calculateTierRevenue } from '@/utils/revenueTiers';
 
 export default function KerilDashboardPage() {
   const [competitions, setCompetitions] = useState<Competition[]>([]);
@@ -26,6 +28,7 @@ export default function KerilDashboardPage() {
   }, []);
 
   const totalVotes = candidates.reduce((sum, c) => sum + c.voteCount, 0);
+  const globalTier = calculateTierRevenue(totalVotes);
 
   return (
     <AdminAuthGuard>
@@ -141,6 +144,82 @@ export default function KerilDashboardPage() {
               change={totalVotes > 0 ? `+${Math.ceil(totalVotes * 0.7)} uniques` : '0 session'}
               isPositive={true}
             />
+          </div>
+
+          {/* BANNIÈRE MONÉTISATION & RENTABILITÉ CONFIDENTIELLE */}
+          <div
+            style={{
+              background: 'linear-gradient(135deg, rgba(91, 61, 245, 0.08) 0%, rgba(255, 90, 126, 0.06) 100%)',
+              border: '1.5px solid rgba(91, 61, 245, 0.25)',
+              borderRadius: '20px',
+              padding: '22px 26px',
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '20px',
+              boxShadow: 'var(--shadow)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div
+                style={{
+                  width: '52px',
+                  height: '52px',
+                  borderRadius: '16px',
+                  background: 'var(--p)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#fff',
+                  boxShadow: '0 8px 18px rgba(91, 61, 245, 0.35)',
+                  flexShrink: 0,
+                }}
+              >
+                <DollarSign className="w-7 h-7" />
+              </div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <h3 style={{ fontSize: '1.15rem', fontWeight: 800 }}>Monétisation & Revenus VoteMoi (Modèle Paliers)</h3>
+                  <span
+                    style={{
+                      background: 'rgba(91, 61, 245, 0.15)',
+                      color: 'var(--p)',
+                      padding: '2px 8px',
+                      borderRadius: '6px',
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                    }}
+                  >
+                    CONFIDENTIEL KERIL
+                  </span>
+                </div>
+                <p className="mute sm" style={{ marginTop: '4px' }}>
+                  Volume brut : <strong>{globalTier.totalGross.toLocaleString('fr-FR')} FCFA</strong> • Marge nette VoteMoi estimée :{' '}
+                  <strong style={{ color: 'var(--p)' }}>+{globalTier.voteMoiNetProfit.toLocaleString('fr-FR')} FCFA</strong> • Frais API (4%) :{' '}
+                  <strong>{globalTier.apiFees.toLocaleString('fr-FR')} FCFA</strong>
+                </p>
+              </div>
+            </div>
+
+            <Link
+              href="/keril/finances"
+              className="btn p"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '12px 22px',
+                borderRadius: '12px',
+                fontWeight: 700,
+                fontSize: '0.88rem',
+                textDecoration: 'none',
+              }}
+            >
+              <Wallet className="w-4 h-4" />
+              <span>Gérer les Finances & Retraits</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
 
           {/* CHARTS & RECENT ACTIVITY SECTION */}

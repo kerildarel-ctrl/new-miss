@@ -16,6 +16,7 @@ export interface Competition {
   gradientTo: string;
   accentColor: string;
   rules?: string;
+  organizerToken?: string; // Clé secrète indevinable pour l'accès confidentiel organisateur
 }
 
 export interface Candidate {

@@ -19,6 +19,7 @@ import {
   Inbox,
   Calendar,
   Ticket,
+  DollarSign,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -29,6 +30,7 @@ export const AdminSidebar: React.FC = () => {
 
   const links = [
     { href: '/keril', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/keril/finances', label: 'Finances & Paliers', icon: DollarSign },
     { href: '/keril/events', label: 'Événements', icon: Calendar },
     { href: '/keril/tickets', label: 'Billetterie', icon: Ticket },
     { href: '/keril/competitions', label: 'Compétitions', icon: Trophy },

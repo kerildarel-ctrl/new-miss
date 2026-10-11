@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS public.competitions (
   gradient_to TEXT DEFAULT '#2563EB',
   accent_color TEXT DEFAULT '#3B82F6',
   rules TEXT DEFAULT 'Votes ouverts à tous.',
+  organizer_token TEXT UNIQUE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

@@ -1,1 +1,22 @@
-[]
+[
+  {
+    "id": "comp_1791708558982",
+    "slug": "copa",
+    "title": "copa",
+    "description": "ras",
+    "bannerImage": "/images/copa_ahn_banner.png",
+    "logoImage": "/images/hero_bg.png",
+    "startDate": "2026-10-11T00:00:00+00:00",
+    "endDate": "2026-11-10T00:00:00+00:00",
+    "status": "EN COURS",
+    "totalCandidates": 0,
+    "totalVotes": 0,
+    "votePrice": 100,
+    "primaryColor": "#2563EB",
+    "gradientFrom": "#EC4899",
+    "gradientTo": "#2563EB",
+    "accentColor": "#3B82F6",
+    "rules": "Votes ouverts à tous.",
+    "organizerToken": "org_sec_e4b87c1a9f2d3e05a6b7c8d9e0f1a2b3"
+  }
+]
