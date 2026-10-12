@@ -3,8 +3,7 @@ import { queryDb } from '@/lib/pgDb';
 
 export const dynamic = 'force-dynamic';
 
-const EMAIL_HTML = `
-<!DOCTYPE html>
+const EMAIL_HTML = `<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -20,7 +19,7 @@ const EMAIL_HTML = `
 <!-- En-tête -->
 <tr><td align="center" style="background:#27149F;background-image:linear-gradient(135deg,#1B0E78 0%,#27149F 50%,#4B2CE0 100%);padding:44px 36px 40px 36px;">
 <img src="https://miss-template.netlify.app/images/logo.png" width="230" alt="VoteMoi" style="display:block;width:230px;max-width:100%;height:auto;border:0;margin:0 auto 28px auto;font-size:32px;font-weight:700;color:#FFFFFF;">
-<p style="margin:0 0 10px 0;font-size:48px;line-height:1;">🎟️</p>
+<p style="margin:0 0 10px 0;font-size:48px;line-height:1;">&#127903;&#65039;</p>
 <h1 style="margin:0 0 12px 0;font-size:30px;line-height:1.2;font-weight:700;color:#FFFFFF;">La billetterie arrive bientôt</h1>
 <p style="margin:0 0 22px 0;font-size:16px;line-height:1.5;color:#D9D4FA;">Vos billets d'événements, au même endroit que vos votes.</p>
 <table role="presentation" align="center" cellpadding="0" cellspacing="0" border="0"><tr><td style="background:#FFFFFF;border-radius:24px;padding:9px 22px;font-size:14px;font-weight:700;color:#27149F;">Bientôt disponible</td></tr></table>
@@ -44,7 +43,7 @@ const EMAIL_HTML = `
 </td>
 <td width="1" style="border-left:2px dashed #8F84F0;font-size:0;line-height:0;">&nbsp;</td>
 <td width="130" align="center" valign="middle" style="padding:26px 12px;">
-<p style="margin:0 0 6px 0;font-size:38px;line-height:1;">🎟️</p>
+<p style="margin:0 0 6px 0;font-size:38px;line-height:1;">&#127903;&#65039;</p>
 <p style="margin:0;font-size:13px;font-weight:700;color:#FFFFFF;">Bientôt</p>
 </td>
 </tr>
@@ -57,19 +56,19 @@ const EMAIL_HTML = `
 <tr>
 <td width="33%" align="center" valign="top" style="padding:0 5px;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#EEF0FC;border-radius:12px;"><tr><td align="center" style="padding:16px 6px;">
-<p style="margin:0 0 6px 0;font-size:26px;line-height:1;">📱</p>
+<p style="margin:0 0 6px 0;font-size:26px;line-height:1;">&#128241;</p>
 <p style="margin:0;font-size:13px;line-height:1.4;font-weight:700;color:#27149F;">Achat en ligne</p>
 </td></tr></table>
 </td>
 <td width="33%" align="center" valign="top" style="padding:0 5px;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#EEF0FC;border-radius:12px;"><tr><td align="center" style="padding:16px 6px;">
-<p style="margin:0 0 6px 0;font-size:26px;line-height:1;">⚡</p>
+<p style="margin:0 0 6px 0;font-size:26px;line-height:1;">&#9889;</p>
 <p style="margin:0;font-size:13px;line-height:1.4;font-weight:700;color:#27149F;">En quelques secondes</p>
 </td></tr></table>
 </td>
 <td width="33%" align="center" valign="top" style="padding:0 5px;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#EEF0FC;border-radius:12px;"><tr><td align="center" style="padding:16px 6px;">
-<p style="margin:0 0 6px 0;font-size:26px;line-height:1;">🎉</p>
+<p style="margin:0 0 6px 0;font-size:26px;line-height:1;">&#127881;</p>
 <p style="margin:0;font-size:13px;line-height:1.4;font-weight:700;color:#27149F;">Avec vos votes</p>
 </td></tr></table>
 </td>
@@ -115,7 +114,7 @@ const EMAIL_HTML = `
 <tr><td align="center" style="background:#1B0E78;padding:22px 36px;font-size:13px;line-height:1.7;color:#BDB6EE;">
 <p style="margin:0;">VoteMoi, conçu et développé par MK PROG.<br>
 Instagram : @mk__prog &nbsp;|&nbsp; MKProg.support@gmail.com<br>
-© 2026 VoteMoi. Tous droits réservés.</p>
+&copy; 2026 VoteMoi. Tous droits réservés.</p>
 </td></tr>
 
 </table>
@@ -123,8 +122,7 @@ Instagram : @mk__prog &nbsp;|&nbsp; MKProg.support@gmail.com<br>
 </td></tr>
 </table>
 </body>
-</html>
-`;
+</html>`;
 
 export async function POST(request: Request) {
   try {
@@ -136,7 +134,7 @@ export async function POST(request: Request) {
 
     const brevoApiKey = process.env.BREVO_API_KEY;
     if (!brevoApiKey) {
-      return NextResponse.json({ success: false, error: 'Clé API Brevo manquante' }, { status: 500 });
+      return NextResponse.json({ success: false, error: 'Clé API Brevo manquante (configurez BREVO_API_KEY sur Netlify)' }, { status: 500 });
     }
 
     // 1. Sauvegarder l'email en base (table ticket_waitlist)
@@ -154,82 +152,10 @@ export async function POST(request: Request) {
         [email]
       );
     } catch {
-      // Continue even if DB fails — email sending is the priority
+      // Continue même si la DB échoue — l'envoi email est prioritaire
     }
 
-    // 2. Envoyer un email de confirmation via Brevo API
-    const emailHtml = `
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Inscription confirmée – VoteMoi Billetterie</title>
-</head>
-<body style="margin:0;padding:0;background:#f4f4f8;font-family:'Segoe UI',Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f8;padding:40px 16px;">
-    <tr>
-      <td align="center">
-        <table width="100%" style="max-width:560px;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
-
-          <!-- HEADER -->
-          <tr>
-            <td style="background:linear-gradient(135deg,#5b3df5 0%,#8b5cf6 100%);padding:36px 40px;text-align:center;">
-              <div style="font-size:26px;font-weight:900;color:#fff;letter-spacing:-0.5px;">
-                Vote<span style="color:#f9c74f;">Moi</span> ✨
-              </div>
-              <div style="color:rgba(255,255,255,0.75);font-size:12px;font-weight:600;margin-top:4px;letter-spacing:2px;text-transform:uppercase;">
-                Billetterie Officielle
-              </div>
-            </td>
-          </tr>
-
-          <!-- BODY -->
-          <tr>
-            <td style="padding:36px 40px;text-align:center;">
-              <div style="width:64px;height:64px;background:rgba(91,61,245,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
-                <span style="font-size:28px;">🎟️</span>
-              </div>
-              <h1 style="font-size:22px;font-weight:800;color:#1e1e2e;margin:0 0 12px;">
-                Vous êtes sur la liste prioritaire !
-              </h1>
-              <p style="font-size:15px;color:#6b7280;line-height:1.6;margin:0 0 24px;">
-                Bonjour, merci de votre inscription.<br/>
-                Dès que la billetterie sera ouverte, vous recevrez une notification <strong style="color:#5b3df5;">en avant-première</strong> à cette adresse.
-              </p>
-
-              <!-- BADGE -->
-              <div style="display:inline-block;background:rgba(91,61,245,0.08);border:1.5px solid rgba(91,61,245,0.25);border-radius:99px;padding:10px 24px;font-weight:700;color:#5b3df5;font-size:14px;margin-bottom:28px;">
-                🔔 &nbsp; Accès Prioritaire Réservé
-              </div>
-
-              <!-- DIVIDER -->
-              <hr style="border:none;border-top:1px solid #f0f0f5;margin:0 0 24px;"/>
-
-              <p style="font-size:13px;color:#9ca3af;line-height:1.6;margin:0;">
-                Vous recevez cet email car vous avez soumis votre adresse email sur la page billetterie de <strong>VoteMoi</strong>.<br/>
-                Si ce n'est pas vous, ignorez simplement ce message.
-              </p>
-            </td>
-          </tr>
-
-          <!-- FOOTER -->
-          <tr>
-            <td style="background:#f9fafb;padding:20px 40px;text-align:center;border-top:1px solid #f0f0f5;">
-              <p style="font-size:12px;color:#9ca3af;margin:0;">
-                © ${new Date().getFullYear()} VoteMoi · Plateforme de vote et billetterie officielle
-              </p>
-            </td>
-          </tr>
-
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-    `.trim();
-
+    // 2. Envoyer via Brevo API v3
     const brevoRes = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
       headers: {
@@ -243,16 +169,18 @@ export async function POST(request: Request) {
           email: 'kerildarel@gmail.com',
         },
         to: [{ email }],
-        subject: '🎟️ La billetterie VoteMoi arrive bientôt – Vous serez parmi les premiers !',
+        subject: 'La billetterie VoteMoi arrive bientot - Vous serez parmi les premiers !',
         htmlContent: EMAIL_HTML,
       }),
     });
 
     if (!brevoRes.ok) {
       const errData = await brevoRes.json().catch(() => ({}));
-      console.error('Erreur Brevo:', errData);
+      console.error('Erreur Brevo status', brevoRes.status, errData);
+      // Retourne le vrai message d'erreur Brevo pour faciliter le diagnostic
+      const brevoMsg = (errData as any)?.message || JSON.stringify(errData);
       return NextResponse.json(
-        { success: false, error: 'Erreur envoi email Brevo', details: errData },
+        { success: false, error: `Brevo erreur ${brevoRes.status}: ${brevoMsg}` },
         { status: 500 }
       );
     }
