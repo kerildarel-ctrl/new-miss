@@ -3,10 +3,129 @@ import { queryDb } from '@/lib/pgDb';
 
 export const dynamic = 'force-dynamic';
 
-// -------------------------------------------------------------------
-// POST /api/notify/billetterie
-// Saves the email to DB (optional) and sends confirmation via Brevo
-// -------------------------------------------------------------------
+const EMAIL_HTML = `
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>La billetterie VoteMoi arrive bientôt</title>
+</head>
+<body style="margin:0;padding:0;background:#ECEBF7;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#ECEBF7;">
+<tr><td align="center" style="padding:28px 12px;">
+
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background:#FFFFFF;border-radius:18px;overflow:hidden;font-family:Arial,Helvetica,sans-serif;color:#1C1647;box-shadow:0 8px 30px rgba(39,20,159,0.15);">
+
+<!-- En-tête -->
+<tr><td align="center" style="background:#27149F;background-image:linear-gradient(135deg,#1B0E78 0%,#27149F 50%,#4B2CE0 100%);padding:44px 36px 40px 36px;">
+<img src="https://miss-template.netlify.app/images/logo.png" width="230" alt="VoteMoi" style="display:block;width:230px;max-width:100%;height:auto;border:0;margin:0 auto 28px auto;font-size:32px;font-weight:700;color:#FFFFFF;">
+<p style="margin:0 0 10px 0;font-size:48px;line-height:1;">🎟️</p>
+<h1 style="margin:0 0 12px 0;font-size:30px;line-height:1.2;font-weight:700;color:#FFFFFF;">La billetterie arrive bientôt</h1>
+<p style="margin:0 0 22px 0;font-size:16px;line-height:1.5;color:#D9D4FA;">Vos billets d'événements, au même endroit que vos votes.</p>
+<table role="presentation" align="center" cellpadding="0" cellspacing="0" border="0"><tr><td style="background:#FFFFFF;border-radius:24px;padding:9px 22px;font-size:14px;font-weight:700;color:#27149F;">Bientôt disponible</td></tr></table>
+</td></tr>
+
+<!-- Message -->
+<tr><td style="padding:38px 40px 6px 40px;font-size:16px;line-height:1.75;">
+<p style="margin:0 0 14px 0;font-size:18px;"><strong>Bonjour,</strong></p>
+<p style="margin:0 0 14px 0;">Merci de votre intérêt pour <strong style="color:#27149F;">VoteMoi</strong>. Nous mettons la touche finale à la <strong>billetterie</strong> de la plateforme.</p>
+<p style="margin:0;">Bientôt, vous pourrez acheter vos billets en ligne, en quelques secondes, pour les événements que vous aimez.</p>
+</td></tr>
+
+<!-- Billet -->
+<tr><td style="padding:28px 40px 6px 40px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#27149F;background-image:linear-gradient(135deg,#1B0E78 0%,#27149F 55%,#4B2CE0 100%);border-radius:16px;">
+<tr>
+<td valign="middle" style="padding:26px 24px;">
+<p style="margin:0 0 6px 0;font-size:12px;letter-spacing:3px;font-weight:700;color:#BDB6EE;">BILLET D'ENTRÉE</p>
+<p style="margin:0 0 6px 0;font-size:28px;line-height:1.1;font-weight:700;color:#FFFFFF;">VoteMoi</p>
+<p style="margin:0;font-size:14px;line-height:1.5;color:#D9D4FA;">Votre place pour vivre l'événement.</p>
+</td>
+<td width="1" style="border-left:2px dashed #8F84F0;font-size:0;line-height:0;">&nbsp;</td>
+<td width="130" align="center" valign="middle" style="padding:26px 12px;">
+<p style="margin:0 0 6px 0;font-size:38px;line-height:1;">🎟️</p>
+<p style="margin:0;font-size:13px;font-weight:700;color:#FFFFFF;">Bientôt</p>
+</td>
+</tr>
+</table>
+</td></tr>
+
+<!-- Avantages -->
+<tr><td style="padding:18px 40px 6px 40px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr>
+<td width="33%" align="center" valign="top" style="padding:0 5px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#EEF0FC;border-radius:12px;"><tr><td align="center" style="padding:16px 6px;">
+<p style="margin:0 0 6px 0;font-size:26px;line-height:1;">📱</p>
+<p style="margin:0;font-size:13px;line-height:1.4;font-weight:700;color:#27149F;">Achat en ligne</p>
+</td></tr></table>
+</td>
+<td width="33%" align="center" valign="top" style="padding:0 5px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#EEF0FC;border-radius:12px;"><tr><td align="center" style="padding:16px 6px;">
+<p style="margin:0 0 6px 0;font-size:26px;line-height:1;">⚡</p>
+<p style="margin:0;font-size:13px;line-height:1.4;font-weight:700;color:#27149F;">En quelques secondes</p>
+</td></tr></table>
+</td>
+<td width="33%" align="center" valign="top" style="padding:0 5px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#EEF0FC;border-radius:12px;"><tr><td align="center" style="padding:16px 6px;">
+<p style="margin:0 0 6px 0;font-size:26px;line-height:1;">🎉</p>
+<p style="margin:0;font-size:13px;line-height:1.4;font-weight:700;color:#27149F;">Avec vos votes</p>
+</td></tr></table>
+</td>
+</tr>
+</table>
+</td></tr>
+
+<!-- Étapes -->
+<tr><td style="padding:30px 40px 6px 40px;">
+<h2 style="margin:0 0 16px 0;font-size:20px;color:#27149F;">Comment ça se passe ?</h2>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-size:15px;line-height:1.55;">
+<tr>
+<td width="46" valign="top" style="padding-bottom:16px;"><div style="width:34px;height:34px;border-radius:17px;background:#27149F;color:#FFFFFF;text-align:center;line-height:34px;font-size:15px;font-weight:700;">1</div></td>
+<td valign="top" style="padding:6px 0 16px 0;"><strong>Nous finalisons</strong> la billetterie.</td>
+</tr>
+<tr>
+<td width="46" valign="top" style="padding-bottom:16px;"><div style="width:34px;height:34px;border-radius:17px;background:#27149F;color:#FFFFFF;text-align:center;line-height:34px;font-size:15px;font-weight:700;">2</div></td>
+<td valign="top" style="padding:6px 0 16px 0;"><strong>Vous recevez une notification</strong> dès qu'elle est disponible, d'ici peu.</td>
+</tr>
+<tr>
+<td width="46" valign="top"><div style="width:34px;height:34px;border-radius:17px;background:#27149F;color:#FFFFFF;text-align:center;line-height:34px;font-size:15px;font-weight:700;">3</div></td>
+<td valign="top" style="padding:6px 0 0 0;"><strong>Vous achetez vos billets</strong> en ligne, sans rien de plus à faire.</td>
+</tr>
+</table>
+</td></tr>
+
+<!-- Contact -->
+<tr><td style="padding:30px 40px 8px 40px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#EEF0FC;border-radius:14px;">
+<tr><td align="center" style="padding:20px;">
+<p style="margin:0;font-size:15px;line-height:1.6;color:#4B4780;">Une question ? Écrivez-nous à<br><strong style="color:#27149F;font-size:17px;">MKProg.support@gmail.com</strong></p>
+</td></tr>
+</table>
+</td></tr>
+
+<!-- Signature -->
+<tr><td style="padding:24px 40px 34px 40px;font-size:16px;line-height:1.6;">
+<p style="margin:0 0 4px 0;">À très bientôt,</p>
+<p style="margin:0;"><strong style="color:#27149F;">L'équipe MK PROG</strong></p>
+</td></tr>
+
+<!-- Pied de page -->
+<tr><td align="center" style="background:#1B0E78;padding:22px 36px;font-size:13px;line-height:1.7;color:#BDB6EE;">
+<p style="margin:0;">VoteMoi, conçu et développé par MK PROG.<br>
+Instagram : @mk__prog &nbsp;|&nbsp; MKProg.support@gmail.com<br>
+© 2026 VoteMoi. Tous droits réservés.</p>
+</td></tr>
+
+</table>
+
+</td></tr>
+</table>
+</body>
+</html>
+`;
+
 export async function POST(request: Request) {
   try {
     const { email } = await request.json();
@@ -121,11 +240,11 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         sender: {
           name: 'VoteMoi Billetterie',
-          email: process.env.BREVO_SENDER_EMAIL || 'noreply@votemoi.com',
+          email: 'kerildarel@gmail.com',
         },
         to: [{ email }],
-        subject: '🎟️ Votre place prioritaire est réservée – Billetterie VoteMoi',
-        htmlContent: emailHtml,
+        subject: '🎟️ La billetterie VoteMoi arrive bientôt – Vous serez parmi les premiers !',
+        htmlContent: EMAIL_HTML,
       }),
     });
 
