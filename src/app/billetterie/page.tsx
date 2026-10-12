@@ -56,19 +56,18 @@ export default function BilletteriePage() {
           <div className="wd">
             <div className="ht" style={{ maxWidth: '780px' }}>
               <p className="eb" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                <Clock className="w-4 h-4" />
-                Coming Soon • Bientôt Disponible
+                <Ticket className="w-4 h-4" />
+                Billetterie Officielle VoteMoi
               </p>
-              <h1>Billetterie Officielle</h1>
-              <p className="tg">Vos billets et Pass d&apos;événements en ligne.</p>
+              <h1>Vos billets d&apos;événements en ligne</h1>
+              <p className="tg">Pass Standard, VIP et VVIP — achat rapide et sécurisé.</p>
               <p>
-                La billetterie pour les soirées de gala, élections et grands événements arrive très prochainement.
-                Restez connectés pour réserver vos pass exclusifs.
+                Achetez vos billets en quelques secondes et recevez votre e-billet avec QR code directement dans votre boîte mail.
               </p>
 
               <div className="row" style={{ marginTop: '20px' }}>
-                <Link href="/" className="btn wh">
-                  Explorer les compétitions
+                <Link href="/billetterie/evenements" className="btn wh">
+                  Voir tous les événements
                 </Link>
                 <Link href="/classement" className="btn ow">
                   Voir les classements

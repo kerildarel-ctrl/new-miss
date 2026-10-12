@@ -14,6 +14,7 @@ export default function KerilTicketsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'VALID' | 'USED'>('ALL');
   const [isResetting, setIsResetting] = useState<string | null>(null);
+  const [confirmResetCode, setConfirmResetCode] = useState<string | null>(null);
 
   const fetchTickets = async () => {
     setLoading(true);
@@ -69,10 +70,8 @@ export default function KerilTicketsPage() {
 
   // Reset ticket handler (Admin only)
   const handleResetTicket = async (ticketCode: string) => {
-    if (!confirm(`Voulez-vous réinitialiser le billet ${ticketCode} à l'état VALIDE ?`)) {
-      return;
-    }
     setIsResetting(ticketCode);
+    setConfirmResetCode(null);
     try {
       const res = await fetch('/api/tickets/reset', {
         method: 'POST',
@@ -411,27 +410,34 @@ export default function KerilTicketsPage() {
                         </td>
                         <td style={{ padding: '16px 20px', textAlign: 'right' }}>
                           {t.status === 'USED' ? (
-                            <button
-                              type="button"
-                              onClick={() => handleResetTicket(t.ticketCode)}
-                              disabled={isResetting === t.ticketCode}
-                              style={{
-                                padding: '6px 12px',
-                                borderRadius: '8px',
-                                border: '1px solid var(--line)',
-                                background: 'var(--soft)',
-                                color: 'var(--ink)',
-                                fontSize: '0.76rem',
-                                fontWeight: 700,
-                                cursor: 'pointer',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                              }}
-                            >
-                              <RotateCcw className="w-3 h-3" />
-                              <span>{isResetting === t.ticketCode ? '...' : 'Réinitialiser'}</span>
-                            </button>
+                            confirmResetCode === t.ticketCode ? (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'flex-end' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => handleResetTicket(t.ticketCode)}
+                                  disabled={isResetting === t.ticketCode}
+                                  style={{ padding: '5px 10px', borderRadius: '99px', background: 'rgba(245,158,11,0.9)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 700 }}
+                                >
+                                  {isResetting === t.ticketCode ? '...' : 'Confirmer'}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setConfirmResetCode(null)}
+                                  style={{ padding: '5px 8px', borderRadius: '99px', background: 'var(--soft)', color: 'var(--mute)', border: '1px solid var(--line)', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 700 }}
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => setConfirmResetCode(t.ticketCode)}
+                                style={{ padding: '6px 12px', borderRadius: '8px', border: '1px solid var(--line)', background: 'var(--soft)', color: 'var(--ink)', fontSize: '0.76rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                              >
+                                <RotateCcw className="w-3 h-3" />
+                                <span>Réinitialiser</span>
+                              </button>
+                            )
                           ) : (
                             <Link
                               href={`/billetterie/${t.ticketCode}`}

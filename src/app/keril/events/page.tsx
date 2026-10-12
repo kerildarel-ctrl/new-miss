@@ -12,6 +12,8 @@ export default function KerilEventsPage() {
   const [events, setEvents] = useState<TicketEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [deletingEventId, setDeletingEventId] = useState<string | null>(null);
+  const [copiedToken, setCopiedToken] = useState<string | null>(null);
 
   // Form State
   const [title, setTitle] = useState('');
@@ -21,14 +23,21 @@ export default function KerilEventsPage() {
   const [city, setCity] = useState('Yaoundé');
   const [bannerImage, setBannerImage] = useState('/images/hero_bg.png');
 
+  // Organizer info
+  const [organizerName, setOrganizerName] = useState('');
+  const [organizerEmail, setOrganizerEmail] = useState('');
+  const [organizerPhone, setOrganizerPhone] = useState('');
+
   // Selected Pass Categories with custom prices
   const [selectedPasses, setSelectedPasses] = useState<TicketPassCategory[]>([...TICKET_PASS_TEMPLATES]);
   const [customPassName, setCustomPassName] = useState('');
   const [customPassPrice, setCustomPassPrice] = useState('3000');
   const [customPassDesc, setCustomPassDesc] = useState('');
+  const [customPassQty, setCustomPassQty] = useState('100');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [createdOrgLink, setCreatedOrgLink] = useState<string | null>(null);
 
   // Load events
   const loadEvents = async () => {
@@ -55,7 +64,7 @@ export default function KerilEventsPage() {
     if (exists) {
       setSelectedPasses(selectedPasses.filter((p) => p.name !== template.name));
     } else {
-      setSelectedPasses([...selectedPasses, template]);
+      setSelectedPasses([...selectedPasses, { ...template }]);
     }
   };
 
@@ -63,6 +72,27 @@ export default function KerilEventsPage() {
     setSelectedPasses(
       selectedPasses.map((p) => (p.name === passName ? { ...p, price: newPrice } : p))
     );
+  };
+
+  const handleUpdatePassQty = (passName: string, newQty: number) => {
+    setSelectedPasses(
+      selectedPasses.map((p) => (p.name === passName ? { ...p, quantity: newQty } : p))
+    );
+  };
+
+  const handleCopyOrgLink = (link: string, token: string) => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(link).catch(() => {});
+    }
+    setCopiedToken(token);
+    setTimeout(() => setCopiedToken(null), 2500);
+  };
+
+  const getOrgLink = (token: string) => {
+    if (typeof window !== 'undefined') {
+      return `${window.location.origin}/organisateur/billetterie/${token}`;
+    }
+    return `/organisateur/billetterie/${token}`;
   };
 
   const handleAddCustomPass = () => {
@@ -93,6 +123,7 @@ export default function KerilEventsPage() {
 
     setIsSubmitting(true);
     setErrorMessage(null);
+    setCreatedOrgLink(null);
 
     try {
       const res = await fetch('/api/tickets/events', {
@@ -105,6 +136,9 @@ export default function KerilEventsPage() {
           venue,
           city,
           bannerImage,
+          organizerName,
+          organizerEmail,
+          organizerPhone,
           passes: selectedPasses,
         }),
       });
@@ -112,28 +146,33 @@ export default function KerilEventsPage() {
       const data = await res.json();
 
       if (data.success) {
-        setIsSubmitting(false);
-        setIsModalOpen(false);
+        const orgToken = data.data?.organizerToken || data.organizerToken || '';
+        if (orgToken) {
+          setCreatedOrgLink(getOrgLink(orgToken));
+        }
         setTitle('');
         setSubtitle('');
         setDate('');
         setVenue('');
+        setOrganizerName('');
+        setOrganizerEmail('');
+        setOrganizerPhone('');
+        setSelectedPasses([...TICKET_PASS_TEMPLATES]);
         loadEvents();
       } else {
-        setIsSubmitting(false);
         setErrorMessage(data.error || 'Erreur lors de la création.');
       }
     } catch {
-      setIsSubmitting(false);
       setErrorMessage('Erreur réseau lors de la création.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleDeleteEvent = async (id: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cet événement ?')) return;
-
     try {
       await fetch(`/api/tickets/events?id=${id}`, { method: 'DELETE' });
+      setDeletingEventId(null);
       loadEvents();
     } catch {
       // Ignore
@@ -283,31 +322,43 @@ export default function KerilEventsPage() {
                 >
                   <div style={{ position: 'relative', height: '160px', width: '100%' }}>
                     <Image src={evt.bannerImage || '/images/hero_bg.png'} alt={evt.title} fill style={{ objectFit: 'cover' }} />
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteEvent(evt.id)}
-                      style={{
-                        position: 'absolute',
-                        top: '12px',
-                        right: '12px',
-                        background: 'rgba(239, 68, 68, 0.9)',
-                        color: '#ffffff',
-                        border: 'none',
-                        borderRadius: '50%',
-                        width: '34px',
-                        height: '34px',
-                        display: 'grid',
-                        placeItems: 'center',
-                        cursor: 'pointer',
-                      }}
-                      title="Supprimer l'événement"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    {/* Delete inline confirmation */}
+                    {deletingEventId === evt.id ? (
+                      <div style={{ position: 'absolute', top: '10px', right: '10px', display: 'flex', gap: '6px' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteEvent(evt.id)}
+                          style={{ padding: '6px 10px', borderRadius: '99px', background: 'rgba(239,68,68,0.95)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700 }}
+                        >
+                          Confirmer
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeletingEventId(null)}
+                          style={{ padding: '6px 10px', borderRadius: '99px', background: 'rgba(0,0,0,0.6)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700 }}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setDeletingEventId(evt.id)}
+                        style={{
+                          position: 'absolute', top: '12px', right: '12px',
+                          background: 'rgba(239, 68, 68, 0.9)', color: '#ffffff', border: 'none',
+                          borderRadius: '50%', width: '34px', height: '34px',
+                          display: 'grid', placeItems: 'center', cursor: 'pointer',
+                        }}
+                        title="Supprimer l'événement"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
 
                   <div style={{ padding: '20px' }}>
-                    <h3 style={{ fontSize: '1.2rem', fontWeight: 800 }}>{evt.title}</h3>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 800 }}>{evt.title}</h3>
                     <p style={{ fontSize: '0.85rem', color: 'var(--mute)', marginTop: '4px' }}>
                       <Calendar className="w-3.5 h-3.5 inline mr-1" /> {evt.date}
                     </p>
@@ -315,21 +366,17 @@ export default function KerilEventsPage() {
                       <MapPin className="w-3.5 h-3.5 inline mr-1" /> {evt.venue}, {evt.city}
                     </p>
 
-                    <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: '1px solid var(--line)' }}>
-                      <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--mute)', textTransform: 'uppercase' }}>
-                        Pass Activés ({evt.passes.length}) :
+                    <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid var(--line)' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--mute)', textTransform: 'uppercase' }}>
+                        Pass ({evt.passes.length}) :
                       </span>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
                         {evt.passes.map((p) => (
                           <span
                             key={p.name}
                             style={{
-                              background: 'var(--soft)',
-                              border: '1px solid var(--line)',
-                              padding: '3px 8px',
-                              borderRadius: '8px',
-                              fontSize: '0.78rem',
-                              fontWeight: 700,
+                              background: 'var(--soft)', border: '1px solid var(--line)',
+                              padding: '3px 8px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 700,
                             }}
                           >
                             {p.name} : <b style={{ color: 'var(--p)' }}>{p.price.toLocaleString('fr-FR')} FCFA</b>
@@ -337,6 +384,30 @@ export default function KerilEventsPage() {
                         ))}
                       </div>
                     </div>
+
+                    {/* Lien organisateur */}
+                    {(evt as any).organizerToken && (
+                      <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid var(--line)' }}>
+                        <p style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--mute)', textTransform: 'uppercase', marginBottom: '6px' }}>
+                          🔗 Lien Organisateur :
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyOrgLink(getOrgLink((evt as any).organizerToken), (evt as any).organizerToken)}
+                          style={{
+                            width: '100%', padding: '8px 12px', borderRadius: '10px',
+                            background: 'rgba(91,61,245,0.08)', border: '1px solid rgba(91,61,245,0.25)',
+                            color: 'var(--p)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer',
+                            textAlign: 'left', display: 'flex', alignItems: 'center', gap: '6px',
+                          }}
+                        >
+                          <QrCode className="w-3.5 h-3.5 flex-shrink-0" />
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                            {copiedToken === (evt as any).organizerToken ? '✅ Lien copié !' : `/organisateur/billetterie/${(evt as any).organizerToken}`}
+                          </span>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -523,6 +594,45 @@ export default function KerilEventsPage() {
                   </div>
                 </div>
 
+                {/* ORGANISATEUR */}
+                <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                  <label style={{ display: 'block', fontSize: '0.92rem', fontWeight: 800, color: '#818cf8' }}>
+                    👤 Informations Organisateur
+                  </label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '10px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, marginBottom: '4px' }}>Nom organisateur</label>
+                      <input
+                        type="text"
+                        placeholder="Jean DUPONT"
+                        value={organizerName}
+                        onChange={(e) => setOrganizerName(e.target.value)}
+                        style={{ width: '100%', height: '42px', background: '#161e33', border: '1.5px solid rgba(255,255,255,0.15)', borderRadius: '10px', padding: '0 12px', color: '#fff', fontSize: '0.88rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, marginBottom: '4px' }}>Téléphone MoMo *</label>
+                      <input
+                        type="tel"
+                        placeholder="690123456"
+                        value={organizerPhone}
+                        onChange={(e) => setOrganizerPhone(e.target.value)}
+                        style={{ width: '100%', height: '42px', background: '#161e33', border: '1.5px solid rgba(255,255,255,0.15)', borderRadius: '10px', padding: '0 12px', color: '#fff', fontSize: '0.88rem' }}
+                      />
+                    </div>
+                  </div>
+                  <div style={{ marginTop: '10px' }}>
+                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, marginBottom: '4px' }}>Email organisateur</label>
+                    <input
+                      type="email"
+                      placeholder="organisateur@email.com"
+                      value={organizerEmail}
+                      onChange={(e) => setOrganizerEmail(e.target.value)}
+                      style={{ width: '100%', height: '42px', background: '#161e33', border: '1.5px solid rgba(255,255,255,0.15)', borderRadius: '10px', padding: '0 12px', color: '#fff', fontSize: '0.88rem' }}
+                    />
+                  </div>
+                </div>
+
                 {/* BANNER IMAGE URL */}
                 <label style={{ display: 'block', marginTop: '14px', fontSize: '0.88rem', fontWeight: 700 }}>
                   Image de Couverture (URL)
@@ -561,14 +671,11 @@ export default function KerilEventsPage() {
                         <div
                           key={tmpl.id}
                           style={{
-                            padding: '12px 14px',
-                            borderRadius: '12px',
+                            padding: '12px 14px', borderRadius: '12px',
                             background: isSelected ? 'rgba(129, 140, 248, 0.15)' : '#161e33',
-                            border: isSelected ? '1.5px solid #818cf8' : '1.5px solid rgba(255, 255, 255, 0.1)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            gap: '12px',
+                            border: isSelected ? '1.5px solid #818cf8' : '1.5px solid rgba(255,255,255,0.1)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px',
+                            flexWrap: 'wrap',
                           }}
                         >
                           <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', flex: 1 }}>
@@ -585,24 +692,26 @@ export default function KerilEventsPage() {
                           </label>
 
                           {isSelected && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <input
-                                type="number"
-                                value={currentPass?.price || tmpl.price}
-                                onChange={(e) => handleUpdatePassPrice(tmpl.name, parseInt(e.target.value, 10) || 0)}
-                                style={{
-                                  width: '85px',
-                                  height: '36px',
-                                  background: '#0f1526',
-                                  border: '1px solid #818cf8',
-                                  borderRadius: '8px',
-                                  color: '#ffffff',
-                                  fontWeight: 800,
-                                  fontSize: '0.88rem',
-                                  textAlign: 'center',
-                                }}
-                              />
-                              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#818cf8' }}>FCFA</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <span style={{ fontSize: '0.65rem', color: '#818cf8', fontWeight: 700, marginBottom: '2px' }}>PRIX</span>
+                                <input
+                                  type="number"
+                                  value={currentPass?.price ?? tmpl.price}
+                                  onChange={(e) => handleUpdatePassPrice(tmpl.name, parseInt(e.target.value, 10) || 0)}
+                                  style={{ width: '80px', height: '34px', background: '#0f1526', border: '1px solid #818cf8', borderRadius: '8px', color: '#fff', fontWeight: 800, fontSize: '0.85rem', textAlign: 'center' }}
+                                />
+                              </div>
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <span style={{ fontSize: '0.65rem', color: '#10b981', fontWeight: 700, marginBottom: '2px' }}>QTÉ</span>
+                                <input
+                                  type="number"
+                                  value={(currentPass as any)?.quantity ?? 100}
+                                  onChange={(e) => handleUpdatePassQty(tmpl.name, parseInt(e.target.value, 10) || 0)}
+                                  style={{ width: '70px', height: '34px', background: '#0f1526', border: '1px solid #10b981', borderRadius: '8px', color: '#fff', fontWeight: 800, fontSize: '0.85rem', textAlign: 'center' }}
+                                />
+                              </div>
+                              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#818cf8', marginTop: '14px' }}>FCFA</span>
                             </div>
                           )}
                         </div>
@@ -614,6 +723,26 @@ export default function KerilEventsPage() {
                 {errorMessage && (
                   <div style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#fca5a5', padding: '10px', borderRadius: '10px', fontSize: '0.82rem', marginTop: '14px' }}>
                     {errorMessage}
+                  </div>
+                )}
+
+                {createdOrgLink && (
+                  <div style={{ background: 'rgba(16,185,129,0.15)', border: '1px solid #10b981', padding: '14px', borderRadius: '12px', marginTop: '14px' }}>
+                    <p style={{ color: '#10b981', fontSize: '0.82rem', fontWeight: 800, marginBottom: '8px' }}>✅ Événement créé ! Lien organisateur :</p>
+                    <div style={{ background: '#0f1526', borderRadius: '8px', padding: '10px 12px', fontSize: '0.78rem', color: '#a78bfa', wordBreak: 'break-all', fontFamily: 'monospace' }}>
+                      {createdOrgLink}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (navigator.clipboard) navigator.clipboard.writeText(createdOrgLink).catch(() => {});
+                        setCopiedToken('modal');
+                        setTimeout(() => setCopiedToken(null), 2000);
+                      }}
+                      style={{ marginTop: '8px', padding: '8px 16px', borderRadius: '8px', background: '#818cf8', border: 'none', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', cursor: 'pointer' }}
+                    >
+                      {copiedToken === 'modal' ? '✅ Copié !' : '📋 Copier le lien'}
+                    </button>
                   </div>
                 )}
 
