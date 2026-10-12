@@ -145,9 +145,9 @@ export async function POST(request: Request) {
     }
 
     const amountNum = Number(body.amount);
-    if (isNaN(amountNum) || amountNum < 2000) {
+    if (isNaN(amountNum) || amountNum < 100) {
       return NextResponse.json(
-        { success: false, error: 'Le montant minimum de retrait est de 2 000 FCFA.' },
+        { success: false, error: 'Le montant minimum de retrait est de 100 FCFA.' },
         { status: 400 }
       );
     }
