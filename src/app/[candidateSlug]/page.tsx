@@ -72,36 +72,29 @@ export default function CandidateDirectPage({
           );
           const data = await res.json();
           if (data.isSuccess) {
-            const addedVotes = data.voteCount || 1;
-            setCandidate((prev) =>
-              prev ? { ...prev, voteCount: (prev.voteCount || 0) + (data.alreadyProcessed ? 0 : addedVotes) } : null
-            );
+            const cands = await getCandidates();
+            const freshCand = cands.find((c) => c.id === candidateId || c.id === candidate?.id);
+            if (freshCand) {
+              setCandidate(freshCand);
+            }
             window.history.replaceState({}, document.title, window.location.pathname);
           }
         } catch {}
       };
       verifyPayment();
     }
-  }, []);
+  }, [candidate?.id]);
 
-  const handleConfirmVote = async (candidateId: string, count: number = 1) => {
-    if (candidate && competition) {
-      setCandidate((prev) =>
-        prev
-          ? {
-              ...prev,
-              voteCount: prev.voteCount + count,
-            }
-          : null
-      );
-      await submitVote(
-        candidateId,
-        `${candidate.firstName} ${candidate.lastName}`,
-        competition.slug,
-        count,
-        competition.votePrice || 100
-      );
-    }
+  const handleConfirmVote = (candidateId: string, count: number = 1) => {
+    // Le vote a DÉJÀ été enregistré de façon atomique par /api/pay/status.
+    setCandidate((prev) =>
+      prev
+        ? {
+            ...prev,
+            voteCount: (prev.voteCount || 0) + count,
+          }
+        : null
+    );
   };
 
   const handleCandidateUpdate = (updatedCandidate: Candidate) => {

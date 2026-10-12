@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import { queryDb } from '@/lib/pgDb';
 import { getSupabaseAdmin } from '@/lib/supabaseClient';
 import { Candidate } from '@/data/mockData';
 import { recordConfirmedVote } from '@/lib/voteRecorder';
@@ -78,8 +79,7 @@ export async function GET(request: Request) {
         // Fallback if network hiccup
       }
     } else {
-      // Simulation mode or URL direct return check
-      paymentStatus = 'SUCCESSFUL';
+      paymentStatus = 'PENDING';
     }
 
     const statusUpper = String(paymentStatus).toUpperCase();
@@ -89,57 +89,61 @@ export async function GET(request: Request) {
     let incrementAmount = queryVoteCount || 1;
     let alreadyProcessed = false;
 
-    // 2. INCREMENT CANDIDATE VOTE COUNT IF PAYMENT IS CONFIRMED
+    // 2. INCREMENT CANDIDATE VOTE COUNT IF PAYMENT IS CONFIRMED (STRICTEMENT UNIQUE)
     if (isSuccess) {
       try {
-        const supabase = getSupabaseAdmin();
-        let voteRecord = null;
+        let voteRecord: any = null;
 
-        if (voteId) {
-          const { data } = await supabase.from('votes').select('*').eq('id', voteId).maybeSingle();
-          voteRecord = data;
-        } else if (transId) {
-          const { data } = await supabase.from('votes').select('*').eq('fapshi_trans_id', transId).maybeSingle();
-          voteRecord = data;
-        }
+        if (voteId || transId) {
+          let updatedRows: any[] = [];
+          if (voteId) {
+            updatedRows = await queryDb<any>(
+              `UPDATE public.votes 
+               SET payment_status = 'SUCCESSFUL', fapshi_trans_id = COALESCE($1, fapshi_trans_id) 
+               WHERE id = $2 AND payment_status != 'SUCCESSFUL' 
+               RETURNING *;`,
+              [transId || null, voteId]
+            );
+          } else if (transId) {
+            updatedRows = await queryDb<any>(
+              `UPDATE public.votes 
+               SET payment_status = 'SUCCESSFUL' 
+               WHERE fapshi_trans_id = $1 AND payment_status != 'SUCCESSFUL' 
+               RETURNING *;`,
+              [transId]
+            );
+          }
 
-        if (voteRecord) {
-          targetCandidateId = voteRecord.candidate_id || targetCandidateId;
-          incrementAmount = voteRecord.vote_count || incrementAmount;
+          if (updatedRows && updatedRows.length > 0) {
+            // Le vote est confirmé pour la TOUTE PREMIÈRE FOIS !
+            voteRecord = updatedRows[0];
+            targetCandidateId = voteRecord.candidate_id || targetCandidateId;
+            incrementAmount = voteRecord.vote_count || incrementAmount;
+            alreadyProcessed = false;
 
-          if (voteRecord.payment_status === 'SUCCESSFUL') {
-            alreadyProcessed = true;
+            // Enregistrement atomique unique du vote
+            await recordConfirmedVote({
+              candidateId: targetCandidateId,
+              count: incrementAmount,
+              voteId: voteRecord.id,
+              transId: transId || voteRecord.fapshi_trans_id,
+              email: voteRecord.voter_email,
+              candidateName: voteRecord.candidate_name,
+              competitionSlug: voteRecord.competition_slug
+            });
           } else {
-            // Update vote record status to SUCCESSFUL
-            await supabase
-              .from('votes')
-              .update({
-                payment_status: 'SUCCESSFUL',
-                fapshi_trans_id: transId || voteRecord.fapshi_trans_id
-              })
-              .eq('id', voteRecord.id);
+            // Le vote a déjà été confirmé et comptabilisé précédemment !
+            alreadyProcessed = true;
+            const lookupId = voteId ? 'id = $1' : 'fapshi_trans_id = $1';
+            const rows = await queryDb<any>(`SELECT * FROM public.votes WHERE ${lookupId} LIMIT 1;`, [voteId || transId]);
+            if (rows && rows.length > 0) {
+              targetCandidateId = rows[0].candidate_id || targetCandidateId;
+              incrementAmount = rows[0].vote_count || incrementAmount;
+            }
           }
         }
-
-        // Only increment if not already processed in previous check/webhook
-        if (!alreadyProcessed && targetCandidateId) {
-          await recordConfirmedVote({
-            candidateId: targetCandidateId,
-            count: incrementAmount,
-            voteId: voteId || undefined,
-            transId: transId || undefined
-          });
-        }
-      } catch {
-        // Fallback disk update if DB fails
-        if (!alreadyProcessed && targetCandidateId) {
-          await recordConfirmedVote({
-            candidateId: targetCandidateId,
-            count: incrementAmount,
-            voteId: voteId || undefined,
-            transId: transId || undefined
-          });
-        }
+      } catch (err) {
+        console.warn('PostgreSQL vote verification notice:', err);
       }
     }
 

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import { queryDb } from '@/lib/pgDb';
 
 export interface PayoutRequest {
   id: string;
@@ -91,6 +92,38 @@ export async function GET(request: Request) {
       return NextResponse.json({ success: false, error: 'Solde Fapshi indisponible' });
     }
 
+    // 1. Lire depuis PostgreSQL Neon
+    try {
+      let sql = 'SELECT * FROM public.payouts';
+      const params: any[] = [];
+      if (slug) {
+        sql += ' WHERE competition_slug = $1';
+        params.push(slug);
+      }
+      sql += ' ORDER BY created_at DESC;';
+
+      const rows = await queryDb<any>(sql, params);
+      if (rows && rows.length > 0) {
+        const mapped: PayoutRequest[] = rows.map((p) => ({
+          id: p.id,
+          competitionSlug: p.competition_slug,
+          competitionTitle: p.competition_title,
+          organizerName: p.organizer_name,
+          organizerPhone: p.organizer_phone,
+          operator: p.operator || 'ORANGE_MONEY',
+          amount: Number(p.amount) || 0,
+          status: p.status || 'PENDING',
+          createdAt: p.created_at ? new Date(p.created_at).toISOString() : new Date().toISOString(),
+          paidAt: p.paid_at ? new Date(p.paid_at).toISOString() : undefined,
+          transactionRef: p.transaction_ref,
+          organizerToken: p.organizer_token,
+        }));
+        return NextResponse.json({ success: true, data: mapped });
+      }
+    } catch (e) {
+      console.warn('PostgreSQL payouts fetch fallback to disk:', e);
+    }
+
     const payouts = readPayouts();
     const filtered = slug ? payouts.filter((p) => p.competitionSlug === slug) : payouts;
 
@@ -123,15 +156,27 @@ export async function POST(request: Request) {
     let compTitle = body.competitionTitle || 'Compétition';
 
     if (body.organizerToken) {
-      const compFilePath = path.join(process.cwd(), 'src', 'data', 'competitions.json');
-      if (fs.existsSync(compFilePath)) {
-        const comps = JSON.parse(fs.readFileSync(compFilePath, 'utf-8') || '[]');
-        const found = comps.find(
-          (c: any) => c.organizerToken === body.organizerToken || c.organizer_token === body.organizerToken
+      try {
+        const comps = await queryDb<any>(
+          'SELECT slug, title FROM public.competitions WHERE organizer_token = $1 LIMIT 1;',
+          [body.organizerToken]
         );
-        if (found) {
-          compSlug = found.slug;
-          compTitle = found.title;
+        if (comps && comps.length > 0) {
+          compSlug = comps[0].slug;
+          compTitle = comps[0].title;
+        }
+      } catch {
+        // Fallback local
+        const compFilePath = path.join(process.cwd(), 'src', 'data', 'competitions.json');
+        if (fs.existsSync(compFilePath)) {
+          const comps = JSON.parse(fs.readFileSync(compFilePath, 'utf-8') || '[]');
+          const found = comps.find(
+            (c: any) => c.organizerToken === body.organizerToken || c.organizer_token === body.organizerToken
+          );
+          if (found) {
+            compSlug = found.slug;
+            compTitle = found.title;
+          }
         }
       }
     }
@@ -156,6 +201,30 @@ export async function POST(request: Request) {
       organizerToken: body.organizerToken,
     };
 
+    // 1. Sauvegarder dans PostgreSQL Neon
+    try {
+      await queryDb(
+        `INSERT INTO public.payouts (
+          id, competition_slug, competition_title, organizer_name,
+          organizer_phone, operator, amount, status, organizer_token, created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW());`,
+        [
+          newPayout.id,
+          newPayout.competitionSlug,
+          newPayout.competitionTitle,
+          newPayout.organizerName,
+          newPayout.organizerPhone,
+          newPayout.operator,
+          newPayout.amount,
+          newPayout.status,
+          newPayout.organizerToken || null,
+        ]
+      );
+    } catch (e) {
+      console.warn('PostgreSQL insert payout error:', e);
+    }
+
+    // 2. Réplication locale sur disque
     const payouts = readPayouts();
     payouts.unshift(newPayout);
     writePayouts(payouts);
@@ -184,6 +253,12 @@ export async function PATCH(request: Request) {
 
     // 1. ACTION DE REJET
     if (status === 'REJECTED') {
+      try {
+        await queryDb('UPDATE public.payouts SET status = $1 WHERE id = $2;', ['REJECTED', id]);
+      } catch (e) {
+        console.warn('PostgreSQL reject payout error:', e);
+      }
+
       const updated = payouts.map((p) => {
         if (p.id === id) {
           return {
@@ -250,6 +325,16 @@ export async function PATCH(request: Request) {
 
         if (fapshiRes.ok && (fapshiData.transId || fapshiData.message === 'Accepted')) {
           const transId = fapshiData.transId || `FAPSHI_${Date.now()}`;
+
+          try {
+            await queryDb(
+              'UPDATE public.payouts SET status = $1, transaction_ref = $2, paid_at = NOW() WHERE id = $3;',
+              ['PAID', transId, id]
+            );
+          } catch (e) {
+            console.warn('PostgreSQL update paid payout error:', e);
+          }
+
           const updated = payouts.map((p) => {
             if (p.id === id) {
               return {
@@ -271,7 +356,6 @@ export async function PATCH(request: Request) {
             data: updated.find((p) => p.id === id),
           });
         } else {
-          // Message d'erreur renvoyé par Fapshi
           const errMsg =
             fapshiData.message ||
             fapshiData.error ||
@@ -298,12 +382,22 @@ export async function PATCH(request: Request) {
     }
 
     // 3. VALIDATION MANUELLE (Transfert fait manuellement par l'admin)
+    const txRef = transactionRef || payout.transactionRef || `MANUEL_${Date.now()}`;
+    try {
+      await queryDb(
+        'UPDATE public.payouts SET status = $1, transaction_ref = $2, paid_at = NOW() WHERE id = $3;',
+        ['PAID', txRef, id]
+      );
+    } catch (e) {
+      console.warn('PostgreSQL manual payout update error:', e);
+    }
+
     const updated = payouts.map((p) => {
       if (p.id === id) {
         return {
           ...p,
           status: 'PAID' as const,
-          transactionRef: transactionRef || p.transactionRef || `MANUEL_${Date.now()}`,
+          transactionRef: txRef,
           paidAt: new Date().toISOString(),
         };
       }

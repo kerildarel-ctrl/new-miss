@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-import { supabase } from '@/lib/supabaseClient';
+import { queryDb } from '@/lib/pgDb';
 import { calculateTierRevenue } from '@/utils/revenueTiers';
 import { isServerAdminAuthorized } from '@/lib/adminAuth';
 import { PayoutRequest } from '../payouts/route';
@@ -21,45 +21,18 @@ export async function GET(request: Request) {
       );
     }
 
-    // 1. Récupérer toutes les compétitions locales
-    const compFilePath = path.join(process.cwd(), 'src', 'data', 'competitions.json');
-    let localComps: any[] = [];
-    if (fs.existsSync(compFilePath)) {
-      localComps = JSON.parse(fs.readFileSync(compFilePath, 'utf-8') || '[]');
-    }
-
     let compData: any = null;
 
+    // 1. Recherche par token organisateur ou slug
     if (token) {
-      // Recherche exclusive par clé secrète indevinable
-      compData = localComps.find(
-        (c: any) => c.organizerToken === token || c.organizer_token === token
+      const dbComps = await queryDb<any>(
+        'SELECT * FROM public.competitions WHERE organizer_token = $1 LIMIT 1;',
+        [token]
       );
-
-      if (!compData) {
-        // Tenter via Supabase
-        const { data: dbComp } = await supabase
-          .from('competitions')
-          .select('*')
-          .or(`organizer_token.eq.${token}`)
-          .maybeSingle();
-
-        if (dbComp && (dbComp.organizer_token === token || dbComp.organizerToken === token)) {
-          compData = dbComp;
-        }
-      }
-
-      if (!compData) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: "Accès refusé : clé secrète invalide ou introuvable. Ce lien est strictement protégé.",
-          },
-          { status: 403 }
-        );
+      if (dbComps && dbComps.length > 0) {
+        compData = dbComps[0];
       }
     } else if (slug) {
-      // Accès par slug autorisé UNIQUEMENT pour le Super-Admin /keril
       const adminAuth = isServerAdminAuthorized(request);
       if (!adminAuth.authorized) {
         return NextResponse.json(
@@ -71,19 +44,36 @@ export async function GET(request: Request) {
         );
       }
 
-      compData = localComps.find((c: any) => c.slug === slug || c.id === slug);
-      if (!compData) {
-        const { data: dbComp } = await supabase
-          .from('competitions')
-          .select('*')
-          .eq('slug', slug)
-          .maybeSingle();
-        if (dbComp) compData = dbComp;
+      const dbComps = await queryDb<any>(
+        'SELECT * FROM public.competitions WHERE slug = $1 OR id = $1 LIMIT 1;',
+        [slug]
+      );
+      if (dbComps && dbComps.length > 0) {
+        compData = dbComps[0];
       }
+    }
 
-      if (!compData) {
-        return NextResponse.json({ success: false, error: 'Compétition introuvable.' }, { status: 404 });
+    // Fallback disque local si la base n'a pas répondu
+    if (!compData) {
+      const compFilePath = path.join(process.cwd(), 'src', 'data', 'competitions.json');
+      if (fs.existsSync(compFilePath)) {
+        const localComps = JSON.parse(fs.readFileSync(compFilePath, 'utf-8') || '[]');
+        compData = localComps.find(
+          (c: any) =>
+            (token && (c.organizerToken === token || c.organizer_token === token)) ||
+            (slug && (c.slug === slug || c.id === slug))
+        );
       }
+    }
+
+    if (!compData) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Accès refusé : clé secrète ou compétition introuvable. Ce lien est strictement protégé.",
+        },
+        { status: 404 }
+      );
     }
 
     const compSlug = compData.slug;
@@ -91,12 +81,18 @@ export async function GET(request: Request) {
     // 2. Récupérer les candidats et total des votes pour cette compétition
     let totalVotes = 0;
     let candidatesList: any[] = [];
-    const { data: dbCands } = await supabase.from('candidates').select('*').eq('competition_slug', compSlug);
 
-    if (dbCands && dbCands.length > 0) {
-      candidatesList = dbCands;
-      totalVotes = dbCands.reduce((sum, c) => sum + (c.vote_count || 0), 0);
-    } else {
+    try {
+      const dbCands = await queryDb<any>(
+        'SELECT * FROM public.candidates WHERE competition_slug = $1;',
+        [compSlug]
+      );
+      if (dbCands && dbCands.length > 0) {
+        candidatesList = dbCands;
+        totalVotes = dbCands.reduce((sum, c) => sum + (c.vote_count || 0), 0);
+      }
+    } catch {
+      // Fallback local
       const candFilePath = path.join(process.cwd(), 'src', 'data', 'candidates.json');
       if (fs.existsSync(candFilePath)) {
         const cands = JSON.parse(fs.readFileSync(candFilePath, 'utf-8') || '[]');
@@ -111,11 +107,35 @@ export async function GET(request: Request) {
     const tiers = calculateTierRevenue(totalVotes, unitPrice);
 
     // 4. Calcul des retraits
-    const payoutsFilePath = path.join(process.cwd(), 'src', 'data', 'payouts.json');
     let payouts: PayoutRequest[] = [];
-    if (fs.existsSync(payoutsFilePath)) {
-      const allPayouts = JSON.parse(fs.readFileSync(payoutsFilePath, 'utf-8') || '[]');
-      payouts = allPayouts.filter((p: PayoutRequest) => p.competitionSlug === compSlug);
+    try {
+      const dbPayouts = await queryDb<any>(
+        'SELECT * FROM public.payouts WHERE competition_slug = $1 ORDER BY created_at DESC;',
+        [compSlug]
+      );
+      if (dbPayouts && dbPayouts.length > 0) {
+        payouts = dbPayouts.map((p) => ({
+          id: p.id,
+          competitionSlug: p.competition_slug,
+          competitionTitle: p.competition_title,
+          organizerName: p.organizer_name,
+          organizerPhone: p.organizer_phone,
+          operator: p.operator || 'ORANGE_MONEY',
+          amount: Number(p.amount) || 0,
+          status: p.status || 'PENDING',
+          createdAt: p.created_at ? new Date(p.created_at).toISOString() : new Date().toISOString(),
+          paidAt: p.paid_at ? new Date(p.paid_at).toISOString() : undefined,
+          transactionRef: p.transaction_ref,
+          organizerToken: p.organizer_token,
+        }));
+      }
+    } catch {
+      // Fallback local
+      const payoutsFilePath = path.join(process.cwd(), 'src', 'data', 'payouts.json');
+      if (fs.existsSync(payoutsFilePath)) {
+        const allPayouts = JSON.parse(fs.readFileSync(payoutsFilePath, 'utf-8') || '[]');
+        payouts = allPayouts.filter((p: PayoutRequest) => p.competitionSlug === compSlug);
+      }
     }
 
     const totalPaid = payouts

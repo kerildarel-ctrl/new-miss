@@ -23,8 +23,10 @@ import {
   Search,
   Zap,
   X,
+  Globe,
 } from 'lucide-react';
 import { VoteMoiCard } from '@/components/VoteMoiCard';
+import { getAutoDomain, getOrganizerLink } from '@/utils/domain';
 
 export default function KerilFinancesPage() {
   const [competitions, setCompetitions] = useState<Competition[]>([]);
@@ -116,12 +118,39 @@ export default function KerilFinancesPage() {
     .reduce((s, p) => s + p.amount, 0);
 
   const [regeneratingSlug, setRegeneratingSlug] = useState<string | null>(null);
+  const [activeDomain, setActiveDomain] = useState<string>('');
+
+  useEffect(() => {
+    setActiveDomain(getAutoDomain());
+  }, []);
 
   const handleCopyLink = (tokenOrSlug: string, slugKey: string) => {
-    const url = `${window.location.origin}/organisateur/${tokenOrSlug}`;
-    navigator.clipboard.writeText(url);
+    const url = getOrganizerLink(tokenOrSlug);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).catch(() => {
+        fallbackCopyText(url);
+      });
+    } else {
+      fallbackCopyText(url);
+    }
     setCopiedSlug(slugKey);
     setTimeout(() => setCopiedSlug(null), 2500);
+  };
+
+  const fallbackCopyText = (text: string) => {
+    try {
+      const el = document.createElement('textarea');
+      el.value = text;
+      el.setAttribute('readonly', '');
+      el.style.position = 'absolute';
+      el.style.left = '-9999px';
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+    } catch {
+      // Ignore
+    }
   };
 
   const handleRegenerateToken = async (slug: string) => {
@@ -333,15 +362,29 @@ export default function KerilFinancesPage() {
                 </p>
               </div>
 
-              <div className="relative w-full sm:w-64">
-                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-3.5" />
-                <input
-                  type="text"
-                  placeholder="Filtrer une élection..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-[var(--line)] text-xs font-semibold outline-none"
-                />
+              <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+                {activeDomain && (
+                  <div
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-[var(--line)] text-[11px] font-bold text-slate-500"
+                    title={`Nom de domaine automatiquement détecté : ${activeDomain}`}
+                  >
+                    <Globe className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                    <span className="truncate max-w-[180px] sm:max-w-[240px]">
+                      Domaine : <strong className="text-indigo-600 dark:text-indigo-400 font-extrabold">{activeDomain.replace(/^https?:\/\//, '')}</strong>
+                    </span>
+                  </div>
+                )}
+
+                <div className="relative w-full sm:w-60">
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-3.5" />
+                  <input
+                    type="text"
+                    placeholder="Filtrer une élection..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-[var(--line)] text-xs font-semibold outline-none"
+                  />
+                </div>
               </div>
             </div>
 
@@ -442,8 +485,11 @@ export default function KerilFinancesPage() {
                               </button>
                             </div>
 
-                            <span className="text-[10px] font-mono text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
-                              {comp.organizerToken ? `${comp.organizerToken.slice(0, 14)}••••••••` : 'Clé auto-générée'}
+                            <span
+                              className="text-[10px] font-mono text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded max-w-[220px] truncate"
+                              title={getOrganizerLink(comp.organizerToken || comp.slug)}
+                            >
+                              {getOrganizerLink(comp.organizerToken || comp.slug)}
                             </span>
                           </div>
                         </td>

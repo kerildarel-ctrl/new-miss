@@ -19,57 +19,45 @@ export async function POST(request: Request) {
     // Verify payment status is SUCCESSFUL
     if (currentStatus === 'SUCCESSFUL') {
       try {
-        const supabase = getSupabaseAdmin();
+        const { queryDb } = await import('@/lib/pgDb');
+        const { recordConfirmedVote } = await import('@/lib/voteRecorder');
 
-        // 1. Get vote log from Supabase
-        let voteRecord = null;
-
+        let updatedRows: any[] = [];
         if (voteId) {
-          const { data } = await supabase
-            .from('votes')
-            .select('*')
-            .eq('id', voteId)
-            .single();
-          voteRecord = data;
+          updatedRows = await queryDb<any>(
+            `UPDATE public.votes 
+             SET payment_status = 'SUCCESSFUL', fapshi_trans_id = COALESCE($1, fapshi_trans_id) 
+             WHERE id = $2 AND payment_status != 'SUCCESSFUL' 
+             RETURNING *;`,
+            [transId || null, voteId]
+          );
         } else if (transId) {
-          const { data } = await supabase
-            .from('votes')
-            .select('*')
-            .eq('fapshi_trans_id', transId)
-            .single();
-          voteRecord = data;
+          updatedRows = await queryDb<any>(
+            `UPDATE public.votes 
+             SET payment_status = 'SUCCESSFUL' 
+             WHERE fapshi_trans_id = $1 AND payment_status != 'SUCCESSFUL' 
+             RETURNING *;`,
+            [transId]
+          );
         }
 
-        // 2. If vote exists and is not marked SUCCESSFUL yet
-        if (voteRecord && voteRecord.payment_status !== 'SUCCESSFUL') {
-          // Update vote status to SUCCESSFUL
-          await supabase
-            .from('votes')
-            .update({
-              payment_status: 'SUCCESSFUL',
-              fapshi_trans_id: transId || voteRecord.fapshi_trans_id
-            })
-            .eq('id', voteRecord.id);
-
-          // Increment candidate's vote count in Supabase
+        if (updatedRows && updatedRows.length > 0) {
+          const voteRecord = updatedRows[0];
           const targetCandidateId = voteRecord.candidate_id || userId;
-          if (targetCandidateId) {
-            const { data: cand } = await supabase
-              .from('candidates')
-              .select('vote_count')
-              .eq('id', targetCandidateId)
-              .single();
+          const count = voteRecord.vote_count || 1;
 
-            if (cand) {
-              await supabase
-                .from('candidates')
-                .update({ vote_count: (cand.vote_count || 0) + (voteRecord.vote_count || 1) })
-                .eq('id', targetCandidateId);
-            }
-          }
+          await recordConfirmedVote({
+            candidateId: targetCandidateId,
+            count: count,
+            voteId: voteRecord.id,
+            transId: transId || voteRecord.fapshi_trans_id,
+            email: voteRecord.voter_email,
+            candidateName: voteRecord.candidate_name,
+            competitionSlug: voteRecord.competition_slug
+          });
         }
-      } catch {
-        // Continue and acknowledge webhook receipt
+      } catch (webhookErr) {
+        console.warn('Webhook DB sync notice:', webhookErr);
       }
     }
 

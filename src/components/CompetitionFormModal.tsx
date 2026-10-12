@@ -12,9 +12,7 @@ import {
   Coins,
   Calendar,
   FileText,
-  Palette,
   ArrowRight,
-  ShieldCheck,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -25,19 +23,16 @@ interface CompetitionFormModalProps {
   initialData?: Competition | null;
 }
 
-export const CompetitionFormModal: React.FC<CompetitionFormModalProps> = ({
-  isOpen,
-  onClose,
-  onSubmit,
-  initialData,
-}) => {
-  const [formData, setFormData] = useState<Partial<Competition>>({
+function buildDefaultFormData(): Partial<Competition> {
+  const now = new Date();
+  const future = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+  return {
     title: '',
     description: '',
     logoImage: '/images/hero_bg.png',
     bannerImage: '/images/copa_ahn_banner.png',
-    startDate: new Date().toISOString().split('T')[0],
-    endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    startDate: now.toISOString().split('T')[0],
+    endDate: future.toISOString().split('T')[0],
     status: 'EN COURS',
     votePrice: 100,
     primaryColor: '#2563EB',
@@ -45,36 +40,40 @@ export const CompetitionFormModal: React.FC<CompetitionFormModalProps> = ({
     gradientTo: '#2563EB',
     accentColor: '#3B82F6',
     rules: 'Votes ouverts à tous.',
-  });
+  };
+}
 
-  const [logoPreview, setLogoPreview] = useState<string>('/images/hero_bg.png');
-  const [bannerPreview, setBannerPreview] = useState<string>('/images/copa_ahn_banner.png');
+export const CompetitionFormModal: React.FC<CompetitionFormModalProps> = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  initialData,
+}) => {
+  const [formData, setFormData] = useState<Partial<Competition>>(
+    () => initialData ?? buildDefaultFormData()
+  );
 
+  const [logoPreview, setLogoPreview] = useState<string>(
+    () => initialData?.logoImage || '/images/hero_bg.png'
+  );
+  const [bannerPreview, setBannerPreview] = useState<string>(
+    () => initialData?.bannerImage || '/images/copa_ahn_banner.png'
+  );
+
+  // Sync state when initialData or open state changes
   useEffect(() => {
+    if (!isOpen) return;
     if (initialData) {
       setFormData(initialData);
       setLogoPreview(initialData.logoImage || '/images/hero_bg.png');
       setBannerPreview(initialData.bannerImage || '/images/copa_ahn_banner.png');
     } else {
-      setFormData({
-        title: '',
-        description: '',
-        logoImage: '/images/hero_bg.png',
-        bannerImage: '/images/copa_ahn_banner.png',
-        startDate: new Date().toISOString().split('T')[0],
-        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        status: 'EN COURS',
-        votePrice: 100,
-        primaryColor: '#2563EB',
-        gradientFrom: '#EC4899',
-        gradientTo: '#2563EB',
-        accentColor: '#3B82F6',
-        rules: 'Votes ouverts à tous.',
-      });
+      setFormData(buildDefaultFormData());
       setLogoPreview('/images/hero_bg.png');
       setBannerPreview('/images/copa_ahn_banner.png');
     }
-  }, [initialData, isOpen]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialData?.id, isOpen]);
 
   if (!isOpen) return null;
 

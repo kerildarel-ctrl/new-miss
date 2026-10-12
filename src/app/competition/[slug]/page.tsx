@@ -72,23 +72,15 @@ export default function CompetitionDetailPage() {
           const data = await res.json();
 
           if (data.isSuccess) {
-            const targetId = data.candidateId || candidateId;
-            const addedVotes = data.voteCount || 1;
-
-            if (targetId) {
-              setCandidates((prev) =>
-                prev.map((c) =>
-                  c.id === targetId
-                    ? { ...c, voteCount: (c.voteCount || 0) + (data.alreadyProcessed ? 0 : addedVotes) }
-                    : c
-                )
-              );
+            const freshCands = await getCandidates(slug);
+            if (freshCands && freshCands.length > 0) {
+              setCandidates(freshCands);
             }
 
             setPaymentNotice({
               type: 'success',
               title: '🎉 Vote Confirmé & Comptabilisé !',
-              message: `Votre paiement a été vérifié avec succès. ${addedVotes} vote(s) crédité(s) !`,
+              message: `Votre paiement a été vérifié avec succès. ${data.voteCount || 1} vote(s) crédité(s) !`,
             });
 
             window.history.replaceState({}, document.title, window.location.pathname);
@@ -132,26 +124,19 @@ export default function CompetitionDetailPage() {
     setIsVoteModalOpen(true);
   };
 
-  const handleConfirmVote = async (candidateId: string, count: number = 1) => {
-    if (selectedCandidate && competition) {
-      setCandidates((prev) =>
-        prev.map((c) =>
-          c.id === candidateId
-            ? {
-                ...c,
-                voteCount: c.voteCount + count,
-              }
-            : c
-        )
-      );
-      await submitVote(
-        candidateId,
-        `${selectedCandidate.firstName} ${selectedCandidate.lastName}`,
-        competition.slug,
-        count,
-        competition.votePrice || 100
-      );
-    }
+  const handleConfirmVote = (candidateId: string, count: number = 1) => {
+    // Le vote a DÉJÀ été enregistré de façon atomique par /api/pay/status.
+    // On met à jour l'affichage local du nombre exact de votes payés (+count).
+    setCandidates((prev) =>
+      prev.map((c) =>
+        c.id === candidateId
+          ? {
+              ...c,
+              voteCount: (c.voteCount || 0) + count,
+            }
+          : c
+      )
+    );
   };
 
   const filteredCandidates = candidates.filter((cand) => {
@@ -274,7 +259,7 @@ export default function CompetitionDetailPage() {
               <span>Fin des votes dans :</span>
               <Countdown targetDate={competition.endDate} />
               <span className="mute" style={{ marginLeft: '12px' }}>
-                · {candidates.length} candidats · {totalVotes.toLocaleString('fr-FR')} votes enregistrés
+                · {candidates.length > 0 ? candidates.length : (competition.totalCandidates || 1)} candidat{(candidates.length || competition.totalCandidates) > 1 ? 's' : ''} · {totalVotes.toLocaleString('fr-FR')} votes enregistrés
               </span>
             </div>
 

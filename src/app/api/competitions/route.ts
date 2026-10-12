@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-import { getSupabaseAdmin, supabase } from '@/lib/supabaseClient';
+import { queryDb } from '@/lib/pgDb';
 import { Competition } from '@/data/mockData';
 import { generateOrganizerToken } from '@/utils/revenueTiers';
 
@@ -42,6 +42,9 @@ function writeDiskCompetitions(comps: Competition[]) {
   }
 }
 
+let memoryCache: { data: Competition[]; timestamp: number } | null = null;
+const CACHE_TTL_MS = 5000;
+
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
@@ -51,19 +54,32 @@ const noCacheHeaders = {
   'Expires': '0',
 };
 
-// GET all competitions (Mandatory Supabase first)
+// GET all competitions (PostgreSQL Neon first)
 export async function GET() {
   try {
-    const diskData = readDiskCompetitions();
-    const { data: dbData, error } = await supabase
-      .from('competitions')
-      .select('*')
-      .order('created_at', { ascending: false });
+    if (memoryCache && Date.now() - memoryCache.timestamp < CACHE_TTL_MS) {
+      return NextResponse.json({ success: true, data: memoryCache.data }, { headers: noCacheHeaders });
+    }
 
-    if (!error && dbData) {
-      const mappedDb: Competition[] = dbData.map((item) => {
+    const sql = `
+      SELECT c.*,
+        (SELECT COUNT(*)::int FROM public.candidates cand WHERE cand.competition_slug = c.slug) as dynamic_candidate_count,
+        COALESCE((SELECT SUM(vote_count)::int FROM public.candidates cand WHERE cand.competition_slug = c.slug), 0) as dynamic_vote_count
+      FROM public.competitions c
+      ORDER BY c.created_at DESC;
+    `;
+    const rows = await queryDb<any>(sql);
+
+    if (rows && rows.length > 0) {
+      const diskData = readDiskCompetitions();
+      const mappedDb: Competition[] = rows.map((item) => {
         const diskComp = diskData.find((d) => d.slug === item.slug || d.id === item.id);
-        const token = item.organizer_token || item.organizerToken || diskComp?.organizerToken || generateOrganizerToken();
+        const token =
+          item.organizer_token ||
+          item.organizerToken ||
+          diskComp?.organizerToken ||
+          generateOrganizerToken();
+
         return {
           id: item.id || `comp-${item.slug}`,
           slug: item.slug,
@@ -71,11 +87,11 @@ export async function GET() {
           description: item.description || '',
           bannerImage: item.banner_image || '/images/copa_ahn_banner.png',
           logoImage: item.logo_image || '/images/hero_bg.png',
-          startDate: item.start_date || new Date().toISOString(),
-          endDate: item.end_date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          startDate: item.start_date ? new Date(item.start_date).toISOString() : new Date().toISOString(),
+          endDate: item.end_date ? new Date(item.end_date).toISOString() : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
           status: item.status || 'EN COURS',
-          totalCandidates: item.total_candidates || 0,
-          totalVotes: item.total_votes || 0,
+          totalCandidates: Number(item.dynamic_candidate_count ?? item.total_candidates ?? 0),
+          totalVotes: Number(item.dynamic_vote_count ?? item.total_votes ?? 0),
           votePrice: item.vote_price || 100,
           primaryColor: item.primary_color || '#2563EB',
           gradientFrom: item.gradient_from || '#EC4899',
@@ -86,18 +102,21 @@ export async function GET() {
         };
       });
 
-      // Keep disk file updated with DB
+      memoryCache = { data: mappedDb, timestamp: Date.now() };
+      // Synchroniser le fichier local avec PostgreSQL
       writeDiskCompetitions(mappedDb);
       return NextResponse.json({ success: true, data: mappedDb }, { headers: noCacheHeaders });
     }
 
+    const diskData = readDiskCompetitions();
     return NextResponse.json({ success: true, data: diskData }, { headers: noCacheHeaders });
-  } catch {
+  } catch (error) {
+    console.warn('PostgreSQL fetch competitions fallback to disk:', error);
     return NextResponse.json({ success: true, data: readDiskCompetitions() }, { headers: noCacheHeaders });
   }
 }
 
-// POST create competition (MANDATORY SUPABASE INSERTION)
+// POST create competition (Insertion dans PostgreSQL Neon)
 export async function POST(request: Request) {
   try {
     const compData: Partial<Competition> = await request.json();
@@ -123,65 +142,47 @@ export async function POST(request: Request) {
       organizerToken: compData.organizerToken || generateOrganizerToken(),
     };
 
-    // 1. MANDATORY INSERTION INTO SUPABASE
-    const supabaseAdmin = getSupabaseAdmin();
-    const { error: dbError } = await supabaseAdmin.from('competitions').insert([
-      {
-        id: newComp.id,
-        slug: newComp.slug,
-        title: newComp.title,
-        description: newComp.description,
-        banner_image: newComp.bannerImage,
-        logo_image: newComp.logoImage,
-        start_date: newComp.startDate,
-        end_date: newComp.endDate,
-        status: newComp.status,
-        total_candidates: 0,
-        total_votes: 0,
-        vote_price: newComp.votePrice,
-        primary_color: newComp.primaryColor,
-        rules: newComp.rules,
-        organizer_token: newComp.organizerToken,
-      }
-    ]);
-
-    if (dbError) {
-      // In case organizer_token column does not exist yet in Supabase, retry without it
-      const { error: fallbackError } = await supabaseAdmin.from('competitions').insert([
-        {
-          id: newComp.id,
-          slug: newComp.slug,
-          title: newComp.title,
-          description: newComp.description,
-          banner_image: newComp.bannerImage,
-          logo_image: newComp.logoImage,
-          start_date: newComp.startDate,
-          end_date: newComp.endDate,
-          status: newComp.status,
-          total_candidates: 0,
-          total_votes: 0,
-          vote_price: newComp.votePrice,
-          primary_color: newComp.primaryColor,
-          rules: newComp.rules,
-        }
-      ]);
-
-      if (fallbackError) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: `Erreur Supabase: ${fallbackError.message}.`
-          },
-          { status: 400 }
-        );
-      }
+    // 1. Sauvegarde dans PostgreSQL Neon
+    try {
+      await queryDb(
+        `INSERT INTO public.competitions (
+          id, slug, title, description, banner_image, logo_image, start_date, end_date,
+          status, total_candidates, total_votes, vote_price, primary_color, rules, organizer_token
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+        ON CONFLICT (slug) DO UPDATE SET
+          title = EXCLUDED.title,
+          description = EXCLUDED.description,
+          banner_image = EXCLUDED.banner_image,
+          logo_image = EXCLUDED.logo_image,
+          rules = EXCLUDED.rules,
+          organizer_token = EXCLUDED.organizer_token;`,
+        [
+          newComp.id,
+          newComp.slug,
+          newComp.title,
+          newComp.description,
+          newComp.bannerImage,
+          newComp.logoImage,
+          newComp.startDate,
+          newComp.endDate,
+          newComp.status,
+          0,
+          0,
+          newComp.votePrice,
+          newComp.primaryColor,
+          newComp.rules,
+          newComp.organizerToken,
+        ]
+      );
+    } catch (dbErr: any) {
+      console.error('Erreur insertion PostgreSQL competition:', dbErr);
     }
 
-    // 2. Also write to local disk JSON file
+    // 2. Synchroniser le fichier disque local
     const diskData = readDiskCompetitions();
     const updatedDisk = [newComp, ...diskData.filter((c) => c.id !== newComp.id)];
     writeDiskCompetitions(updatedDisk);
-
+    memoryCache = null;
     return NextResponse.json({ success: true, data: newComp });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
@@ -195,16 +196,19 @@ export async function PATCH(request: Request) {
     if (!slug) return NextResponse.json({ success: false, error: 'Slug requis' }, { status: 400 });
 
     const newToken = generateOrganizerToken();
+
+    try {
+      await queryDb('UPDATE public.competitions SET organizer_token = $1 WHERE slug = $2;', [
+        newToken,
+        slug,
+      ]);
+    } catch (e) {
+      console.warn('Erreur PostgreSQL update token:', e);
+    }
+
     const diskData = readDiskCompetitions();
     const updated = diskData.map((c) => (c.slug === slug ? { ...c, organizerToken: newToken } : c));
     writeDiskCompetitions(updated);
-
-    try {
-      const supabaseAdmin = getSupabaseAdmin();
-      await supabaseAdmin.from('competitions').update({ organizer_token: newToken }).eq('slug', slug);
-    } catch {
-      // Continue
-    }
 
     return NextResponse.json({ success: true, organizerToken: newToken });
   } catch (err: any) {
@@ -219,14 +223,11 @@ export async function DELETE(request: Request) {
     const id = searchParams.get('id');
     const slug = searchParams.get('slug');
 
-    const supabaseAdmin = getSupabaseAdmin();
-    if (id) {
-      await supabaseAdmin.from('competitions').delete().eq('id', id);
-      await supabaseAdmin.from('competitions').delete().eq('slug', id);
-    }
-    if (slug) {
-      await supabaseAdmin.from('competitions').delete().eq('slug', slug);
-      await supabaseAdmin.from('competitions').delete().eq('id', slug);
+    try {
+      if (id) await queryDb('DELETE FROM public.competitions WHERE id = $1 OR slug = $1;', [id]);
+      if (slug) await queryDb('DELETE FROM public.competitions WHERE slug = $1 OR id = $1;', [slug]);
+    } catch (e) {
+      console.warn('Erreur PostgreSQL delete competition:', e);
     }
 
     const diskData = readDiskCompetitions();
@@ -242,4 +243,3 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
-

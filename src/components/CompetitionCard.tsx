@@ -33,7 +33,7 @@ export const CompetitionCard: React.FC<CompetitionCardProps> = ({ competition, c
 
   // Take maximum 4 candidates
   const displayCandidates = candidatesList.slice(0, 4);
-  const actualCandidateCount = candidatesList.length;
+  const actualCandidateCount = candidatesList.length > 0 ? candidatesList.length : (competition.totalCandidates || 1);
 
   return (
     <Link href={`/competition/${competition.slug}`} className="tile">

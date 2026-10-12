@@ -83,21 +83,16 @@ export default function CandidateDetailPage({
           const data = await res.json();
 
           if (data.isSuccess) {
-            const addedVotes = data.voteCount || 1;
-
-            setCandidate((prev) =>
-              prev
-                ? {
-                    ...prev,
-                    voteCount: (prev.voteCount || 0) + (data.alreadyProcessed ? 0 : addedVotes),
-                  }
-                : null
-            );
+            const cands = await getCandidates(compSlug);
+            const freshCand = cands.find((c) => c.id === candidateId || c.id === candidate?.id);
+            if (freshCand) {
+              setCandidate(freshCand);
+            }
 
             setPaymentNotice({
               type: 'success',
               title: '🎉 Vote Confirmé & Comptabilisé !',
-              message: `Votre paiement a été vérifié avec succès. ${addedVotes} vote(s) crédité(s) !`,
+              message: `Votre paiement a été vérifié avec succès. ${data.voteCount || 1} vote(s) crédité(s) !`,
             });
 
             window.history.replaceState({}, document.title, window.location.pathname);
@@ -134,26 +129,19 @@ export default function CandidateDetailPage({
       verifyPayment();
       return () => clearInterval(pollInterval);
     }
-  }, []);
+  }, [compSlug, candidate?.id]);
 
-  const handleConfirmVote = async (candidateId: string, count: number = 1) => {
-    if (candidate && competition) {
-      setCandidate((prev) =>
-        prev
-          ? {
-              ...prev,
-              voteCount: prev.voteCount + count,
-            }
-          : null
-      );
-      await submitVote(
-        candidateId,
-        `${candidate.firstName} ${candidate.lastName}`,
-        competition.slug,
-        count,
-        competition.votePrice || 100
-      );
-    }
+  const handleConfirmVote = (candidateId: string, count: number = 1) => {
+    // Le vote est déjà enregistré de manière atomique par /api/pay/status.
+    // On incrémente uniquement l'affichage local du nombre exact de votes payés (+count).
+    setCandidate((prev) =>
+      prev
+        ? {
+            ...prev,
+            voteCount: (prev.voteCount || 0) + count,
+          }
+        : null
+    );
   };
 
   const handleCandidateUpdate = (updated: Candidate) => {

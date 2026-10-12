@@ -1,0 +1,177 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Competition {
+  id              String      @id @default(cuid())
+  slug            String      @unique
+  title           String
+  description     String?     @default("")
+  bannerImage     String?     @default("/images/copa_ahn_banner.png")
+  logoImage       String?     @default("/images/hero_bg.png")
+  startDate       DateTime?   @default(now())
+  endDate         DateTime?
+  status          String      @default("EN COURS")
+  totalCandidates Int         @default(0)
+  totalVotes      Int         @default(0)
+  votePrice       Int         @default(100)
+  primaryColor    String      @default("#2563EB")
+  gradientFrom    String      @default("#EC4899")
+  gradientTo      String      @default("#2563EB")
+  accentColor     String      @default("#3B82F6")
+  rules           String?     @default("Votes ouverts à tous.")
+  organizerToken  String?     @unique
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  candidates      Candidate[]
+  votes           Vote[]
+  payouts         Payout[]
+}
+
+model Candidate {
+  id              String      @id @default(cuid())
+  competitionSlug String
+  firstName       String
+  lastName        String
+  candidateNumber String
+  photoUrl        String?     @default("/images/candidate_1.png")
+  bio             String?     @default("")
+  category        String      @default("Miss")
+  voteCount       Int         @default(0)
+  percentage      Float       @default(0)
+  rank            Int         @default(1)
+  status          String      @default("ACTIF")
+  socialInstagram String?     @default("")
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  competition     Competition @relation(fields: [competitionSlug], references: [slug], onDelete: Cascade)
+  votes           Vote[]
+
+  @@index([competitionSlug])
+  @@index([voteCount(sort: Desc)])
+}
+
+model Vote {
+  id              String       @id @default(cuid())
+  candidateId     String?
+  candidateName   String?
+  competitionSlug String?
+  voteCount       Int          @default(1)
+  amountFcfa      Int          @default(100)
+  paymentMethod   String       @default("mobile_money")
+  paymentStatus   String       @default("SUCCESSFUL") // SUCCESSFUL, PENDING, FAILED
+  fapshiTransId   String?
+  voterEmail      String?
+  createdAt       DateTime     @default(now())
+
+  candidate       Candidate?   @relation(fields: [candidateId], references: [id], onDelete: SetNull)
+  competition     Competition? @relation(fields: [competitionSlug], references: [slug], onDelete: SetNull)
+
+  @@index([candidateId])
+  @@index([competitionSlug])
+  @@index([voterEmail])
+  @@index([fapshiTransId])
+}
+
+model Payout {
+  id               String       @id @default(cuid())
+  competitionSlug  String
+  competitionTitle String
+  organizerName    String
+  organizerPhone   String
+  operator         String       @default("ORANGE_MONEY") // ORANGE_MONEY, MTN_MOMO
+  amount           Float
+  status           String       @default("PENDING") // PENDING, PAID, REJECTED
+  transactionRef   String?
+  organizerToken   String?
+  createdAt        DateTime     @default(now())
+  paidAt           DateTime?
+
+  competition      Competition? @relation(fields: [competitionSlug], references: [slug], onDelete: Cascade)
+
+  @@index([competitionSlug])
+  @@index([organizerToken])
+}
+
+model Event {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  title       String
+  subtitle    String?
+  date        String
+  venue       String
+  city        String    @default("Yaoundé")
+  bannerImage String?   @default("/images/hero_bg.png")
+  passes      Json?     @default("[]")
+  createdAt   DateTime  @default(now())
+
+  tickets     Ticket[]
+}
+
+model Ticket {
+  id                 String                @id @default(cuid())
+  ticketCode         String                @unique
+  eventId            String
+  eventTitle         String
+  passName           String
+  unitPrice          Int                   @default(2000)
+  quantity           Int                   @default(1)
+  totalPrice         Int                   @default(2000)
+  buyerName          String
+  buyerEmail         String
+  buyerPhone         String?
+  orderRef           String?
+  paymentStatus      String                @default("PAID") // PAID, PENDING, FAILED
+  status             String                @default("VALID") // VALID, USED
+  purchasedAt        DateTime              @default(now())
+  scannedAt          DateTime?
+  scannedByAgentId   String?
+  scannedByAgentName String?
+  resetCount         Int                   @default(0)
+  createdAt          DateTime              @default(now())
+
+  event              Event?                @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  validationLogs     TicketValidationLog[]
+
+  @@index([ticketCode])
+  @@index([buyerEmail])
+  @@index([status])
+}
+
+model TicketValidationLog {
+  id         String   @id @default(cuid())
+  ticketCode String
+  eventId    String?
+  eventTitle String?
+  action     String   // VALIDATED, ATTEMPT_ALREADY_USED, ATTEMPT_UNPAID, RESET_BY_ADMIN
+  agentId    String?  @default("admin")
+  agentName  String?  @default("Admin /keril")
+  timestamp  DateTime @default(now())
+
+  ticket     Ticket?  @relation(fields: [ticketCode], references: [ticketCode], onDelete: Cascade)
+
+  @@index([ticketCode])
+  @@index([timestamp(sort: Desc)])
+}
+
+model EventRequest {
+  id                String   @id @default(cuid())
+  eventName         String
+  organizerName     String
+  phone             String
+  email             String?
+  votePrice         String?  @default("100")
+  candidateEstimate String?  @default("10")
+  campus            String?
+  startDate         String?
+  endDate           String?
+  description       String?
+  createdAt         DateTime @default(now())
+}

@@ -53,16 +53,9 @@ export default function ClassementPage() {
           );
           const data = await res.json();
           if (data.isSuccess) {
-            const addedVotes = data.voteCount || 1;
-            const targetId = data.candidateId || candidateId;
-            if (targetId) {
-              setCandidates((prev) =>
-                prev.map((c) =>
-                  c.id === targetId
-                    ? { ...c, voteCount: (c.voteCount || 0) + (data.alreadyProcessed ? 0 : addedVotes) }
-                    : c
-                )
-              );
+            const freshCands = await getCandidates(selectedSlug);
+            if (freshCands && freshCands.length > 0) {
+              setCandidates(freshCands);
             }
             window.history.replaceState({}, document.title, window.location.pathname);
           }
@@ -70,7 +63,7 @@ export default function ClassementPage() {
       };
       verifyPayment();
     }
-  }, []);
+  }, [selectedSlug]);
 
   // When competition tab changes
   const handleSelectComp = async (slug: string) => {
@@ -90,26 +83,18 @@ export default function ClassementPage() {
     setIsVoteModalOpen(true);
   };
 
-  const handleConfirmVote = async (candidateId: string, count: number = 1) => {
-    if (selectedCandidate && currentCompetition) {
-      setCandidates((prev) =>
-        prev.map((c) =>
-          c.id === candidateId
-            ? {
-                ...c,
-                voteCount: c.voteCount + count,
-              }
-            : c
-        )
-      );
-      await submitVote(
-        candidateId,
-        `${selectedCandidate.firstName} ${selectedCandidate.lastName}`,
-        currentCompetition.slug,
-        count,
-        currentCompetition.votePrice || 100
-      );
-    }
+  const handleConfirmVote = (candidateId: string, count: number = 1) => {
+    // Le vote a DÉJÀ été enregistré de façon atomique par /api/pay/status.
+    setCandidates((prev) =>
+      prev.map((c) =>
+        c.id === candidateId
+          ? {
+              ...c,
+              voteCount: (c.voteCount || 0) + count,
+            }
+          : c
+      )
+    );
   };
 
   return (

@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { getSupabaseAdmin } from '@/lib/supabaseClient';
+import { getDbPool } from '@/lib/pgDb';
 import { Candidate, Competition } from '@/data/mockData';
 
 const candsFilePath = path.join(process.cwd(), 'src', 'data', 'candidates.json');
@@ -26,12 +26,72 @@ export async function recordConfirmedVote(params: {
     transId = '',
     paymentMethod = 'mobile_money',
     amount = count * 100,
-    email = ''
+    email = '',
   } = params;
 
   let newVoteCount = count;
 
-  // 1. UPDATE DISK JSON (CANDIDATES & COMPETITIONS) - Guaranteed local persistence
+  // 1. TRANSACTION ATOMIQUE DANS POSTGRESQL NEON
+  try {
+    const pool = getDbPool();
+    const client = await pool.connect();
+
+    try {
+      await client.query('BEGIN');
+
+      // 1. Incrémenter le vote du candidat
+      const candRes = await client.query(
+        'UPDATE public.candidates SET vote_count = vote_count + $1 WHERE id = $2 RETURNING vote_count;',
+        [count, candidateId]
+      );
+
+      if (candRes.rows && candRes.rows.length > 0) {
+        newVoteCount = candRes.rows[0].vote_count;
+      }
+
+      // 2. Incrémenter le total de la compétition
+      if (competitionSlug) {
+        await client.query(
+          'UPDATE public.competitions SET total_votes = total_votes + $1 WHERE slug = $2;',
+          [count, competitionSlug]
+        );
+      }
+
+      // 3. Enregistrer la transaction de vote
+      await client.query(
+        `INSERT INTO public.votes (
+          id, candidate_id, candidate_name, competition_slug, vote_count,
+          amount_fcfa, payment_method, payment_status, fapshi_trans_id,
+          voter_email, created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'SUCCESSFUL', $8, $9, NOW())
+        ON CONFLICT (id) DO UPDATE SET
+          payment_status = 'SUCCESSFUL',
+          fapshi_trans_id = EXCLUDED.fapshi_trans_id;`,
+        [
+          voteId,
+          candidateId,
+          candidateName,
+          competitionSlug,
+          count,
+          amount,
+          paymentMethod,
+          transId || null,
+          email || null,
+        ]
+      );
+
+      await client.query('COMMIT');
+    } catch (txErr) {
+      await client.query('ROLLBACK');
+      console.error('PostgreSQL vote transaction error, rolling back:', txErr);
+    } finally {
+      client.release();
+    }
+  } catch (dbErr) {
+    console.error('PostgreSQL connection error for voteRecorder:', dbErr);
+  }
+
+  // 2. SYNCHRONISATION DES FICHIERS LOCAUX (DISQUE)
   try {
     if (fs.existsSync(candsFilePath)) {
       const fileData = fs.readFileSync(candsFilePath, 'utf8');
@@ -39,7 +99,7 @@ export async function recordConfirmedVote(params: {
       const cand = candidates.find((c) => c.id === candidateId);
       if (cand) {
         cand.voteCount = (cand.voteCount || 0) + count;
-        newVoteCount = cand.voteCount;
+        if (!newVoteCount) newVoteCount = cand.voteCount;
       }
       fs.writeFileSync(candsFilePath, JSON.stringify(candidates, null, 2), 'utf8');
     }
@@ -55,60 +115,6 @@ export async function recordConfirmedVote(params: {
     }
   } catch (diskErr) {
     console.error('Disk vote update error:', diskErr);
-  }
-
-  // 2. UPDATE SUPABASE DATABASE (SERVERLESS PERSISTENCE FOR NETLIFY)
-  try {
-    const supabase = getSupabaseAdmin();
-
-    // Check if candidate exists in Supabase
-    const { data: cand } = await supabase
-      .from('candidates')
-      .select('vote_count')
-      .eq('id', candidateId)
-      .maybeSingle();
-
-    if (cand) {
-      const updatedCount = (cand.vote_count || 0) + count;
-      newVoteCount = updatedCount;
-      await supabase
-        .from('candidates')
-        .update({ vote_count: updatedCount })
-        .eq('id', candidateId);
-    }
-
-    // Update competition total_votes
-    const { data: comp } = await supabase
-      .from('competitions')
-      .select('total_votes')
-      .eq('slug', competitionSlug)
-      .maybeSingle();
-
-    if (comp) {
-      await supabase
-        .from('competitions')
-        .update({ total_votes: (comp.total_votes || 0) + count })
-        .eq('slug', competitionSlug);
-    }
-
-    // Record vote transaction as SUCCESSFUL
-    await supabase.from('votes').upsert([
-      {
-        id: voteId,
-        candidate_id: candidateId,
-        candidate_name: candidateName,
-        competition_slug: competitionSlug,
-        vote_count: count,
-        amount_fcfa: amount,
-        payment_method: paymentMethod,
-        payment_status: 'SUCCESSFUL',
-        fapshi_trans_id: transId || null,
-        voter_email: email || null,
-        created_at: new Date().toISOString()
-      }
-    ]);
-  } catch (dbErr) {
-    console.warn('Supabase vote update notice (table may need creation):', dbErr);
   }
 
   return { success: true, newVoteCount };

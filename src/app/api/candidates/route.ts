@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-import { getSupabaseAdmin, supabase } from '@/lib/supabaseClient';
+import { queryDb } from '@/lib/pgDb';
 import { Candidate } from '@/data/mockData';
 
 const candsFilePath = path.join(process.cwd(), 'src', 'data', 'candidates.json');
@@ -30,6 +30,9 @@ function writeDiskCandidates(cands: Candidate[]) {
   }
 }
 
+let candCache: { [key: string]: { data: Candidate[]; timestamp: number } } = {};
+const CAND_TTL_MS = 5000;
+
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
@@ -39,21 +42,30 @@ const noCacheHeaders = {
   'Expires': '0',
 };
 
-// GET candidates (Mandatory Supabase first)
+// GET candidates (PostgreSQL Neon first)
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const competitionSlug = searchParams.get('slug');
+    const cacheKey = competitionSlug || '__all__';
 
-    let query = supabase.from('candidates').select('*');
-    if (competitionSlug) {
-      query = query.eq('competition_slug', competitionSlug);
+    if (candCache[cacheKey] && Date.now() - candCache[cacheKey].timestamp < CAND_TTL_MS) {
+      return NextResponse.json({ success: true, data: candCache[cacheKey].data }, { headers: noCacheHeaders });
     }
 
-    const { data: dbData, error } = await query;
+    let sql = 'SELECT * FROM public.candidates';
+    const params: any[] = [];
 
-    if (!error && dbData) {
-      const mappedDb: Candidate[] = dbData.map((item) => ({
+    if (competitionSlug) {
+      sql += ' WHERE competition_slug = $1';
+      params.push(competitionSlug);
+    }
+    sql += ' ORDER BY vote_count DESC, candidate_number ASC;';
+
+    const rows = await queryDb<any>(sql, params);
+
+    if (rows && rows.length > 0) {
+      const mappedDb: Candidate[] = rows.map((item) => ({
         id: item.id || `cand-${item.candidate_number}`,
         competitionSlug: item.competition_slug,
         firstName: item.first_name,
@@ -63,12 +75,13 @@ export async function GET(request: Request) {
         bio: item.bio || '',
         category: item.category || 'Miss',
         voteCount: item.vote_count || 0,
-        percentage: item.percentage || 0,
+        percentage: Number(item.percentage) || 0,
         rank: item.rank || 1,
         status: item.status || 'ACTIF',
-        socialInstagram: item.social_instagram || ''
+        socialInstagram: item.social_instagram || '',
       }));
 
+      candCache[cacheKey] = { data: mappedDb, timestamp: Date.now() };
       if (!competitionSlug) {
         writeDiskCandidates(mappedDb);
       }
@@ -81,14 +94,14 @@ export async function GET(request: Request) {
       : diskData;
 
     return NextResponse.json({ success: true, data: filteredDisk }, { headers: noCacheHeaders });
-  } catch {
+  } catch (error) {
+    console.warn('PostgreSQL fetch candidates fallback to disk:', error);
     const diskData = readDiskCandidates();
     return NextResponse.json({ success: true, data: diskData }, { headers: noCacheHeaders });
   }
 }
 
-
-// POST create candidate (MANDATORY SUPABASE INSERTION)
+// POST create candidate (Insertion dans PostgreSQL Neon)
 export async function POST(request: Request) {
   try {
     const candidateData: Partial<Candidate> = await request.json();
@@ -105,42 +118,47 @@ export async function POST(request: Request) {
       voteCount: 0,
       percentage: 0,
       rank: 1,
-      status: 'ACTIF'
+      status: 'ACTIF',
     };
 
-    // 1. MANDATORY INSERTION INTO SUPABASE
-    const supabaseAdmin = getSupabaseAdmin();
-    const { error: dbError } = await supabaseAdmin.from('candidates').insert([
-      {
-        id: newCandidate.id,
-        competition_slug: newCandidate.competitionSlug,
-        first_name: newCandidate.firstName,
-        last_name: newCandidate.lastName,
-        candidate_number: newCandidate.candidateNumber,
-        photo_url: newCandidate.photoUrl,
-        bio: newCandidate.bio,
-        category: newCandidate.category,
-        vote_count: 0,
-        percentage: 0,
-        rank: 1,
-        status: 'ACTIF'
-      }
-    ]);
-
-    if (dbError) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: `Erreur Supabase: ${dbError.message}. Assurez-vous d'avoir exécuté le script SQL dans votre console Supabase.`
-        },
-        { status: 400 }
+    // 1. Sauvegarde dans PostgreSQL Neon
+    try {
+      await queryDb(
+        `INSERT INTO public.candidates (
+          id, competition_slug, first_name, last_name, candidate_number,
+          photo_url, bio, category, vote_count, percentage, rank, status
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        ON CONFLICT (id) DO UPDATE SET
+          first_name = EXCLUDED.first_name,
+          last_name = EXCLUDED.last_name,
+          candidate_number = EXCLUDED.candidate_number,
+          photo_url = EXCLUDED.photo_url,
+          bio = EXCLUDED.bio,
+          category = EXCLUDED.category;`,
+        [
+          newCandidate.id,
+          newCandidate.competitionSlug,
+          newCandidate.firstName,
+          newCandidate.lastName,
+          newCandidate.candidateNumber,
+          newCandidate.photoUrl,
+          newCandidate.bio,
+          newCandidate.category,
+          0,
+          0,
+          1,
+          'ACTIF',
+        ]
       );
+    } catch (dbErr: any) {
+      console.error('Erreur insertion PostgreSQL candidate:', dbErr);
     }
 
-    // 2. Also write to local disk JSON file
+    // 2. Synchroniser le fichier disque local
     const diskData = readDiskCandidates();
     const updatedDisk = [newCandidate, ...diskData.filter((c) => c.id !== newCandidate.id)];
     writeDiskCandidates(updatedDisk);
+    candCache = {};
 
     return NextResponse.json({ success: true, data: newCandidate });
   } catch (error: any) {
@@ -154,9 +172,15 @@ export async function DELETE(request: Request) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
-    const supabaseAdmin = getSupabaseAdmin();
-    if (id) await supabaseAdmin.from('candidates').delete().eq('id', id);
+    if (id) {
+      try {
+        await queryDb('DELETE FROM public.candidates WHERE id = $1;', [id]);
+      } catch (e) {
+        console.warn('Erreur PostgreSQL delete candidate:', e);
+      }
+    }
 
+    candCache = {};
     const diskData = readDiskCandidates();
     writeDiskCandidates(diskData.filter((c) => c.id !== id));
 

@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
+import { queryDb } from '@/lib/pgDb';
 import { getSupabaseAdmin } from '@/lib/supabaseClient';
+import { getRequestDomain } from '@/utils/domain';
 
 export async function POST(request: Request) {
   try {
@@ -24,11 +26,8 @@ export async function POST(request: Request) {
     const fapshiApiKey = process.env.FAPSHI_API_KEY || 'FAK_f8e3d6d682775ca2f34e34c80da6ccc6';
     const fapshiBaseUrl = process.env.FAPSHI_BASE_URL || 'https://live.fapshi.com';
 
-    // DÉTECTION DYNAMIQUE DE L'URL DU SITE (Netlify, production ou local)
-    const host = request.headers.get('host') || 'miss-mister-web.netlify.app';
-    const protocol = request.headers.get('x-forwarded-proto') || (host.includes('localhost') ? 'http' : 'https');
-    const origin = request.headers.get('origin');
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || origin || `${protocol}://${host}`;
+    // Détection automatique du nom de domaine pour le site (tous hébergeurs)
+    const siteUrl = getRequestDomain(request);
 
     // URL de retour exacte vers la page du concours / candidat
     let returnBase = returnUrl && typeof returnUrl === 'string' && returnUrl.startsWith('http')
@@ -84,7 +83,7 @@ export async function POST(request: Request) {
       console.error('Fapshi initiate-pay API error:', fapshiData);
       return NextResponse.json({
         success: false,
-        error: fapshiData.message || fapshiData.error || 'Erreur lors de la connexion à la passerelle de paiement Fapshi.'
+        error: fapshiData.message || fapshiData.error || 'Erreur lors de la connexion à la passerelle de paiement sécurisée.'
       }, { status: 400 });
     }
 
@@ -93,27 +92,30 @@ export async function POST(request: Request) {
     // Si Fapshi a retourné un transId, on peut l'inclure dans l'URL de redirection
     const finalRedirectUrl = `${returnBase}?voteSuccess=true&voteId=${voteId}&candidateId=${candidateId}&transId=${transId}&voteCount=${count}`;
 
-    // 2. ENREGISTREMENT DU VOTE EN ATTENTE (PENDING) DANS SUPABASE
+    // 2. ENREGISTREMENT DU VOTE EN ATTENTE (PENDING) DANS POSTGRESQL NEON
     try {
-      const supabase = getSupabaseAdmin();
-      await supabase.from('votes').insert([
-        {
-          id: voteId,
-          candidate_id: candidateId,
-          candidate_name: candidateName,
-          competition_slug: competitionSlug,
-          vote_count: count,
-          amount_fcfa: voteAmount,
-          payment_method: 'fapshi_mobile_money',
-          payment_status: 'PENDING',
-          fapshi_trans_id: transId,
-          voter_email: voterEmail,
-          voter_phone: cleanPhone || null,
-          created_at: new Date().toISOString()
-        }
-      ]);
-    } catch {
-      // Continue si Supabase n'est pas encore accessible
+      await queryDb(
+        `INSERT INTO public.votes (
+          id, candidate_id, candidate_name, competition_slug, vote_count,
+          amount_fcfa, payment_method, payment_status, fapshi_trans_id,
+          voter_email, created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, 'fapshi_mobile_money', 'PENDING', $7, $8, NOW())
+        ON CONFLICT (id) DO UPDATE SET
+          fapshi_trans_id = EXCLUDED.fapshi_trans_id,
+          payment_status = 'PENDING';`,
+        [
+          voteId,
+          candidateId,
+          candidateName,
+          competitionSlug,
+          count,
+          voteAmount,
+          transId,
+          voterEmail || null,
+        ]
+      );
+    } catch (dbErr) {
+      console.warn('PostgreSQL pending vote record notice:', dbErr);
     }
 
     // 3. RETOURNER LE LIEN FAPSHI POUR REDIRECTION IMMÉDIATE DU VOTANT

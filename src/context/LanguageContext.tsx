@@ -50,7 +50,7 @@ const translations: Record<Language, Record<string, string>> = {
 
     // Candidate Profile
     'profile.back': '‹ Retour',
-    'profile.voteBtn': 'Voter pour',
+    'profile.voteBtn': 'Voter',
     'profile.votes': 'votes comptabilisés',
     'profile.rank': 'Rang actuel',
     'profile.category': 'Catégorie',
@@ -109,7 +109,7 @@ const translations: Record<Language, Record<string, string>> = {
 
     // Candidate Profile
     'profile.back': '‹ Back',
-    'profile.voteBtn': 'Vote for',
+    'profile.voteBtn': 'Vote',
     'profile.votes': 'counted votes',
     'profile.rank': 'Current Rank',
     'profile.category': 'Category',
@@ -139,16 +139,13 @@ const LanguageContext = createContext<LanguageContextType>({
 });
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [lang, setLangState] = useState<Language>('FR');
-
-  useEffect(() => {
+  const [lang, setLangState] = useState<Language>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('mm_lang') as Language;
-      if (saved && (saved === 'FR' || saved === 'EN')) {
-        setLangState(saved);
-      }
+      if (saved && (saved === 'FR' || saved === 'EN')) return saved;
     }
-  }, []);
+    return 'FR';
+  });
 
   const setLang = (newLang: Language) => {
     setLangState(newLang);

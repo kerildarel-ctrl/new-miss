@@ -24,6 +24,14 @@ export async function POST(request: Request) {
       );
     }
 
+    if (voteId) {
+      const { queryDb } = await import('@/lib/pgDb');
+      const existing = await queryDb<any>('SELECT * FROM public.votes WHERE id = $1 AND payment_status = $2 LIMIT 1;', [voteId, 'SUCCESSFUL']);
+      if (existing && existing.length > 0) {
+        return NextResponse.json({ success: true, message: 'Vote déjà comptabilisé' });
+      }
+    }
+
     const result = await recordConfirmedVote({
       candidateId,
       count: parseInt(voteCount, 10) || 1,

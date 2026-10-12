@@ -45,19 +45,11 @@ export default function CandidateDetailPage({
     loadData();
   }, [slug, id]);
 
-  const handleConfirmVote = async (candidateId: string, count: number = 1) => {
-    if (candidate && competition) {
-      setCandidate((prev) =>
-        prev ? { ...prev, voteCount: prev.voteCount + count } : null
-      );
-      await submitVote(
-        candidateId,
-        `${candidate.firstName} ${candidate.lastName}`,
-        competition.slug,
-        count,
-        competition.votePrice || 100
-      );
-    }
+  const handleConfirmVote = (candidateId: string, count: number = 1) => {
+    // Le vote a DÉJÀ été enregistré de façon atomique par /api/pay/status.
+    setCandidate((prev) =>
+      prev ? { ...prev, voteCount: (prev.voteCount || 0) + count } : null
+    );
   };
 
   if (isLoading) {

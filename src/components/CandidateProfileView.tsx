@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { VoteModal } from '@/components/VoteModal';
 import { Candidate, Competition } from '@/data/mockData';
 import { useLanguage } from '@/context/LanguageContext';
+import { getAutoDomain } from '@/utils/domain';
 
 interface CandidateProfileViewProps {
   candidate: Candidate;
@@ -34,7 +35,8 @@ export function CandidateProfileView({
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      setProfileUrl(window.location.href);
+      const base = getAutoDomain();
+      setProfileUrl(`${base}${window.location.pathname}`);
     }
   }, []);
 
@@ -96,19 +98,31 @@ export function CandidateProfileView({
   };
 
   return (
-    <div className="cp-profile-container">
-      {/* PAYMENT NOTIFICATION BANNER */}
+    <div
+      className="cp-profile-container"
+      style={{
+        fontFamily: "var(--font-poppins), 'Poppins', sans-serif",
+      }}
+    >
+      {/* NOTIFICATION DE PAIEMENT ÉVENTUELLE */}
       {paymentNotice && (
-        <div className="cp-payment-notice">
+        <div
+          className="cp-payment-notice"
+          style={{
+            fontFamily: "var(--font-poppins), 'Poppins', sans-serif",
+            borderRadius: '16px',
+          }}
+        >
           <div>
             <strong>{paymentNotice.title}</strong>
-            <span className="sm mute">{paymentNotice.message}</span>
+            <span className="sm mute" style={{ marginLeft: '8px' }}>{paymentNotice.message}</span>
           </div>
           {onClosePaymentNotice && (
             <button
               type="button"
               className="btn sm line"
               onClick={onClosePaymentNotice}
+              style={{ fontFamily: "var(--font-poppins), 'Poppins', sans-serif" }}
             >
               {t('btn.close', 'Fermer')}
             </button>
@@ -116,26 +130,55 @@ export function CandidateProfileView({
         </div>
       )}
 
-      {/* BREADCRUMB */}
+      {/* FIL D'ARIANE / RETOUR COMPÉTITION */}
       {competition && (
-        <div className="cp-breadcrumb-wrapper">
-          <Link href={`/competition/${competition.slug}`} className="crumb">
-            {t('profile.back', '‹ Retour à')} {competition.title}
+        <div className="cp-breadcrumb-wrapper" style={{ marginBottom: '20px' }}>
+          <Link
+            href={`/competition/${competition.slug}`}
+            className="crumb"
+            style={{
+              fontFamily: "var(--font-poppins), 'Poppins', sans-serif",
+              fontSize: '0.92rem',
+              fontWeight: 500,
+              color: 'var(--mute)',
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+          >
+            ‹ Retour {competition.title}
           </Link>
         </div>
       )}
 
-      {/* CARD CONTAINER ENCLOSING THE PROFILE */}
-      <div className="cp-card-wrapper">
+      {/* CONTENEUR DE PROFIL ÉPURÉ SANS RECTANGLE / SANS CADRE (STYLE AUTH ADMIN) */}
+      <div
+        className="cp-card-wrapper"
+        style={{
+          background: 'transparent',
+          border: 'none',
+          boxShadow: 'none',
+          padding: '0',
+          fontFamily: "var(--font-poppins), 'Poppins', sans-serif",
+        }}
+      >
         <div className="cp-profile-grid">
-          {/* LEFT COLUMN: PHOTO SEULEMENT (CLEAN & PRESTIGIEUX) */}
+          {/* COLONNE GAUCHE: PHOTO DU CANDIDAT */}
           <div className="cp-photo-col">
             <a
               href={profileUrl || '#'}
               title="Ouvrir le lien du profil"
               style={{ display: 'block', width: '100%', cursor: 'pointer' }}
             >
-              <div className="cp-photo-wrapper">
+              <div
+                className="cp-photo-wrapper"
+                style={{
+                  borderRadius: '24px',
+                  border: '1.5px solid var(--line)',
+                  boxShadow: '0 16px 36px -12px rgba(0, 0, 0, 0.4)',
+                }}
+              >
                 <Image
                   src={candidate.photoUrl}
                   alt={`${candidate.firstName} ${candidate.lastName}`}
@@ -144,44 +187,118 @@ export function CandidateProfileView({
                   sizes="(max-width: 768px) 100vw, 420px"
                   style={{ objectFit: 'cover', objectPosition: 'top' }}
                 />
-                <span className="cp-rank-badge">{rankLabel}</span>
+                <span
+                  className="cp-rank-badge"
+                  style={{
+                    fontFamily: "var(--font-poppins), 'Poppins', sans-serif",
+                    fontWeight: 800,
+                  }}
+                >
+                  {rankLabel}
+                </span>
               </div>
             </a>
           </div>
 
-          {/* RIGHT COLUMN: DETAILS & VOTER ACTION */}
-          <div className="cp-info-col">
-            {/* NAME */}
-            <h1 className="cp-name">
-              {candidate.firstName} <span className="cp-name-highlight">{candidate.lastName}</span>
+          {/* COLONNE DROITE: INFORMATIONS & ACTION DE VOTE */}
+          <div className="cp-info-col" style={{ fontFamily: "var(--font-poppins), 'Poppins', sans-serif" }}>
+            {/* NOM DU CANDIDAT */}
+            <h1
+              className="cp-name"
+              style={{
+                fontFamily: "var(--font-poppins), 'Poppins', sans-serif",
+                fontSize: 'clamp(2.2rem, 5vw, 3.8rem)',
+                fontWeight: 900,
+                letterSpacing: '-0.02em',
+                lineHeight: 1.1,
+                marginBottom: '8px',
+              }}
+            >
+              {candidate.firstName} <span style={{ color: 'var(--p)' }}>{candidate.lastName}</span>
             </h1>
 
-            {/* SUBTITLE & STATUS */}
-            <div className="cp-subtitle">
-              <span>{t('profile.category', 'Candidat')} n°{candidateNumberClean}</span>
+            {/* SOUS-TITRE & STATUT */}
+            <div
+              className="cp-subtitle"
+              style={{
+                fontFamily: "var(--font-poppins), 'Poppins', sans-serif",
+                fontSize: '0.92rem',
+                color: 'var(--mute)',
+                marginBottom: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                flexWrap: 'wrap',
+              }}
+            >
+              <span>{t('profile.category', 'Catégorie')} n°{candidateNumberClean}</span>
               <span className="cp-dot-sep">•</span>
               <span>{competition?.title || 'Compétition'}</span>
               <span className="cp-dot-sep">•</span>
-              <span className="cp-status-pill">
+              <span
+                className="cp-status-pill"
+                style={{
+                  fontFamily: "var(--font-poppins), 'Poppins', sans-serif",
+                  fontWeight: 600,
+                }}
+              >
                 <i className="cp-status-pulse" />
                 En Cours
               </span>
             </div>
 
-            {/* BIO / DESCRIPTION */}
-            <p className="cp-bio">{cleanBio}</p>
+            {/* BIO DU CANDIDAT */}
+            <p
+              className="cp-bio"
+              style={{
+                fontFamily: "var(--font-poppins), 'Poppins', sans-serif",
+                fontSize: '0.98rem',
+                lineHeight: 1.6,
+                color: 'var(--ink)',
+                opacity: 0.9,
+                marginBottom: '24px',
+                maxWidth: '680px',
+              }}
+            >
+              {cleanBio}
+            </p>
 
-            {/* VOTE COUNT & PROGRESS BAR */}
-            <div className="cp-vote-box">
-              <div className="cp-vote-display">
-                <span className="cp-vote-number">
+            {/* COMPTEUR DE VOTES & JAUGE */}
+            <div className="cp-vote-box" style={{ marginBottom: '22px' }}>
+              <div
+                className="cp-vote-display"
+                style={{
+                  fontFamily: "var(--font-poppins), 'Poppins', sans-serif",
+                  display: 'flex',
+                  alignItems: 'baseline',
+                  gap: '10px',
+                  marginBottom: '10px',
+                }}
+              >
+                <span
+                  className="cp-vote-number"
+                  style={{
+                    fontFamily: "var(--font-poppins), 'Poppins', sans-serif",
+                    fontSize: 'clamp(2.6rem, 5vw, 3.8rem)',
+                    fontWeight: 900,
+                    lineHeight: 1,
+                  }}
+                >
                   {candidate.voteCount.toLocaleString('fr-FR')}
                 </span>
-                <span className="cp-vote-label">
-                  {t('profile.votes', 'votes enregistrés')} ({candidate.percentage || 0}% · Rang #{candidate.rank})
+                <span
+                  className="cp-vote-label"
+                  style={{
+                    fontFamily: "var(--font-poppins), 'Poppins', sans-serif",
+                    fontSize: '0.95rem',
+                    color: 'var(--mute)',
+                    fontWeight: 500,
+                  }}
+                >
+                  votes comptabilisés ({candidate.percentage || 0}% · Rang #{candidate.rank})
                 </span>
               </div>
-              <div className="cp-progress-track">
+              <div className="cp-progress-track" style={{ height: '6px', maxWidth: '680px' }}>
                 <div
                   className="cp-progress-fill"
                   style={{ width: `${votePercentage}%` }}
@@ -189,26 +306,53 @@ export function CandidateProfileView({
               </div>
             </div>
 
-            {/* MAIN VOTE BUTTON - PROMINENT & IMMEDIATE */}
+            {/* BOUTON VOTER : SANS ÉTOILE, JUSTE "Voter", POLICE POPPINS */}
             <button
               type="button"
-              className="cp-voter-btn"
+              className="btn full cp-voter-btn"
               onClick={() => setIsVoteModalOpen(true)}
+              style={{
+                marginTop: '16px',
+                height: '54px',
+                maxWidth: '520px',
+                borderRadius: '99px',
+                background: 'var(--p)',
+                color: '#ffffff',
+                fontSize: '1.05rem',
+                fontWeight: 700,
+                fontFamily: "var(--font-poppins), 'Poppins', sans-serif",
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: 'none',
+                boxShadow: '0 10px 28px rgba(91, 61, 245, 0.4)',
+                transition: 'transform 0.2s, box-shadow 0.2s',
+              }}
             >
-              <span>⭐</span>
-              <span>{t('profile.voteBtn', 'Voter pour ce candidat')} · {competition?.votePrice || 100} FCFA</span>
+              Voter
             </button>
 
-            {/* DIVIDER LINE */}
-            <div className="cp-divider" />
+            {/* SÉPARATEUR DISCRET */}
+            <div className="cp-divider" style={{ maxWidth: '680px', margin: '24px 0' }} />
 
-            {/* SHARE & QR CODE SECTION */}
-            <div style={{ marginTop: '8px' }}>
-              <label className="cp-section-label" style={{ display: 'block', marginBottom: '8px' }}>
+            {/* SECTION PARTAGE & QR CODE */}
+            <div style={{ marginTop: '4px', maxWidth: '680px' }}>
+              <label
+                className="cp-section-label"
+                style={{
+                  display: 'block',
+                  marginBottom: '10px',
+                  fontFamily: "var(--font-poppins), 'Poppins', sans-serif",
+                  fontWeight: 700,
+                  fontSize: '0.95rem',
+                  color: 'var(--ink)',
+                }}
+              >
                 🔗 {t('profile.share', 'Partager ce profil')}
               </label>
 
-              {/* ACTION BUTTONS: COPY LINK & TOGGLE QR CODE */}
+              {/* BOUTONS D'ACTION */}
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 <button
                   type="button"
@@ -221,11 +365,12 @@ export function CandidateProfileView({
                     gap: '6px',
                     padding: '12px 16px',
                     borderRadius: '12px',
-                    background: 'var(--soft, rgba(255, 255, 255, 0.08))',
-                    border: '1.5px solid var(--line, rgba(255, 255, 255, 0.15))',
-                    color: 'var(--ink, #fff)',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1.5px solid var(--line)',
+                    color: 'var(--ink)',
                     fontSize: '0.88rem',
                     fontWeight: 600,
+                    fontFamily: "var(--font-poppins), 'Poppins', sans-serif",
                     cursor: 'pointer',
                     transition: 'all 0.2s',
                   }}
@@ -245,11 +390,12 @@ export function CandidateProfileView({
                     gap: '6px',
                     padding: '12px 16px',
                     borderRadius: '12px',
-                    background: showQrCode ? 'rgba(124, 58, 237, 0.2)' : 'var(--soft, rgba(255, 255, 255, 0.08))',
-                    border: showQrCode ? '1.5px solid #a78bfa' : '1.5px solid var(--line, rgba(255, 255, 255, 0.15))',
-                    color: showQrCode ? '#a78bfa' : 'var(--ink, #fff)',
+                    background: showQrCode ? 'rgba(91, 61, 245, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                    border: showQrCode ? '1.5px solid var(--p)' : '1.5px solid var(--line)',
+                    color: showQrCode ? 'var(--p)' : 'var(--ink)',
                     fontSize: '0.88rem',
                     fontWeight: 600,
+                    fontFamily: "var(--font-poppins), 'Poppins', sans-serif",
                     cursor: 'pointer',
                     transition: 'all 0.2s',
                   }}
@@ -273,6 +419,7 @@ export function CandidateProfileView({
                     color: '#25D366',
                     fontSize: '0.88rem',
                     fontWeight: 600,
+                    fontFamily: "var(--font-poppins), 'Poppins', sans-serif",
                     cursor: 'pointer',
                   }}
                 >
@@ -281,24 +428,24 @@ export function CandidateProfileView({
                 </button>
               </div>
 
-              {/* ELEGANT EXPANDABLE QR CODE CARD */}
+              {/* QR CODE SÉCURISÉ */}
               {showQrCode && (
                 <div
                   style={{
                     marginTop: '16px',
                     padding: '20px',
                     borderRadius: '20px',
-                    background: 'var(--card, rgba(17, 24, 39, 0.95))',
-                    border: '1.5px solid rgba(124, 58, 237, 0.3)',
-                    boxShadow: '0 16px 36px rgba(0, 0, 0, 0.3)',
+                    background: 'rgba(255, 255, 255, 0.03)',
+                    border: '1.5px solid var(--line)',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     textAlign: 'center',
                     animation: 'fadeIn 0.25s ease-out',
+                    fontFamily: "var(--font-poppins), 'Poppins', sans-serif",
                   }}
                 >
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#a78bfa', fontSize: '0.82rem', fontWeight: 600, marginBottom: '8px' }}>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'var(--p)', fontSize: '0.82rem', fontWeight: 600, marginBottom: '8px' }}>
                     <span>📱</span>
                     <span>{t('profile.qrBadge', 'QR code officiel du profil')}</span>
                   </div>
@@ -326,34 +473,9 @@ export function CandidateProfileView({
                     )}
                   </div>
 
-                  <p style={{ fontSize: '0.82rem', color: '#9ca3af', maxWidth: '300px', margin: '8px 0 14px', lineHeight: 1.4 }}>
+                  <p style={{ fontSize: '0.82rem', color: 'var(--mute)', maxWidth: '300px', margin: '8px 0 14px', lineHeight: 1.4 }}>
                     {t('profile.qrDesc', 'Scannez avec un téléphone pour ouvrir directement ce profil et voter.')}
                   </p>
-
-                  {qrCodeImageUrl && (
-                    <a
-                      href={qrCodeImageUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      download={`qrcode-${candidate.firstName}-${candidate.lastName}.png`}
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        padding: '10px 18px',
-                        borderRadius: '999px',
-                        background: 'rgba(124, 58, 237, 0.15)',
-                        border: '1px solid rgba(124, 58, 237, 0.35)',
-                        color: '#a78bfa',
-                        fontSize: '0.82rem',
-                        fontWeight: 600,
-                        textDecoration: 'none',
-                      }}
-                    >
-                      <span>📥</span>
-                      <span>{t('profile.qrDownload', 'Télécharger l’image QR')}</span>
-                    </a>
-                  )}
                 </div>
               )}
             </div>
@@ -361,7 +483,7 @@ export function CandidateProfileView({
         </div>
       </div>
 
-      {/* VOTE MODAL */}
+      {/* MODALE DE VOTE */}
       <VoteModal
         isOpen={isVoteModalOpen}
         candidate={candidate}

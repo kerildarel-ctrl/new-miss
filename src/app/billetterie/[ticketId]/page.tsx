@@ -16,6 +16,7 @@ import {
   KeyRound,
   Download,
 } from 'lucide-react';
+import { getAutoDomain } from '@/utils/domain';
 
 interface TicketFullData {
   id: string;
@@ -70,7 +71,7 @@ export default function SingleTicketPage() {
   const [siteOrigin, setSiteOrigin] = useState('');
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      setSiteOrigin(window.location.origin);
+      setSiteOrigin(getAutoDomain());
     }
   }, []);
 
@@ -209,7 +210,7 @@ export default function SingleTicketPage() {
   };
 
   // QR Code Public URL (pointing strictly to this domain and page)
-  const publicTicketUrl = `${siteOrigin || 'https://miss-template.netlify.app'}/billetterie/${encodeURIComponent(cleanCode)}`;
+  const publicTicketUrl = `${siteOrigin || ''}/billetterie/${encodeURIComponent(cleanCode)}`;
   const qrCodeImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodeURIComponent(publicTicketUrl)}`;
 
   return (
