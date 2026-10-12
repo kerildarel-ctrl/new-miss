@@ -26,10 +26,19 @@ export default function BilletteriePage() {
 
     setIsSubmitting(true);
     try {
-      await new Promise((res) => setTimeout(res, 600));
-      setIsNotified(true);
+      const res = await fetch('/api/notify/billetterie', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: notifyEmail }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setIsNotified(true);
+      } else {
+        alert(data.error || 'Erreur lors de l\'envoi. Réessayez.');
+      }
     } catch {
-      // Ignore
+      alert('Erreur réseau. Réessayez.');
     } finally {
       setIsSubmitting(false);
     }
