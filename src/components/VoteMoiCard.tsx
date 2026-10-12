@@ -262,8 +262,7 @@ export function VoteMoiCard({
           <button
             type="button"
             onClick={onWithdrawClick}
-            disabled={!canWithdraw}
-            className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 hover:from-indigo-500 hover:to-purple-600 text-white font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/25 transition-all transform active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 hover:from-indigo-500 hover:to-purple-600 text-white font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/25 transition-all transform active:scale-[0.99] cursor-pointer"
           >
             <span>Demander un retrait Mobile Money</span>
             <ArrowUpRight className="w-4 h-4" />
