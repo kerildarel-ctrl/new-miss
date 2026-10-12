@@ -97,7 +97,7 @@ export function VoteMoiCard({
     <div className={`relative group w-full max-w-[500px] select-none ${className}`}>
       {/* Halo lumineux d'ambiance en arrière-plan */}
       <div
-        className={`absolute -inset-1 rounded-[32px] bg-gradient-to-r ${themeStyles.glow} blur-xl opacity-60 group-hover:opacity-100 transition-opacity duration-500`}
+        className={`absolute -inset-1 rounded-[32px] bg-gradient-to-r ${themeStyles.glow} blur-xl opacity-60 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none`}
       />
 
       {/* CORPS DE LA CARTE BANCAIRE */}
