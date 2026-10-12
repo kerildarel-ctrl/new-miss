@@ -17,6 +17,7 @@ export default function KerilCompetitionsPage() {
   const [editingCompetition, setEditingCompetition] = useState<Competition | null>(null);
   const [selectedCompForCand, setSelectedCompForCand] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -44,10 +45,9 @@ export default function KerilCompetitionsPage() {
   };
 
   const handleDelete = async (id: string, slug?: string) => {
-    if (confirm('Voulez-vous vraiment supprimer cette compétition ?')) {
-      setCompetitions((prev) => prev.filter((c) => c.id !== id && c.slug !== slug));
-      await deleteCompetition(id, slug);
-    }
+    setCompetitions((prev) => prev.filter((c) => c.id !== id && c.slug !== slug));
+    setDeletingId(null);
+    await deleteCompetition(id, slug);
   };
 
   const handleToggleStatus = (id: string) => {
@@ -271,21 +271,33 @@ export default function KerilCompetitionsPage() {
                             >
                               <Edit3 className="w-4 h-4" />
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDelete(comp.id, comp.slug)}
-                              style={{
-                                padding: '8px 10px',
-                                borderRadius: '99px',
-                                background: 'rgba(255, 90, 126, 0.12)',
-                                color: 'var(--a)',
-                                border: 'none',
-                                cursor: 'pointer',
-                              }}
-                              title="Supprimer"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            {deletingId === comp.id ? (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDelete(comp.id, comp.slug)}
+                                  style={{ padding: '6px 10px', borderRadius: '99px', background: 'rgba(255,90,126,0.9)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700 }}
+                                >
+                                  Confirmer
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setDeletingId(null)}
+                                  style={{ padding: '6px 8px', borderRadius: '99px', background: 'var(--soft)', color: 'var(--mute)', border: '1px solid var(--line)', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700 }}
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => setDeletingId(comp.id)}
+                                style={{ padding: '8px 10px', borderRadius: '99px', background: 'rgba(255, 90, 126, 0.12)', color: 'var(--a)', border: 'none', cursor: 'pointer' }}
+                                title="Supprimer"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>

@@ -154,9 +154,6 @@ export default function KerilFinancesPage() {
   };
 
   const handleRegenerateToken = async (slug: string) => {
-    if (!confirm("Voulez-vous vraiment régénérer la clé secrète pour cette élection ? L'ancien lien partagé à l'organisateur deviendra immédiatement invalide.")) {
-      return;
-    }
     setRegeneratingSlug(slug);
     try {
       const res = await fetch('/api/competitions', {
@@ -167,7 +164,6 @@ export default function KerilFinancesPage() {
       const data = await res.json();
       if (data.success) {
         await loadAllFinancials();
-        alert('Nouvelle clé secrète générée avec succès !');
       } else {
         alert(data.error || 'Erreur lors de la régénération');
       }

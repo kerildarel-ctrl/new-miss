@@ -15,6 +15,7 @@ export default function KerilCandidatesPage() {
   const [editingCandidate, setEditingCandidate] = useState<Candidate | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -37,10 +38,9 @@ export default function KerilCandidatesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Voulez-vous vraiment supprimer ce candidat ?')) {
-      setCandidates((prev) => prev.filter((c) => c.id !== id));
-      await deleteCandidate(id);
-    }
+    setCandidates((prev) => prev.filter((c) => c.id !== id));
+    setDeletingId(null);
+    await deleteCandidate(id);
   };
 
   const handleSubmitForm = async (formData: Partial<Candidate>) => {
@@ -241,21 +241,33 @@ export default function KerilCandidatesPage() {
                             >
                               <Edit3 className="w-4 h-4" />
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDelete(cand.id)}
-                              style={{
-                                padding: '8px 10px',
-                                borderRadius: '99px',
-                                background: 'rgba(255, 90, 126, 0.12)',
-                                color: 'var(--a)',
-                                border: 'none',
-                                cursor: 'pointer',
-                              }}
-                              title="Supprimer"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            {deletingId === cand.id ? (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDelete(cand.id)}
+                                  style={{ padding: '6px 10px', borderRadius: '99px', background: 'rgba(255,90,126,0.9)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700 }}
+                                >
+                                  Confirmer
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setDeletingId(null)}
+                                  style={{ padding: '6px 8px', borderRadius: '99px', background: 'var(--soft)', color: 'var(--mute)', border: '1px solid var(--line)', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700 }}
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => setDeletingId(cand.id)}
+                                style={{ padding: '8px 10px', borderRadius: '99px', background: 'rgba(255, 90, 126, 0.12)', color: 'var(--a)', border: 'none', cursor: 'pointer' }}
+                                title="Supprimer"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
