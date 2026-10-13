@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import jsQR from 'jsqr';
 import { useParams } from 'next/navigation';
 import {
   TrendingUp, Users, DollarSign, Ticket, RefreshCw,
@@ -59,10 +60,11 @@ export default function OrganizerDashboardPage() {
   const [payoutMsg, setPayoutMsg] = useState<string | null>(null);
 
   // Camera refs
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const animRef = useRef<number>(0);
+  const videoRef   = useRef<HTMLVideoElement>(null);
+  const canvasRef  = useRef<HTMLCanvasElement>(null);
+  const streamRef  = useRef<MediaStream | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const lockedRef  = useRef(false); // prevents duplicate scans
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -84,59 +86,55 @@ export default function OrganizerDashboardPage() {
   // ── Scanner logic ──────────────────────────────────────────────
 
   const stopCamera = useCallback(() => {
-    cancelAnimationFrame(animRef.current);
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop());
-      streamRef.current = null;
-    }
+    if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
+    if (streamRef.current) { streamRef.current.getTracks().forEach((t) => t.stop()); streamRef.current = null; }
+    lockedRef.current = false;
   }, []);
 
   const startCamera = useCallback(async () => {
     setCameraError(null);
     setScanResult(null);
+    lockedRef.current = false;
+    // Stop any existing stream first
+    if (streamRef.current) { streamRef.current.getTracks().forEach((t) => t.stop()); streamRef.current = null; }
+    if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
       });
       streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-        tickQR();
-      }
+      const video = videoRef.current;
+      if (!video) return;
+      video.srcObject = stream;
+      await video.play();
+
+      // ── Scan every 250ms using setInterval (NOT rAF — avoids blackout) ──
+      intervalRef.current = setInterval(() => {
+        if (lockedRef.current) return;
+        const vid = videoRef.current;
+        const cvs = canvasRef.current;
+        if (!vid || !cvs || vid.readyState < 2 || vid.videoWidth === 0) return;
+        const ctx = cvs.getContext('2d', { willReadFrequently: true });
+        if (!ctx) return;
+        cvs.width  = vid.videoWidth;
+        cvs.height = vid.videoHeight;
+        ctx.drawImage(vid, 0, 0);
+        const img = ctx.getImageData(0, 0, cvs.width, cvs.height);
+        const code = jsQR(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' });
+        if (code?.data) {
+          lockedRef.current = true; // prevent double-fire
+          clearInterval(intervalRef.current!);
+          intervalRef.current = null;
+          const raw = code.data;
+          const match = raw.match(/TKT-[A-Z0-9]{4}-[A-Z0-9]{4}/i);
+          const ticketCode = match ? match[0].toUpperCase() : raw.trim().toUpperCase();
+          stopCamera();
+          submitScan(ticketCode);
+        }
+      }, 250);
     } catch (err: any) {
       setCameraError(`Caméra inaccessible : ${err.message || 'permission refusée'}`);
     }
-  }, []); // eslint-disable-line
-
-  const tickQR = useCallback(() => {
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    if (!video || !canvas || video.readyState < 2) {
-      animRef.current = requestAnimationFrame(tickQR);
-      return;
-    }
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    canvas.width  = video.videoWidth;
-    canvas.height = video.videoHeight;
-    ctx.drawImage(video, 0, 0);
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-
-    // Dynamic import jsQR
-    import('jsqr').then(({ default: jsQR }) => {
-      const code = jsQR(imageData.data, imageData.width, imageData.height);
-      if (code?.data) {
-        // Extract ticket code from URL if needed
-        const raw = code.data;
-        const match = raw.match(/TKT-[A-Z0-9]{4}-[A-Z0-9]{4}/i);
-        const ticketCode = match ? match[0].toUpperCase() : raw.trim().toUpperCase();
-        stopCamera();
-        submitScan(ticketCode);
-        return;
-      }
-      animRef.current = requestAnimationFrame(tickQR);
-    });
   }, [stopCamera]); // eslint-disable-line
 
   useEffect(() => {
