@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Calendar, MapPin, Ticket, ArrowRight, Search } from 'lucide-react';
 
 interface TicketPass {
@@ -133,17 +132,29 @@ export default function EvenementsPage() {
                     }}
                   >
                     {/* Banner */}
-                    <div style={{ position: 'relative', height: '190px' }}>
-                      <Image
-                        src={evt.bannerImage || '/images/hero_bg.png'}
-                        alt={evt.title}
-                        fill
-                        style={{ objectFit: 'cover' }}
-                      />
-                      <div style={{
-                        position: 'absolute', inset: 0,
-                        background: 'linear-gradient(to top, rgba(15,10,50,0.7) 0%, transparent 50%)',
-                      }} />
+                    <div style={{
+                      position: 'relative', height: '190px',
+                      background: 'linear-gradient(135deg,#1B0E78 0%,#27149F 55%,#4B2CE0 100%)',
+                      overflow: 'hidden',
+                    }}>
+                      {/* Only show image if it's a real URL (not the default placeholder) */}
+                      {evt.bannerImage && evt.bannerImage !== '/images/hero_bg.png' && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={evt.bannerImage}
+                          alt={evt.title}
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                      )}
+                      {/* Overlay */}
+                      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(15,10,50,0.75) 0%, transparent 55%)' }} />
+                      {/* Decorative pattern when no image */}
+                      {(!evt.bannerImage || evt.bannerImage === '/images/hero_bg.png') && (
+                        <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', opacity: 0.12 }}>
+                          <span style={{ fontSize: '5rem' }}>🎟️</span>
+                        </div>
+                      )}
                       {minPrice > 0 && (
                         <div style={{
                           position: 'absolute', bottom: '12px', left: '14px',
