@@ -364,10 +364,10 @@ export default function KerilEventsPage() {
                       <>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={bannerPreview} alt="preview" style={{ width: '100%', maxHeight: '180px', objectFit: 'cover', display: 'block' }} />
-                        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0 }}
-                          onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
-                          onMouseLeave={(e) => (e.currentTarget.style.opacity = '0')}
-                          style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'opacity 0.2s' }}>
+                        <div
+                          style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'opacity 0.2s', opacity: 0 }}
+                          onMouseEnter={(e) => ((e.currentTarget as HTMLDivElement).style.opacity = '1')}
+                          onMouseLeave={(e) => ((e.currentTarget as HTMLDivElement).style.opacity = '0')}>
                           <div style={{ textAlign: 'center' }}>
                             <Upload style={{ width: '24px', height: '24px', color: '#f59e0b', margin: '0 auto 6px' }} />
                             <div style={{ fontSize: '0.8rem', color: '#fff', fontWeight: 700 }}>Changer la photo</div>

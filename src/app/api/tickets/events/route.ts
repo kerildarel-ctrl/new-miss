@@ -197,8 +197,8 @@ export async function PUT(request: Request) {
     );
 
     // Return updated event + keep organizerToken from DB
-    const rows = await queryDb('SELECT * FROM public.events WHERE id=$1', [id]);
-    const evt = rows.rows?.[0];
+    const result = await queryDb('SELECT * FROM public.events WHERE id=$1', [id]);
+    const evt = (result as any).rows?.[0] ?? result[0];
     return NextResponse.json({
       success: true,
       data: {
