@@ -166,3 +166,56 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
+
+export async function PUT(request: Request) {
+  try {
+    await ensureEventsTable();
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    if (!id) return NextResponse.json({ success: false, error: 'ID requis' }, { status: 400 });
+
+    const body = await request.json();
+    const { title, subtitle, date, venue, city, bannerImage, passes,
+            organizerName, organizerEmail, organizerPhone } = body;
+
+    if (!title || !date || !venue)
+      return NextResponse.json({ success: false, error: 'Titre, date et lieu sont requis' }, { status: 400 });
+
+    await queryDb(
+      `UPDATE public.events
+         SET title=$1, subtitle=$2, date=$3, venue=$4, city=$5,
+             banner_image=$6, passes=$7,
+             organizer_name=$8, organizer_email=$9, organizer_phone=$10
+       WHERE id=$11`,
+      [
+        title, subtitle || '', date, venue, city || 'Yaoundé',
+        bannerImage || '',
+        JSON.stringify(Array.isArray(passes) ? passes : []),
+        organizerName || '', organizerEmail || '', organizerPhone || '',
+        id,
+      ]
+    );
+
+    // Return updated event + keep organizerToken from DB
+    const rows = await queryDb('SELECT * FROM public.events WHERE id=$1', [id]);
+    const evt = rows.rows?.[0];
+    return NextResponse.json({
+      success: true,
+      data: {
+        id,
+        title, subtitle, date, venue, city,
+        bannerImage,
+        passes: Array.isArray(passes) ? passes : [],
+        organizerToken: evt?.organizer_token || '',
+        organizerName: organizerName || '',
+        organizerEmail: organizerEmail || '',
+        organizerPhone: organizerPhone || '',
+      },
+      organizerToken: evt?.organizer_token || '',
+    });
+  } catch (error: any) {
+    console.error('PUT /api/tickets/events error:', error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
+
