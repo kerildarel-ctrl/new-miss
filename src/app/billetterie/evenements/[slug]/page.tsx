@@ -12,7 +12,6 @@ interface TicketPass {
   price: number;
   quantity?: number;
   description?: string;
-  color?: string;
 }
 
 interface Event {
@@ -24,6 +23,7 @@ interface Event {
   venue: string;
   city?: string;
   bannerImage?: string;
+  htmlContent?: string;
   passes: TicketPass[];
 }
 
@@ -125,58 +125,94 @@ export default function EventDetailPage() {
     );
   }
 
+  const hasHtml = Boolean(event.htmlContent && event.htmlContent.trim().length > 50);
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--soft)', color: 'var(--ink)' }}>
-      {/* BANNER */}
-      <div style={{ position: 'relative', height: 'clamp(220px, 35vw, 400px)' }}>
-        <Image src={event.bannerImage || '/images/hero_bg.png'} alt={event.title} fill style={{ objectFit: 'cover' }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(15,10,50,0.85) 100%)' }} />
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 'clamp(16px,4vw,40px)' }}>
-          <Link href="/billetterie/evenements" style={{
-            display: 'inline-flex', alignItems: 'center', gap: '6px',
-            color: '#D9D4FA', fontWeight: 700, fontSize: '0.85rem',
-            textDecoration: 'none', marginBottom: '16px',
-          }}>
-            <ArrowLeft style={{ width: '16px', height: '16px' }} /> Tous les événements
-          </Link>
-          <h1 style={{ color: '#ffffff', fontSize: 'clamp(1.6rem,4vw,2.8rem)', fontWeight: 900, margin: '0 0 8px', lineHeight: 1.2 }}>
-            {event.title}
-          </h1>
-          {event.subtitle && (
-            <p style={{ color: '#D9D4FA', fontSize: '1rem', margin: 0 }}>{event.subtitle}</p>
-          )}
-        </div>
+
+      {/* BACK NAV */}
+      <div style={{
+        background: 'linear-gradient(135deg,#1B0E78,#27149F)',
+        padding: 'clamp(14px,2.5vw,24px) clamp(16px,4vw,48px)',
+        display: 'flex', alignItems: 'center', gap: '16px',
+      }}>
+        <Link href="/billetterie/evenements" style={{
+          display: 'inline-flex', alignItems: 'center', gap: '6px',
+          color: '#D9D4FA', fontWeight: 700, fontSize: '0.85rem', textDecoration: 'none',
+        }}>
+          <ArrowLeft style={{ width: '16px', height: '16px' }} /> Tous les événements
+        </Link>
+        <span style={{ color: 'rgba(255,255,255,0.3)' }}>·</span>
+        <span style={{ color: '#fff', fontWeight: 700, fontSize: '0.9rem' }}>{event.title}</span>
       </div>
+
+      {/* HTML TEMPLATE or BANNER IMAGE */}
+      {hasHtml ? (
+        <div style={{ width: '100%', background: '#000' }}>
+          <iframe
+            srcDoc={event.htmlContent}
+            style={{ width: '100%', minHeight: 'clamp(400px, 60vw, 700px)', border: 'none', display: 'block' }}
+            title={event.title}
+            sandbox="allow-same-origin allow-scripts"
+            loading="lazy"
+          />
+        </div>
+      ) : (
+        <div style={{ position: 'relative', height: 'clamp(220px, 35vw, 400px)' }}>
+          <Image
+            src={event.bannerImage || '/images/hero_bg.png'}
+            alt={event.title}
+            fill
+            style={{ objectFit: 'cover' }}
+          />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 40%, rgba(15,10,50,0.8) 100%)' }} />
+          <div style={{ position: 'absolute', bottom: '24px', left: 'clamp(16px,4vw,40px)', right: 'clamp(16px,4vw,40px)' }}>
+            <h1 style={{ color: '#fff', fontSize: 'clamp(1.5rem,4vw,2.5rem)', fontWeight: 900, margin: '0 0 6px' }}>
+              {event.title}
+            </h1>
+            {event.subtitle && <p style={{ color: '#D9D4FA', margin: 0 }}>{event.subtitle}</p>}
+          </div>
+        </div>
+      )}
 
       {/* CONTENT */}
       <main style={{
         maxWidth: '1100px', margin: '0 auto',
         padding: 'clamp(20px,4vw,40px) clamp(16px,4vw,32px)',
-        display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(280px,380px)',
+        display: 'grid',
+        gridTemplateColumns: 'minmax(0,1fr) minmax(280px,380px)',
         gap: '32px', alignItems: 'start',
       }}>
         {/* LEFT */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          {/* Title (shown below HTML if html is present) */}
+          {hasHtml && (
+            <div>
+              <h1 style={{ margin: '0 0 6px', fontSize: 'clamp(1.4rem,3vw,2rem)', fontWeight: 900 }}>{event.title}</h1>
+              {event.subtitle && <p style={{ margin: 0, color: 'var(--mute)' }}>{event.subtitle}</p>}
+            </div>
+          )}
+
           {/* Event info */}
           <div style={{ background: 'var(--bg)', borderRadius: '20px', padding: '24px', border: '1.5px solid var(--line)' }}>
-            <h2 style={{ margin: '0 0 16px', fontSize: '1.1rem', fontWeight: 800 }}>Informations</h2>
+            <h2 style={{ margin: '0 0 16px', fontSize: '1.05rem', fontWeight: 800 }}>📅 Informations</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'var(--soft)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-                  <Calendar style={{ width: '18px', height: '18px', color: 'var(--p)' }} />
+                <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'var(--soft)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                  <Calendar style={{ width: '17px', height: '17px', color: 'var(--p)' }} />
                 </div>
                 <div>
-                  <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--mute)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Date</p>
-                  <p style={{ margin: 0, fontWeight: 700, fontSize: '0.95rem' }}>{event.date}</p>
+                  <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--mute)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Date</p>
+                  <p style={{ margin: 0, fontWeight: 700 }}>{event.date}</p>
                 </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'var(--soft)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-                  <MapPin style={{ width: '18px', height: '18px', color: 'var(--p)' }} />
+                <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'var(--soft)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                  <MapPin style={{ width: '17px', height: '17px', color: 'var(--p)' }} />
                 </div>
                 <div>
-                  <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--mute)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Lieu</p>
-                  <p style={{ margin: 0, fontWeight: 700, fontSize: '0.95rem' }}>{event.venue}{event.city ? `, ${event.city}` : ''}</p>
+                  <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--mute)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Lieu</p>
+                  <p style={{ margin: 0, fontWeight: 700 }}>{event.venue}{event.city ? `, ${event.city}` : ''}</p>
                 </div>
               </div>
             </div>
@@ -184,7 +220,7 @@ export default function EventDetailPage() {
 
           {/* Pass selection */}
           <div style={{ background: 'var(--bg)', borderRadius: '20px', padding: '24px', border: '1.5px solid var(--line)' }}>
-            <h2 style={{ margin: '0 0 16px', fontSize: '1.1rem', fontWeight: 800 }}>Choisissez votre pass</h2>
+            <h2 style={{ margin: '0 0 16px', fontSize: '1.05rem', fontWeight: 800 }}>🎟️ Choisissez votre pass</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {event.passes.map((pass) => (
                 <div
@@ -200,23 +236,22 @@ export default function EventDetailPage() {
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <div style={{
-                      width: '12px', height: '12px', borderRadius: '50%',
+                      width: '14px', height: '14px', borderRadius: '50%', flexShrink: 0,
                       background: selectedPass?.name === pass.name ? 'var(--p)' : 'var(--line)',
-                      flexShrink: 0, border: selectedPass?.name === pass.name ? '3px solid rgba(91,61,245,0.3)' : '3px solid transparent',
+                      boxShadow: selectedPass?.name === pass.name ? '0 0 0 4px rgba(91,61,245,0.2)' : 'none',
                     }} />
                     <div>
                       <p style={{ margin: 0, fontWeight: 800, fontSize: '0.95rem' }}>{pass.name}</p>
                       {pass.description && <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: 'var(--mute)' }}>{pass.description}</p>}
                       {pass.quantity !== undefined && (
-                        <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: 'var(--mute)' }}>
-                          <Users style={{ width: '11px', height: '11px', display: 'inline', marginRight: '3px' }} />
-                          {pass.quantity} places disponibles
+                        <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: 'var(--mute)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <Users style={{ width: '11px', height: '11px' }} /> {pass.quantity} places
                         </p>
                       )}
                     </div>
                   </div>
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <p style={{ margin: 0, fontWeight: 900, fontSize: '1.1rem', color: 'var(--p)' }}>
+                    <p style={{ margin: 0, fontWeight: 900, fontSize: '1.15rem', color: 'var(--p)' }}>
                       {pass.price.toLocaleString('fr-FR')}
                     </p>
                     <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--mute)', fontWeight: 700 }}>FCFA</p>
@@ -243,11 +278,11 @@ export default function EventDetailPage() {
           </div>
         </div>
 
-        {/* RIGHT — Purchase form */}
+        {/* RIGHT — Purchase form (sticky) */}
         <div style={{ position: 'sticky', top: '20px' }}>
           <div style={{ background: 'var(--bg)', borderRadius: '20px', padding: '24px', border: '1.5px solid var(--line)', boxShadow: '0 8px 32px rgba(39,20,159,0.1)' }}>
-            <h2 style={{ margin: '0 0 20px', fontSize: '1.1rem', fontWeight: 800 }}>
-              {selectedPass ? `Réserver — ${selectedPass.name}` : 'Sélectionnez un pass'}
+            <h2 style={{ margin: '0 0 20px', fontSize: '1.05rem', fontWeight: 800 }}>
+              {selectedPass ? `Réserver — ${selectedPass.name}` : '👆 Sélectionnez un pass'}
             </h2>
 
             {selectedPass ? (
@@ -265,7 +300,7 @@ export default function EventDetailPage() {
                       style={{ width: '38px', height: '38px', borderRadius: '10px', border: '1.5px solid var(--line)', background: 'var(--soft)', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
                       <Plus style={{ width: '16px', height: '16px' }} />
                     </button>
-                    <span style={{ fontSize: '0.82rem', color: 'var(--mute)' }}>max 10</span>
+                    <span style={{ fontSize: '0.78rem', color: 'var(--mute)' }}>max 10</span>
                   </div>
                 </div>
 
@@ -273,14 +308,14 @@ export default function EventDetailPage() {
                 <div>
                   <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px' }}>Nom complet *</label>
                   <input type="text" required placeholder="Jean DUPONT" value={buyerName} onChange={(e) => setBuyerName(e.target.value)}
-                    style={{ width: '100%', height: '44px', borderRadius: '12px', border: '1.5px solid var(--line)', background: 'var(--soft)', padding: '0 14px', fontSize: '0.9rem', boxSizing: 'border-box' }} />
+                    style={{ width: '100%', height: '44px', borderRadius: '12px', border: '1.5px solid var(--line)', background: 'var(--soft)', padding: '0 14px', fontSize: '0.9rem', boxSizing: 'border-box', color: 'var(--ink)' }} />
                 </div>
 
                 {/* Email */}
                 <div>
                   <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px' }}>Email *</label>
                   <input type="email" required placeholder="votre@email.com" value={buyerEmail} onChange={(e) => setBuyerEmail(e.target.value)}
-                    style={{ width: '100%', height: '44px', borderRadius: '12px', border: '1.5px solid var(--line)', background: 'var(--soft)', padding: '0 14px', fontSize: '0.9rem', boxSizing: 'border-box' }} />
+                    style={{ width: '100%', height: '44px', borderRadius: '12px', border: '1.5px solid var(--line)', background: 'var(--soft)', padding: '0 14px', fontSize: '0.9rem', boxSizing: 'border-box', color: 'var(--ink)' }} />
                 </div>
 
                 {/* Phone */}
@@ -291,7 +326,7 @@ export default function EventDetailPage() {
                       🇨🇲 +237
                     </div>
                     <input type="tel" required placeholder="690 000 000" value={buyerPhone} onChange={(e) => setBuyerPhone(e.target.value)}
-                      style={{ flex: 1, height: '44px', borderRadius: '12px', border: '1.5px solid var(--line)', background: 'var(--soft)', padding: '0 14px', fontSize: '0.9rem', boxSizing: 'border-box' }} />
+                      style={{ flex: 1, height: '44px', borderRadius: '12px', border: '1.5px solid var(--line)', background: 'var(--soft)', padding: '0 14px', fontSize: '0.9rem', boxSizing: 'border-box', color: 'var(--ink)' }} />
                   </div>
                 </div>
 
@@ -321,17 +356,19 @@ export default function EventDetailPage() {
                     boxShadow: submitting ? 'none' : '0 8px 24px rgba(39,20,159,0.35)',
                     transition: 'all 0.2s',
                   }}>
-                  {submitting ? 'Redirection…' : `🎟️ Payer ${total.toLocaleString('fr-FR')} FCFA`}
+                  {submitting ? '⏳ Redirection…' : `🎟️ Payer ${total.toLocaleString('fr-FR')} FCFA`}
                 </button>
 
                 <p style={{ textAlign: 'center', fontSize: '0.76rem', color: 'var(--mute)', margin: 0 }}>
-                  Paiement sécurisé par Fapshi · Orange Money & MTN MoMo
+                  🔒 Paiement sécurisé · Orange Money & MTN MoMo
                 </p>
               </form>
             ) : (
               <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--mute)' }}>
-                <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>👆</div>
-                <p style={{ fontSize: '0.9rem' }}>Sélectionnez un type de pass<br />pour continuer</p>
+                <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>🎟️</div>
+                <p style={{ fontSize: '0.9rem', lineHeight: 1.6 }}>
+                  Sélectionnez un type de pass<br />dans la liste à gauche
+                </p>
               </div>
             )}
           </div>

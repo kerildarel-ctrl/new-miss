@@ -2,6 +2,7 @@ export interface TicketPassCategory {
   id: string;
   name: string;
   price: number;
+  quantity?: number;
   description: string;
   badge?: string;
 }
@@ -15,7 +16,13 @@ export interface TicketEvent {
   venue: string;
   city: string;
   bannerImage: string;
+  htmlContent?: string;
   passes: TicketPassCategory[];
+  organizerName?: string;
+  organizerEmail?: string;
+  organizerPhone?: string;
+  organizerToken?: string;
+  status?: string;
 }
 
 export interface IssuedTicket {

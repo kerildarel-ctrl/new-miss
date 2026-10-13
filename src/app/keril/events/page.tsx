@@ -39,6 +39,23 @@ export default function KerilEventsPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [createdOrgLink, setCreatedOrgLink] = useState<string | null>(null);
 
+  // HTML template
+  const [htmlContent, setHtmlContent] = useState('');
+  const [htmlFileName, setHtmlFileName] = useState('');
+  const [htmlPreview, setHtmlPreview] = useState(false);
+
+  const handleHtmlFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setHtmlFileName(file.name);
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const content = ev.target?.result as string;
+      setHtmlContent(content || '');
+    };
+    reader.readAsText(file, 'utf-8');
+  };
+
   // Load events
   const loadEvents = async () => {
     setLoading(true);
@@ -115,7 +132,6 @@ export default function KerilEventsPage() {
       setErrorMessage('Titre, date et lieu sont requis.');
       return;
     }
-
     if (selectedPasses.length === 0) {
       setErrorMessage('Veuillez sélectionner au moins une catégorie de Pass/Billet.');
       return;
@@ -136,6 +152,7 @@ export default function KerilEventsPage() {
           venue,
           city,
           bannerImage,
+          htmlContent,
           organizerName,
           organizerEmail,
           organizerPhone,
@@ -147,13 +164,15 @@ export default function KerilEventsPage() {
 
       if (data.success) {
         const orgToken = data.data?.organizerToken || data.organizerToken || '';
-        if (orgToken) {
-          setCreatedOrgLink(getOrgLink(orgToken));
-        }
+        if (orgToken) setCreatedOrgLink(getOrgLink(orgToken));
         setTitle('');
         setSubtitle('');
         setDate('');
         setVenue('');
+        setCity('Yaoundé');
+        setBannerImage('/images/hero_bg.png');
+        setHtmlContent('');
+        setHtmlFileName('');
         setOrganizerName('');
         setOrganizerEmail('');
         setOrganizerPhone('');
@@ -633,9 +652,68 @@ export default function KerilEventsPage() {
                   </div>
                 </div>
 
+                {/* HTML TEMPLATE UPLOAD */}
+                <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                  <label style={{ display: 'block', fontSize: '0.92rem', fontWeight: 800, color: '#f59e0b' }}>
+                    📄 Template HTML de l&apos;événement
+                  </label>
+                  <p style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '4px', marginBottom: '10px' }}>
+                    Uploadez votre fichier HTML (flyer de vote, présentation…). Il s&apos;affichera sur la page publique de l&apos;événement.
+                  </p>
+
+                  <label htmlFor="htmlFileInput" style={{
+                    display: 'flex', alignItems: 'center', gap: '10px',
+                    padding: '14px 18px', borderRadius: '12px',
+                    border: htmlFileName ? '2px solid #f59e0b' : '2px dashed rgba(255,255,255,0.2)',
+                    background: htmlFileName ? 'rgba(245,158,11,0.08)' : '#161e33',
+                    cursor: 'pointer', transition: 'all 0.2s',
+                  }}>
+                    <span style={{ fontSize: '1.4rem' }}>📎</span>
+                    <div style={{ flex: 1, overflow: 'hidden' }}>
+                      <p style={{ margin: 0, fontWeight: 700, fontSize: '0.88rem', color: htmlFileName ? '#f59e0b' : '#94a3b8' }}>
+                        {htmlFileName || 'Choisir un fichier .html'}
+                      </p>
+                      <p style={{ margin: 0, fontSize: '0.72rem', color: '#64748b' }}>
+                        {htmlFileName ? "✅ Fichier chargé — prêt à l'envoi" : 'Cliquez pour sélectionner'}
+                      </p>
+                    </div>
+                    {htmlFileName && (
+                      <button type="button" onClick={() => { setHtmlContent(''); setHtmlFileName(''); }}
+                        style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '1rem', padding: '4px' }}
+                      >✕</button>
+                    )}
+                  </label>
+                  <input
+                    id="htmlFileInput"
+                    type="file"
+                    accept=".html,.htm"
+                    onChange={handleHtmlFileChange}
+                    style={{ display: 'none' }}
+                  />
+
+                  {htmlContent && (
+                    <div style={{ marginTop: '10px' }}>
+                      <button type="button" onClick={() => setHtmlPreview(!htmlPreview)}
+                        style={{ padding: '6px 14px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 700 }}>
+                        {htmlPreview ? '🔼 Masquer aperçu' : '👁️ Voir aperçu'}
+                      </button>
+                      {htmlPreview && (
+                        <div style={{ marginTop: '10px', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.15)' }}>
+                          <iframe
+                            srcDoc={htmlContent}
+                            style={{ width: '100%', height: '400px', border: 'none', background: '#fff' }}
+                            title="Aperçu HTML"
+                            sandbox="allow-same-origin"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 {/* BANNER IMAGE URL */}
                 <label style={{ display: 'block', marginTop: '14px', fontSize: '0.88rem', fontWeight: 700 }}>
-                  Image de Couverture (URL)
+                  Image Miniature (URL) <span style={{ color: '#64748b', fontWeight: 400 }}>— utilisée si pas de HTML</span>
                 </label>
                 <input
                   type="text"
@@ -643,17 +721,10 @@ export default function KerilEventsPage() {
                   value={bannerImage}
                   onChange={(e) => setBannerImage(e.target.value)}
                   style={{
-                    width: '100%',
-                    marginTop: '6px',
-                    height: '46px',
-                    background: '#161e33',
-                    border: '1.5px solid rgba(255, 255, 255, 0.15)',
-                    borderRadius: '12px',
-                    padding: '0 14px',
-                    color: '#ffffff',
-                    fontSize: '0.92rem',
-                    fontWeight: 600,
-                    outline: 'none',
+                    width: '100%', marginTop: '6px', height: '46px',
+                    background: '#161e33', border: '1.5px solid rgba(255,255,255,0.15)',
+                    borderRadius: '12px', padding: '0 14px', color: '#ffffff',
+                    fontSize: '0.92rem', fontWeight: 600, outline: 'none',
                   }}
                 />
 

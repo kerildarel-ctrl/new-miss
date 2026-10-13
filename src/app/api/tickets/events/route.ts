@@ -1,27 +1,30 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-import { getSupabaseAdmin } from '@/lib/supabaseClient';
-import { TicketEvent } from '@/data/mockTickets';
+import { queryDb } from '@/lib/pgDb';
 
-const eventsFilePath = path.join(process.cwd(), 'src', 'data', 'events.json');
+export const dynamic = 'force-dynamic';
 
-function getDiskEvents(): TicketEvent[] {
-  try {
-    if (fs.existsSync(eventsFilePath)) {
-      const data = fs.readFileSync(eventsFilePath, 'utf8');
-      return JSON.parse(data || '[]');
-    }
-  } catch { /* Ignore */ }
-  return [];
-}
-
-function saveDiskEvents(events: TicketEvent[]) {
-  try {
-    const dir = path.dirname(eventsFilePath);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(eventsFilePath, JSON.stringify(events, null, 2), 'utf8');
-  } catch { /* Ignore */ }
+/** Auto-create the events table in Neon if it doesn't exist */
+async function ensureEventsTable() {
+  await queryDb(`
+    CREATE TABLE IF NOT EXISTS public.events (
+      id TEXT PRIMARY KEY,
+      slug TEXT NOT NULL,
+      title TEXT NOT NULL,
+      subtitle TEXT DEFAULT '',
+      date TEXT NOT NULL,
+      venue TEXT NOT NULL,
+      city TEXT DEFAULT 'Yaoundé',
+      banner_image TEXT DEFAULT '/images/hero_bg.png',
+      html_content TEXT DEFAULT '',
+      passes JSONB DEFAULT '[]',
+      organizer_name TEXT DEFAULT '',
+      organizer_email TEXT DEFAULT '',
+      organizer_phone TEXT DEFAULT '',
+      organizer_token TEXT,
+      status TEXT DEFAULT 'ACTIVE',
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+  `);
 }
 
 function generateOrgToken(): string {
@@ -31,145 +34,124 @@ function generateOrgToken(): string {
   return token;
 }
 
+function mapRow(e: any) {
+  return {
+    id: e.id,
+    slug: e.slug,
+    title: e.title,
+    subtitle: e.subtitle || '',
+    date: e.date,
+    venue: e.venue,
+    city: e.city || 'Yaoundé',
+    bannerImage: e.banner_image || '/images/hero_bg.png',
+    htmlContent: e.html_content || '',
+    passes: Array.isArray(e.passes) ? e.passes : (typeof e.passes === 'string' ? JSON.parse(e.passes || '[]') : []),
+    organizerToken: e.organizer_token || '',
+    organizerName: e.organizer_name || '',
+    organizerEmail: e.organizer_email || '',
+    organizerPhone: e.organizer_phone || '',
+    status: e.status || 'ACTIVE',
+  };
+}
+
 export async function GET(request: Request) {
   try {
+    await ensureEventsTable();
     const { searchParams } = new URL(request.url);
     const token = searchParams.get('token');
     const slug = searchParams.get('slug');
 
-    let events: TicketEvent[] = [];
-
-    // Try Supabase first
-    try {
-      const supabase = getSupabaseAdmin();
-      let query = supabase.from('events').select('*').order('created_at', { ascending: false });
-      if (token) query = (query as any).eq('organizer_token', token);
-      if (slug)  query = (query as any).eq('slug', slug);
-
-      const { data } = await query;
-      if (data && data.length > 0) {
-        events = data.map((e: any) => ({
-          id: e.id,
-          slug: e.slug,
-          title: e.title,
-          subtitle: e.subtitle || '',
-          date: e.date,
-          venue: e.venue,
-          city: e.city || 'Yaoundé',
-          bannerImage: e.banner_image || '/images/hero_bg.png',
-          passes: typeof e.passes === 'string' ? JSON.parse(e.passes) : (e.passes || []),
-          organizerToken: e.organizer_token || '',
-          organizerName: e.organizer_name || '',
-          organizerEmail: e.organizer_email || '',
-          organizerPhone: e.organizer_phone || '',
-          status: e.status || 'ACTIVE',
-        }));
-      }
-    } catch { /* Supabase unavailable */ }
-
-    // Fallback to disk
-    if (events.length === 0) {
-      let disk = getDiskEvents();
-      if (token) disk = disk.filter((e: any) => e.organizerToken === token);
-      if (slug)  disk = disk.filter((e: any) => e.slug === slug);
-      events = disk;
+    let rows: any[];
+    if (token) {
+      rows = await queryDb('SELECT * FROM public.events WHERE organizer_token = $1 LIMIT 1', [token]);
+    } else if (slug) {
+      rows = await queryDb('SELECT * FROM public.events WHERE slug = $1 LIMIT 1', [slug]);
+    } else {
+      rows = await queryDb('SELECT * FROM public.events ORDER BY created_at DESC');
     }
 
-    // If fetching single event by slug/token, return single object
-    if ((slug || token) && events.length === 1) {
-      return NextResponse.json({ success: true, data: events[0] });
+    const events = rows.map(mapRow);
+
+    // Return single object when querying by token or slug
+    if ((token || slug) && events.length <= 1) {
+      return NextResponse.json({ success: true, data: events[0] || null });
     }
 
     return NextResponse.json({ success: true, data: events });
   } catch (error: any) {
+    console.error('GET /api/tickets/events error:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
   try {
+    await ensureEventsTable();
+
     const body = await request.json();
     const {
-      title, subtitle, date, venue, city, bannerImage, passes,
-      organizerName = '', organizerEmail = '', organizerPhone = '',
+      title, subtitle = '', date, venue,
+      city = 'Yaoundé',
+      bannerImage = '/images/hero_bg.png',
+      htmlContent = '',
+      passes = [],
+      organizerName = '',
+      organizerEmail = '',
+      organizerPhone = '',
     } = body;
 
     if (!title || !date || !venue) {
-      return NextResponse.json({ success: false, error: 'Titre, date et lieu sont requis' }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: 'Titre, date et lieu sont requis' },
+        { status: 400 }
+      );
     }
 
     const eventId = `evt_${Date.now()}`;
-    const baseSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const baseSlug = title
+      .toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
     const slug = `${baseSlug}-${eventId.slice(-6)}`;
     const organizerToken = generateOrgToken();
 
-    const newEvent: TicketEvent & {
-      organizerToken: string; organizerName: string;
-      organizerEmail: string; organizerPhone: string; status: string;
-    } = {
-      id: eventId,
-      slug,
-      title,
-      subtitle: subtitle || '',
-      date,
-      venue,
-      city: city || 'Yaoundé',
-      bannerImage: bannerImage || '/images/hero_bg.png',
-      passes: Array.isArray(passes) && passes.length > 0 ? passes : [],
+    await queryDb(
+      `INSERT INTO public.events
+        (id, slug, title, subtitle, date, venue, city, banner_image, html_content,
+         passes, organizer_name, organizer_email, organizer_phone, organizer_token, status, created_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,'ACTIVE',NOW())`,
+      [
+        eventId, slug, title, subtitle, date, venue, city,
+        bannerImage, htmlContent,
+        JSON.stringify(Array.isArray(passes) ? passes : []),
+        organizerName, organizerEmail, organizerPhone, organizerToken,
+      ]
+    );
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        id: eventId, slug, title, subtitle, date, venue, city,
+        bannerImage, htmlContent, passes, organizerToken,
+        organizerName, organizerEmail, organizerPhone, status: 'ACTIVE',
+      },
       organizerToken,
-      organizerName,
-      organizerEmail,
-      organizerPhone,
-      status: 'ACTIVE',
-    };
-
-    // Save to Disk JSON
-    const diskEvents = getDiskEvents();
-    diskEvents.unshift(newEvent as any);
-    saveDiskEvents(diskEvents);
-
-    // Save to Supabase
-    try {
-      const supabase = getSupabaseAdmin();
-      await supabase.from('events').insert([{
-        id: eventId,
-        slug,
-        title,
-        subtitle: subtitle || '',
-        date,
-        venue,
-        city: city || 'Yaoundé',
-        banner_image: bannerImage || '/images/hero_bg.png',
-        passes: JSON.stringify(newEvent.passes),
-        organizer_token: organizerToken,
-        organizer_name: organizerName,
-        organizer_email: organizerEmail,
-        organizer_phone: organizerPhone,
-        status: 'ACTIVE',
-        created_at: new Date().toISOString(),
-      }]);
-    } catch { /* Disk JSON already saved */ }
-
-    return NextResponse.json({ success: true, data: newEvent, organizerToken });
+    });
   } catch (error: any) {
+    console.error('POST /api/tickets/events error:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
 
 export async function DELETE(request: Request) {
   try {
+    await ensureEventsTable();
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     if (!id) return NextResponse.json({ success: false, error: 'ID requis' }, { status: 400 });
 
-    const diskEvents = getDiskEvents().filter((e) => e.id !== id);
-    saveDiskEvents(diskEvents);
-
-    try {
-      const supabase = getSupabaseAdmin();
-      await supabase.from('events').delete().eq('id', id);
-    } catch { /* Ignore */ }
-
+    await queryDb('DELETE FROM public.events WHERE id = $1', [id]);
     return NextResponse.json({ success: true, message: 'Événement supprimé' });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
