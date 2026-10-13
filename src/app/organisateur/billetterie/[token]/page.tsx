@@ -91,11 +91,20 @@ export default function OrganizerDashboardPage() {
     lockedRef.current = false;
   }, []);
 
+  const handleDetected = useCallback((raw: string) => {
+    if (lockedRef.current) return;
+    lockedRef.current = true;
+    if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
+    stopCamera();
+    const match = raw.match(/TKT-[A-Z0-9]{4}-[A-Z0-9]{4}/i);
+    const code = match ? match[0].toUpperCase() : raw.trim().toUpperCase();
+    submitScan(code);
+  }, [stopCamera]); // eslint-disable-line
+
   const startCamera = useCallback(async () => {
     setCameraError(null);
     setScanResult(null);
     lockedRef.current = false;
-    // Stop any existing stream first
     if (streamRef.current) { streamRef.current.getTracks().forEach((t) => t.stop()); streamRef.current = null; }
     if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
     try {
@@ -108,34 +117,39 @@ export default function OrganizerDashboardPage() {
       video.srcObject = stream;
       await video.play();
 
-      // ── Scan every 250ms using setInterval (NOT rAF — avoids blackout) ──
+      // ── Strategy 1: native BarcodeDetector (Chrome Android, no canvas → no blackout) ──
+      if ('BarcodeDetector' in window) {
+        const detector = new (window as any).BarcodeDetector({ formats: ['qr_code'] });
+        intervalRef.current = setInterval(async () => {
+          if (lockedRef.current || !videoRef.current || videoRef.current.readyState < 2) return;
+          try {
+            const results = await detector.detect(videoRef.current);
+            if (results.length > 0) handleDetected(results[0].rawValue);
+          } catch { /* ignore frame errors */ }
+        }, 300);
+        return;
+      }
+
+      // ── Strategy 2: jsQR on small 320×240 canvas (iOS fallback) ──
       intervalRef.current = setInterval(() => {
         if (lockedRef.current) return;
         const vid = videoRef.current;
         const cvs = canvasRef.current;
         if (!vid || !cvs || vid.readyState < 2 || vid.videoWidth === 0) return;
+        // Use tiny canvas (320×240) — reduces GPU read cost dramatically
+        const W = 320; const H = 240;
+        cvs.width = W; cvs.height = H;
         const ctx = cvs.getContext('2d', { willReadFrequently: true });
         if (!ctx) return;
-        cvs.width  = vid.videoWidth;
-        cvs.height = vid.videoHeight;
-        ctx.drawImage(vid, 0, 0);
-        const img = ctx.getImageData(0, 0, cvs.width, cvs.height);
-        const code = jsQR(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' });
-        if (code?.data) {
-          lockedRef.current = true; // prevent double-fire
-          clearInterval(intervalRef.current!);
-          intervalRef.current = null;
-          const raw = code.data;
-          const match = raw.match(/TKT-[A-Z0-9]{4}-[A-Z0-9]{4}/i);
-          const ticketCode = match ? match[0].toUpperCase() : raw.trim().toUpperCase();
-          stopCamera();
-          submitScan(ticketCode);
-        }
-      }, 250);
+        ctx.drawImage(vid, 0, 0, W, H);
+        const img = ctx.getImageData(0, 0, W, H);
+        const result = jsQR(img.data, W, H, { inversionAttempts: 'dontInvert' });
+        if (result?.data) handleDetected(result.data);
+      }, 350);
     } catch (err: any) {
       setCameraError(`Caméra inaccessible : ${err.message || 'permission refusée'}`);
     }
-  }, [stopCamera]); // eslint-disable-line
+  }, [stopCamera, handleDetected]);
 
   useEffect(() => {
     if (scannerOpen) startCamera();
@@ -291,8 +305,9 @@ export default function OrganizerDashboardPage() {
 
               {/* Camera viewfinder */}
               <div style={{ position: 'relative', width: '100%', maxWidth: '420px', margin: '0 auto', borderRadius: '16px', overflow: 'hidden', background: '#000', aspectRatio: '4/3' }}>
-                <video ref={videoRef} muted playsInline style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                <canvas ref={canvasRef} style={{ display: 'none' }} />
+                <video ref={videoRef} muted playsInline autoPlay style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                {/* Canvas must NOT be display:none — use invisible positioning instead */}
+                <canvas ref={canvasRef} style={{ position: 'absolute', top: 0, left: 0, width: '1px', height: '1px', opacity: 0, pointerEvents: 'none' }} />
 
                 {/* Scan frame overlay */}
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
