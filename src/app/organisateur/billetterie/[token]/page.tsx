@@ -60,11 +60,13 @@ export default function OrganizerDashboardPage() {
   const [payoutMsg, setPayoutMsg] = useState<string | null>(null);
 
   // Camera refs
-  const videoRef   = useRef<HTMLVideoElement>(null);
-  const canvasRef  = useRef<HTMLCanvasElement>(null);
-  const streamRef  = useRef<MediaStream | null>(null);
+  const videoRef    = useRef<HTMLVideoElement>(null);
+  const canvasRef   = useRef<HTMLCanvasElement>(null);
+  const streamRef   = useRef<MediaStream | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const lockedRef  = useRef(false); // prevents duplicate scans
+  const lockedRef   = useRef(false);
+  // Always up-to-date event ref — avoids stale closures in scanner callbacks
+  const eventRef    = useRef<EventData | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -73,6 +75,7 @@ export default function OrganizerDashboardPage() {
       const evtData = await evtRes.json();
       if (!evtData.success || !evtData.data) { setNotFound(true); return; }
       const evt: EventData = evtData.data;
+      eventRef.current = evt; // keep ref in sync
       setEvent(evt);
       const tixRes = await fetch(`/api/organizer/tickets?token=${token}&eventId=${evt.id}`);
       const tixData = await tixRes.json();
@@ -91,74 +94,14 @@ export default function OrganizerDashboardPage() {
     lockedRef.current = false;
   }, []);
 
-  const handleDetected = useCallback((raw: string) => {
-    if (lockedRef.current) return;
-    lockedRef.current = true;
-    if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
-    stopCamera();
-    const match = raw.match(/TKT-[A-Z0-9]{4}-[A-Z0-9]{4}/i);
-    const code = match ? match[0].toUpperCase() : raw.trim().toUpperCase();
-    submitScan(code);
-  }, [stopCamera]); // eslint-disable-line
-
-  const startCamera = useCallback(async () => {
-    setCameraError(null);
-    setScanResult(null);
-    lockedRef.current = false;
-    if (streamRef.current) { streamRef.current.getTracks().forEach((t) => t.stop()); streamRef.current = null; }
-    if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
-      });
-      streamRef.current = stream;
-      const video = videoRef.current;
-      if (!video) return;
-      video.srcObject = stream;
-      await video.play();
-
-      // ── Strategy 1: native BarcodeDetector (Chrome Android, no canvas → no blackout) ──
-      if ('BarcodeDetector' in window) {
-        const detector = new (window as any).BarcodeDetector({ formats: ['qr_code'] });
-        intervalRef.current = setInterval(async () => {
-          if (lockedRef.current || !videoRef.current || videoRef.current.readyState < 2) return;
-          try {
-            const results = await detector.detect(videoRef.current);
-            if (results.length > 0) handleDetected(results[0].rawValue);
-          } catch { /* ignore frame errors */ }
-        }, 300);
-        return;
-      }
-
-      // ── Strategy 2: jsQR on small 320×240 canvas (iOS fallback) ──
-      intervalRef.current = setInterval(() => {
-        if (lockedRef.current) return;
-        const vid = videoRef.current;
-        const cvs = canvasRef.current;
-        if (!vid || !cvs || vid.readyState < 2 || vid.videoWidth === 0) return;
-        // Use tiny canvas (320×240) — reduces GPU read cost dramatically
-        const W = 320; const H = 240;
-        cvs.width = W; cvs.height = H;
-        const ctx = cvs.getContext('2d', { willReadFrequently: true });
-        if (!ctx) return;
-        ctx.drawImage(vid, 0, 0, W, H);
-        const img = ctx.getImageData(0, 0, W, H);
-        const result = jsQR(img.data, W, H, { inversionAttempts: 'dontInvert' });
-        if (result?.data) handleDetected(result.data);
-      }, 350);
-    } catch (err: any) {
-      setCameraError(`Caméra inaccessible : ${err.message || 'permission refusée'}`);
+  // submitScan is defined BEFORE handleDetected so the closure captures it correctly.
+  // Uses eventRef (not event state) to always have the latest event, even in stale closures.
+  const submitScan = useCallback(async (code: string) => {
+    const currentEvent = eventRef.current;
+    if (!currentEvent || !code.trim()) {
+      console.warn('[scan] Aucun événement chargé ou code vide', { currentEvent, code });
+      return;
     }
-  }, [stopCamera, handleDetected]);
-
-  useEffect(() => {
-    if (scannerOpen) startCamera();
-    else stopCamera();
-    return () => stopCamera();
-  }, [scannerOpen, startCamera, stopCamera]);
-
-  const submitScan = async (code: string) => {
-    if (!event || !code.trim()) return;
     setScanning(true);
     setScanResult(null);
     try {
@@ -168,12 +111,11 @@ export default function OrganizerDashboardPage() {
         body: JSON.stringify({
           ticketCode: code.trim().toUpperCase(),
           organizerToken: token,
-          eventId: event.id,
+          eventId: currentEvent.id,
           agentName: 'Organisateur',
         }),
       });
       const data = await res.json();
-
       if (data.success) {
         setScanResult({
           type: 'success',
@@ -182,7 +124,6 @@ export default function OrganizerDashboardPage() {
           buyerName: data.ticket?.buyerName,
           passName: data.ticket?.passName,
         });
-        // Refresh ticket list
         loadData();
       } else {
         const type = data.scanResult === 'ALREADY_USED' ? 'warning' : 'error';
@@ -200,7 +141,79 @@ export default function OrganizerDashboardPage() {
       setScanning(false);
       setManualCode('');
     }
-  };
+  }, [token, loadData]);
+
+  const handleDetected = useCallback((raw: string) => {
+    if (lockedRef.current) return;
+    lockedRef.current = true;
+    if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
+    stopCamera();
+    const match = raw.match(/TKT-[A-Z0-9]{4}-[A-Z0-9]{4}/i);
+    const code = match ? match[0].toUpperCase() : raw.trim().toUpperCase();
+    console.log('[scan] QR détecté:', raw, '→ code:', code);
+    submitScan(code);
+  }, [stopCamera, submitScan]);
+
+  const startCamera = useCallback(async () => {
+    setCameraError(null);
+    setScanResult(null);
+    lockedRef.current = false;
+    if (streamRef.current) { streamRef.current.getTracks().forEach((t) => t.stop()); streamRef.current = null; }
+    if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+      });
+      streamRef.current = stream;
+      const video = videoRef.current;
+      if (!video) return;
+      video.srcObject = stream;
+      await video.play();
+
+      // ── Strategy 1: native BarcodeDetector (Chrome Android — no canvas, no blackout) ──
+      if ('BarcodeDetector' in window) {
+        const detector = new (window as any).BarcodeDetector({ formats: ['qr_code'] });
+        intervalRef.current = setInterval(async () => {
+          if (lockedRef.current) return;
+          const vid = videoRef.current;
+          if (!vid || vid.readyState < 2 || vid.videoWidth === 0) return;
+          try {
+            const results = await detector.detect(vid);
+            if (results.length > 0) handleDetected(results[0].rawValue);
+          } catch { /* frame error — ignore */ }
+        }, 250);
+        return;
+      }
+
+      // ── Strategy 2: jsQR on 640×480 canvas (iOS Safari / Firefox fallback) ──
+      intervalRef.current = setInterval(() => {
+        if (lockedRef.current) return;
+        const vid = videoRef.current;
+        const cvs = canvasRef.current;
+        if (!vid || !cvs || vid.readyState < 2 || vid.videoWidth === 0) return;
+        const W = 640; const H = 480;
+        cvs.width = W; cvs.height = H;
+        const ctx = cvs.getContext('2d', { willReadFrequently: true });
+        if (!ctx) return;
+        ctx.drawImage(vid, 0, 0, W, H);
+        const img = ctx.getImageData(0, 0, W, H);
+        // attemptBoth tries normal + inverted — works on printed AND screen QR codes
+        const result = jsQR(img.data, W, H, { inversionAttempts: 'attemptBoth' });
+        if (result?.data) handleDetected(result.data);
+      }, 350);
+    } catch (err: any) {
+      setCameraError(`Caméra inaccessible : ${err.message || 'permission refusée'}`);
+    }
+  }, [stopCamera, handleDetected]);
+
+  useEffect(() => {
+    if (scannerOpen) startCamera();
+    else stopCamera();
+    return () => stopCamera();
+  }, [scannerOpen, startCamera, stopCamera]);
+
+
+
 
   // ── Payout ────────────────────────────────────────────────────
 
