@@ -3,8 +3,9 @@ import { queryDb } from '@/lib/pgDb';
 
 export const dynamic = 'force-dynamic';
 
-/** Auto-create the events table in Neon if it doesn't exist */
+/** Auto-create the events table in Neon if it doesn't exist, and migrate missing columns */
 async function ensureEventsTable() {
+  // Create table if it doesn't exist at all
   await queryDb(`
     CREATE TABLE IF NOT EXISTS public.events (
       id TEXT PRIMARY KEY,
@@ -15,16 +16,24 @@ async function ensureEventsTable() {
       venue TEXT NOT NULL,
       city TEXT DEFAULT 'Yaoundé',
       banner_image TEXT DEFAULT '/images/hero_bg.png',
-      html_content TEXT DEFAULT '',
       passes JSONB DEFAULT '[]',
-      organizer_name TEXT DEFAULT '',
-      organizer_email TEXT DEFAULT '',
-      organizer_phone TEXT DEFAULT '',
-      organizer_token TEXT,
       status TEXT DEFAULT 'ACTIVE',
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
   `);
+
+  // Migrate: add any columns that may be missing from an older version of the table
+  const migrations = [
+    `ALTER TABLE public.events ADD COLUMN IF NOT EXISTS html_content TEXT DEFAULT ''`,
+    `ALTER TABLE public.events ADD COLUMN IF NOT EXISTS organizer_name TEXT DEFAULT ''`,
+    `ALTER TABLE public.events ADD COLUMN IF NOT EXISTS organizer_email TEXT DEFAULT ''`,
+    `ALTER TABLE public.events ADD COLUMN IF NOT EXISTS organizer_phone TEXT DEFAULT ''`,
+    `ALTER TABLE public.events ADD COLUMN IF NOT EXISTS organizer_token TEXT`,
+    `ALTER TABLE public.events ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'ACTIVE'`,
+  ];
+  for (const sql of migrations) {
+    await queryDb(sql).catch(() => { /* ignore if already exists */ });
+  }
 }
 
 function generateOrgToken(): string {
