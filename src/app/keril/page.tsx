@@ -19,16 +19,21 @@ export default function KerilDashboardPage() {
 
   const loadLiveData = useCallback(async () => {
     setIsLoading(true);
+    const adminSecret = process.env.NEXT_PUBLIC_ADMIN_SECRET || '';
     try {
       const [comps, cands, ticketsRes, eventsRes] = await Promise.all([
         getCompetitions(),
         getCandidates(),
-        fetch('/api/tickets?_t=' + Date.now(), { cache: 'no-store' }).then(r => r.json()).catch(() => ({ data: [] })),
+        fetch('/api/tickets?_t=' + Date.now(), {
+          cache: 'no-store',
+          headers: { 'x-admin-secret': adminSecret },
+        }).then(r => r.json()).catch(() => ({ tickets: [] })),
         fetch('/api/tickets/events?_t=' + Date.now(), { cache: 'no-store' }).then(r => r.json()).catch(() => ({ data: [] })),
       ]);
       setCompetitions(comps);
       setCandidates(cands);
-      setTicketCount(Array.isArray(ticketsRes?.data) ? ticketsRes.data.length : (Array.isArray(ticketsRes) ? ticketsRes.length : 0));
+      // API /api/tickets returns { success, tickets: [...] }
+      setTicketCount(Array.isArray(ticketsRes?.tickets) ? ticketsRes.tickets.length : 0);
       setEventCount(Array.isArray(eventsRes?.data) ? eventsRes.data.length : (Array.isArray(eventsRes) ? eventsRes.length : 0));
     } catch { /* continue */ }
     finally { setIsLoading(false); }

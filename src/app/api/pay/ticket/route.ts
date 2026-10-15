@@ -12,6 +12,9 @@ const ALLOWED_ORIGINS = [
   'https://miss-template.netlify.app',
   'https://votemoi.netlify.app',
   process.env.NEXT_PUBLIC_SITE_URL,
+  // Allow local development
+  'http://localhost:3000',
+  'http://localhost:3001',
 ].filter(Boolean) as string[];
 
 const MAX_QUANTITY = 20; // Safety cap
@@ -130,7 +133,7 @@ export async function POST(request: Request) {
     });
 
     const fapshiData = await fapshiRes.json().catch(() => ({}));
-    console.log('[Fapshi] initiate-pay status:', fapshiRes.status, 'transId:', fapshiData.transId);
+    console.info('[Fapshi] initiate-pay status:', fapshiRes.status);
 
     const paymentLink = fapshiData.link || fapshiData.paymentLink || fapshiData.payment_link || '';
     const transId     = fapshiData.transId || fapshiData.trans_id || '';

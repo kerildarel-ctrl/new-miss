@@ -450,15 +450,30 @@ export default function OrganizerDashboardPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {Object.entries(byPass).map(([passName, info]) => {
                 const pct = info.passQty ? Math.round((info.count / info.passQty) * 100) : 0;
+                const remaining = info.passQty ? Math.max(0, info.passQty - info.count) : null;
+                const isSoldOut = remaining !== null && remaining === 0;
+                const isLow = remaining !== null && !isSoldOut && (remaining <= 10 || pct >= 80);
                 return (
                   <div key={passName}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '0.88rem', flexWrap: 'wrap', gap: '4px' }}>
-                      <span style={{ fontWeight: 700 }}>{passName}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontWeight: 700 }}>{passName}</span>
+                        {isSoldOut && (
+                          <span style={{ fontSize: '0.65rem', fontWeight: 800, padding: '2px 8px', borderRadius: '99px', background: 'rgba(239,68,68,0.15)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.3)' }}>
+                            SOLD OUT
+                          </span>
+                        )}
+                        {isLow && !isSoldOut && (
+                          <span style={{ fontSize: '0.65rem', fontWeight: 800, padding: '2px 8px', borderRadius: '99px', background: 'rgba(245,158,11,0.15)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.3)' }}>
+                            ⚠️ Stock bas ({remaining} restants)
+                          </span>
+                        )}
+                      </div>
                       <span style={{ color: '#94a3b8' }}>{info.count} vendu{info.count > 1 ? 's' : ''}{info.passQty ? ` / ${info.passQty}` : ''} — <b style={{ color: '#34d399' }}>{info.revenue.toLocaleString('fr-FR')} FCFA</b></span>
                     </div>
                     {info.passQty ? (
                       <div style={{ height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '99px', overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: `${Math.min(pct, 100)}%`, background: 'linear-gradient(90deg,#818cf8,#4B2CE0)', borderRadius: '99px' }} />
+                        <div style={{ height: '100%', width: `${Math.min(pct, 100)}%`, background: isSoldOut ? 'linear-gradient(90deg,#ef4444,#dc2626)' : isLow ? 'linear-gradient(90deg,#f59e0b,#d97706)' : 'linear-gradient(90deg,#818cf8,#4B2CE0)', borderRadius: '99px' }} />
                       </div>
                     ) : null}
                   </div>

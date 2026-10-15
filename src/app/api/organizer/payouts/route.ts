@@ -3,20 +3,10 @@ import fs from 'fs';
 import path from 'path';
 import { queryDb } from '@/lib/pgDb';
 
-export interface PayoutRequest {
-  id: string;
-  competitionSlug: string;
-  competitionTitle: string;
-  organizerName: string;
-  organizerPhone: string;
-  operator: 'MTN_MOMO' | 'ORANGE_MONEY';
-  amount: number;
-  status: 'PENDING' | 'PAID' | 'REJECTED';
-  createdAt: string;
-  paidAt?: string;
-  transactionRef?: string;
-  organizerToken?: string;
-}
+// Re-export from shared types file (single source of truth)
+export type { PayoutRequest } from '@/types/payouts';
+import type { PayoutRequest } from '@/types/payouts';
+
 
 const payoutsFilePath = path.join(process.cwd(), 'src', 'data', 'payouts.json');
 

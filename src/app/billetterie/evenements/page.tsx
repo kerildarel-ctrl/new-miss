@@ -9,6 +9,7 @@ interface TicketPass {
   name: string;
   price: number;
   quantity?: number;
+  soldCount?: number;
   description?: string;
 }
 
@@ -42,10 +43,30 @@ export default function EvenementsPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const filtered = events.filter((e) =>
-    !search || e.title.toLowerCase().includes(search.toLowerCase()) ||
-    (e.city || '').toLowerCase().includes(search.toLowerCase())
-  );
+  // Normalise les accents pour la recherche (fix #9)
+  const normalize = (s: string) =>
+    s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  const filtered = events.filter((e) => {
+    if (!search) return true;
+    const q = normalize(search);
+    return normalize(e.title).includes(q) || normalize(e.city || '').includes(q) || normalize(e.venue || '').includes(q);
+  });
+
+  // Helpers stock + date
+  const isEventSoldOut = (evt: Event) => {
+    if (!evt.passes.length) return false;
+    return evt.passes.every((p) => {
+      if (p.quantity === undefined || p.quantity <= 0) return false;
+      return (p.soldCount || 0) >= p.quantity;
+    });
+  };
+
+  const isEventExpired = (dateStr: string) => {
+    // Try to parse common formats; if unparseable, don't mark as expired
+    const d = new Date(dateStr);
+    return !isNaN(d.getTime()) && d < new Date();
+  };
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--soft)', color: 'var(--ink)' }}>
@@ -165,13 +186,26 @@ export default function EvenementsPage() {
                           À partir de {minPrice.toLocaleString('fr-FR')} FCFA
                         </div>
                       )}
-                      <div style={{
-                        position: 'absolute', top: '12px', right: '12px',
-                        background: 'rgba(16,185,129,0.9)', color: '#fff',
-                        padding: '4px 10px', borderRadius: '99px', fontSize: '0.72rem', fontWeight: 800,
-                      }}>
-                        🟢 Disponible
-                      </div>
+                      {/* Dynamic status badge */}
+                      {(() => {
+                        const soldOut = isEventSoldOut(evt);
+                        const expired = isEventExpired(evt.date);
+                        if (soldOut) return (
+                          <div style={{ position: 'absolute', top: '12px', right: '12px', background: 'rgba(239,68,68,0.92)', color: '#fff', padding: '4px 10px', borderRadius: '99px', fontSize: '0.72rem', fontWeight: 800 }}>
+                            🔴 SOLD OUT
+                          </div>
+                        );
+                        if (expired) return (
+                          <div style={{ position: 'absolute', top: '12px', right: '12px', background: 'rgba(100,116,139,0.92)', color: '#fff', padding: '4px 10px', borderRadius: '99px', fontSize: '0.72rem', fontWeight: 800 }}>
+                            ⏰ Terminé
+                          </div>
+                        );
+                        return (
+                          <div style={{ position: 'absolute', top: '12px', right: '12px', background: 'rgba(16,185,129,0.9)', color: '#fff', padding: '4px 10px', borderRadius: '99px', fontSize: '0.72rem', fontWeight: 800 }}>
+                            🟢 Disponible
+                          </div>
+                        );
+                      })()}
                     </div>
 
                     {/* Content */}

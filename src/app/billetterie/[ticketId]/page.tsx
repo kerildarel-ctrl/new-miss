@@ -36,6 +36,7 @@ interface TicketFullData {
   purchasedAt?: string;
   scannedAt?: string;
   scannedByAgentName?: string;
+  qrDataUrl?: string;  // stored at ticket issuance — preferred over external QR API
 }
 
 export default function SingleTicketPage() {
@@ -209,9 +210,12 @@ export default function SingleTicketPage() {
     }
   };
 
-  // QR Code Public URL (pointing strictly to this domain and page)
+  // QR Code: prefer stored data URL, fall back to external API only if needed
   const publicTicketUrl = `${siteOrigin || ''}/billetterie/${encodeURIComponent(cleanCode)}`;
-  const qrCodeImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodeURIComponent(publicTicketUrl)}`;
+  const externalQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodeURIComponent(publicTicketUrl)}`;
+  const qrCodeImageUrl = ticket?.qrDataUrl || externalQrUrl;
+  // For public (unauthorized) view, use external QR since we don’t have the stored URL
+  const publicQrUrl = externalQrUrl;
 
   return (
     <>
@@ -332,9 +336,10 @@ export default function SingleTicketPage() {
                     border: '1px solid var(--line)',
                   }}
                 >
+                  {/* QR: use stored data URL when available, external API as fallback */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={qrCodeImageUrl}
+                    src={publicQrUrl}
                     alt={`QR Code ${cleanCode}`}
                     width={200}
                     height={200}

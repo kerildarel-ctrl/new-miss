@@ -56,10 +56,12 @@ export default function ConfirmationPage() {
 
   useEffect(() => { verify(); }, [verify]);
 
-  // ── PDF download via print window ────────────────────────────────────────
+  // ── PDF download via Blob URL (works on mobile Safari + Chrome Android) ──
   const handleDownloadPDF = (ticket: IssuedTicket, index: number) => {
     if (!result) return;
-    const qrImg = ticket.qrDataUrl ? `<img src="${ticket.qrDataUrl}" width="140" height="140" style="display:block;border-radius:10px;" />` : '';
+    const qrImg = ticket.qrDataUrl
+      ? `<img src="${ticket.qrDataUrl}" width="140" height="140" style="display:block;border-radius:10px;" />`
+      : '';
     const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"/><title>Billet ${result.passName} — ${result.eventTitle}</title>
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
@@ -104,11 +106,25 @@ export default function ConfirmationPage() {
         <div class="bottom-brand">VoteMoi × MK PROG © 2026</div>
       </div>
     </div>
-    <script>window.onload=function(){window.print();setTimeout(function(){window.close();},1000);}<\/script>
+    <script>window.onload=function(){window.print();setTimeout(function(){window.close();},1500);}<\/script>
     </body></html>`;
 
-    const win = window.open('', '_blank', 'width=620,height=400');
-    if (win) { win.document.write(html); win.document.close(); }
+    // Use Blob URL — bypasses mobile popup blockers (Safari iOS, Chrome Android)
+    try {
+      const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+      const blobUrl = URL.createObjectURL(blob);
+      const win = window.open(blobUrl, '_blank');
+      // Revoke after 30s to free memory
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 30_000);
+      if (!win) {
+        // Fallback: navigate current tab (last resort for strict popup blockers)
+        window.location.href = blobUrl;
+      }
+    } catch {
+      // Ultimate fallback: data URL
+      const dataUrl = 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
+      window.open(dataUrl, '_blank');
+    }
   };
 
   if (loading) {
@@ -225,12 +241,15 @@ export default function ConfirmationPage() {
                   <Download style={{ width: '16px', height: '16px' }} />
                   Télécharger mon billet (PDF)
                 </button>
-                <Link
-                  href={`/billetterie/${ticket.ticketCode}`}
-                  style={{ padding: '10px 16px', borderRadius: '10px', background: 'rgba(255,255,255,0.06)', border: '1.5px solid rgba(255,255,255,0.12)', color: 'var(--ink)', fontWeight: 700, textDecoration: 'none', fontSize: '0.82rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                >
-                  Voir mon billet
-                </Link>
+                {/* Guard against undefined ticketCode (#4) */}
+                {ticket.ticketCode && (
+                  <Link
+                    href={`/billetterie/${ticket.ticketCode}`}
+                    style={{ padding: '10px 16px', borderRadius: '10px', background: 'rgba(255,255,255,0.06)', border: '1.5px solid rgba(255,255,255,0.12)', color: 'var(--ink)', fontWeight: 700, textDecoration: 'none', fontSize: '0.82rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    Voir mon billet
+                  </Link>
+                )}
               </div>
             </div>
           ))}

@@ -7,7 +7,7 @@ import { AdminAuthGuard } from '@/components/AdminAuthGuard';
 import { getCompetitions, getCandidates } from '@/services/dbService';
 import { Competition, Candidate } from '@/data/mockData';
 import { calculateTierRevenue } from '@/utils/revenueTiers';
-import { PayoutRequest } from '@/app/api/organizer/payouts/route';
+import { PayoutRequest } from '@/types/payouts';
 import {
   DollarSign,
   Wallet,
