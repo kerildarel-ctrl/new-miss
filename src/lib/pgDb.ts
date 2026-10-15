@@ -9,12 +9,25 @@ export function getDbPool(): Pool {
       throw new Error('DATABASE_URL environment variable is not set.');
     }
 
+    // Strip unsupported params for the `pg` driver (channel_binding is not supported)
+    const cleanUrl = connectionString
+      .replace(/[?&]channel_binding=[^&]*/g, '')
+      .replace(/\?&/, '?')
+      .replace(/&&/g, '&')
+      .replace(/[?&]$/, '');
+
     globalForPg.pgPool = new Pool({
-      connectionString,
+      connectionString: cleanUrl,
       ssl: { rejectUnauthorized: false },
-      max: 10,
-      idleTimeoutMillis: 120000, // Garde les connexions ouvertes 2 minutes
-      connectionTimeoutMillis: 5000,
+      max: 5,                         // lower max for serverless
+      idleTimeoutMillis: 30000,       // 30s idle (serverless resets anyway)
+      connectionTimeoutMillis: 10000, // 10s — enough for Netlify cold start
+    });
+
+    // Catch pool-level errors silently so they don't crash the process
+    globalForPg.pgPool.on('error', (err) => {
+      console.warn('[pgPool] idle client error:', err.message);
+      globalForPg.pgPool = undefined; // reset so next call creates a fresh pool
     });
   }
   return globalForPg.pgPool;
