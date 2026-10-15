@@ -334,7 +334,37 @@ export async function POST(request: Request) {
     const eventDate  = evt.date  || '';
     const eventVenue = evt.venue || '';
 
-    // 4. Générer les billets (un par place)
+    // 4. Verrou atomique — empêche la double-émission en cas de double-clic / retry simultané
+    // Si la commande est déjà PROCESSING ou PAID, un autre appel est en cours → on refuse
+    const lockResult = await queryDb<any>(
+      `UPDATE public.ticket_orders
+         SET payment_status = 'PROCESSING', fapshi_trans_id = $1
+       WHERE id = $2 AND payment_status = 'PENDING'
+       RETURNING id`,
+      [fapshiTransId || '', orderId]
+    ).catch(() => []);
+
+    if (!lockResult.length) {
+      // Either already PROCESSING (race) or PAID (already done — resend existing tickets)
+      const existingOrder = await queryDb<any>('SELECT * FROM public.ticket_orders WHERE id = $1 LIMIT 1', [orderId]);
+      if (existingOrder[0]?.payment_status === 'PAID') {
+        const existingTickets = await queryDb<any>('SELECT * FROM public.tickets WHERE order_ref = $1', [orderId]);
+        const origin = request.headers.get('origin') || 'https://miss-template.netlify.app';
+        return NextResponse.json({
+          success: true, alreadyPaid: true, orderId,
+          tickets: existingTickets.map((t: any) => ({ ticketCode: t.ticket_code, ticketUrl: `${origin}/billetterie/${t.ticket_code}` })),
+          buyerName: order.buyer_name, buyerEmail: order.buyer_email,
+          eventTitle, eventDate, eventVenue,
+          passName: order.pass_name, quantity: order.quantity || 1, totalPrice: order.total_price,
+        });
+      }
+      return NextResponse.json({
+        success: false,
+        error: 'Vérification déjà en cours. Merci de patienter quelques secondes.',
+      }, { status: 409 });
+    }
+
+    // 5. Générer les billets (un par place)
     const qty = order.quantity || 1;
     const origin = request.headers.get('origin') || 'https://miss-template.netlify.app';
     const issuedTickets: { ticketCode: string; ticketUrl: string; qrDataUrl: string }[] = [];

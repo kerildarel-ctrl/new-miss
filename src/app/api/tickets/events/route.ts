@@ -3,6 +3,17 @@ import { queryDb } from '@/lib/pgDb';
 
 export const dynamic = 'force-dynamic';
 
+/** Check admin authorization via X-Admin-Secret header or query param */
+function isAdminAuthed(request: Request): boolean {
+  const secret = process.env.ADMIN_SECRET || process.env.KERIL_SECRET || '';
+  if (!secret) return true; // No secret configured → allow (dev mode)
+  const header = request.headers.get('x-admin-secret') || '';
+  const { searchParams } = new URL(request.url);
+  const param = searchParams.get('secret') || '';
+  return header === secret || param === secret;
+}
+
+
 /** Auto-create the events table in Neon if it doesn't exist, and migrate missing columns */
 async function ensureEventsTable() {
   // Create table if it doesn't exist at all
@@ -154,6 +165,9 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  if (!isAdminAuthed(request)) {
+    return NextResponse.json({ success: false, error: 'Non autorisé' }, { status: 401 });
+  }
   try {
     await ensureEventsTable();
     const { searchParams } = new URL(request.url);
@@ -168,10 +182,14 @@ export async function DELETE(request: Request) {
 }
 
 export async function PUT(request: Request) {
+  if (!isAdminAuthed(request)) {
+    return NextResponse.json({ success: false, error: 'Non autorisé' }, { status: 401 });
+  }
   try {
     await ensureEventsTable();
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
+
     if (!id) return NextResponse.json({ success: false, error: 'ID requis' }, { status: 400 });
 
     const body = await request.json();

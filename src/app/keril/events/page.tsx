@@ -165,7 +165,7 @@ export default function KerilEventsPage() {
       if (modalMode === 'edit' && editingEvent) {
         res = await fetch(`/api/tickets/events?id=${editingEvent.id}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'x-admin-secret': process.env.NEXT_PUBLIC_ADMIN_SECRET || '' },
           body: JSON.stringify(payload),
         });
       } else {
@@ -190,7 +190,7 @@ export default function KerilEventsPage() {
   };
 
   const handleDeleteEvent = async (id: string) => {
-    await fetch(`/api/tickets/events?id=${id}`, { method: 'DELETE' });
+    await fetch(`/api/tickets/events?id=${id}`, { method: 'DELETE', headers: { 'x-admin-secret': process.env.NEXT_PUBLIC_ADMIN_SECRET || '' } });
     setDeletingEventId(null);
     loadEvents();
   };
