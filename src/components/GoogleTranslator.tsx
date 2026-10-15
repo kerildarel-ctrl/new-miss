@@ -51,7 +51,8 @@ export function GoogleTranslator() {
       script.id = 'google-translate-script';
       script.src = '//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
       script.async = true;
-      document.body.appendChild(script);
+      script.onerror = () => { /* ignore — Google Translate not critical */ };
+      try { document.body.appendChild(script); } catch { /* ignore */ }
     }
 
     setGoogTransCookie(lang);
