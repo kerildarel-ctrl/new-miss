@@ -251,9 +251,12 @@ async function ensureTables() {
       buyer_name TEXT DEFAULT '', buyer_email TEXT DEFAULT '',
       buyer_phone TEXT DEFAULT '', order_ref TEXT DEFAULT '',
       payment_status TEXT DEFAULT 'PAID', status TEXT DEFAULT 'VALID',
+      qr_data_url TEXT DEFAULT '',
       purchased_at TIMESTAMPTZ DEFAULT NOW(),
       scanned_at TIMESTAMPTZ, scanned_by_agent_name TEXT
     );
+    -- Ensure qr_data_url column exists on older tables
+    ALTER TABLE public.tickets ADD COLUMN IF NOT EXISTS qr_data_url TEXT DEFAULT '';
   `);
 }
 
@@ -282,7 +285,11 @@ export async function POST(request: Request) {
       const evt = evtRows[0] || {};
       return NextResponse.json({
         success: true, alreadyPaid: true, orderId,
-        tickets: tickets.map((t: any) => ({ ticketCode: t.ticket_code, ticketUrl: `${origin}/billetterie/${t.ticket_code}` })),
+        tickets: tickets.map((t: any) => ({
+          ticketCode: t.ticket_code,
+          ticketUrl: `${origin}/billetterie/${t.ticket_code}`,
+          qrDataUrl: t.qr_data_url || '',  // include stored QR for PDF download
+        })),
         buyerName: order.buyer_name, buyerEmail: order.buyer_email,
         eventTitle: evt.title || order.event_title,
         eventDate: evt.date || '', eventVenue: evt.venue || '',
@@ -300,7 +307,7 @@ export async function POST(request: Request) {
           headers: { 'apiuser': FAPSHI_API_USER, 'apikey': FAPSHI_API_KEY },
         });
         const verifyData = await verifyRes.json().catch(() => ({}));
-        console.log('[Fapshi] verify status:', JSON.stringify(verifyData));
+        console.info('[Fapshi] verify status:', verifyData.status || verifyData.data?.status);
         const status = (verifyData.status || verifyData.data?.status || '').toUpperCase();
         paymentConfirmed = ['SUCCESSFUL', 'SUCCESS', 'PAID'].includes(status);
         if (!paymentConfirmed) {
@@ -352,7 +359,11 @@ export async function POST(request: Request) {
         const origin = request.headers.get('origin') || 'https://miss-template.netlify.app';
         return NextResponse.json({
           success: true, alreadyPaid: true, orderId,
-          tickets: existingTickets.map((t: any) => ({ ticketCode: t.ticket_code, ticketUrl: `${origin}/billetterie/${t.ticket_code}` })),
+          tickets: existingTickets.map((t: any) => ({
+            ticketCode: t.ticket_code,
+            ticketUrl: `${origin}/billetterie/${t.ticket_code}`,
+            qrDataUrl: t.qr_data_url || '',
+          })),
           buyerName: order.buyer_name, buyerEmail: order.buyer_email,
           eventTitle, eventDate, eventVenue,
           passName: order.pass_name, quantity: order.quantity || 1, totalPrice: order.total_price,
@@ -379,12 +390,13 @@ export async function POST(request: Request) {
         `INSERT INTO public.tickets
           (id, ticket_code, event_id, event_title, pass_name, unit_price, quantity,
            total_price, buyer_name, buyer_email, buyer_phone, order_ref,
-           payment_status, status, purchased_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'PAID','VALID',NOW())
+           payment_status, status, qr_data_url, purchased_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'PAID','VALID',$13,NOW())
          ON CONFLICT (ticket_code) DO NOTHING`,
         [ticketId, ticketCode, order.event_id, eventTitle, order.pass_name,
          order.unit_price, 1, order.unit_price,
-         order.buyer_name, order.buyer_email, order.buyer_phone, orderId]
+         order.buyer_name, order.buyer_email, order.buyer_phone, orderId,
+         qrDataUrl]  // <-- store QR data URL in DB
       ).catch((e) => console.warn('Ticket insert warn:', e?.message));
 
       issuedTickets.push({ ticketCode, ticketUrl, qrDataUrl });
