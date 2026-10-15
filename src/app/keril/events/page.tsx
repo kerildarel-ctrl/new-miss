@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { AdminAuthGuard } from '@/components/AdminAuthGuard';
 import { TicketEvent, TicketPassCategory, TICKET_PASS_TEMPLATES } from '@/data/mockTickets';
-import { Plus, Trash2, Calendar, MapPin, QrCode, ArrowLeft, Pencil, Upload, X, ImageIcon } from 'lucide-react';
+import { Plus, Trash2, Calendar, MapPin, QrCode, ArrowLeft, Pencil, Upload, X, ImageIcon, Users } from 'lucide-react';
 
 const INPUT_STYLE: React.CSSProperties = {
   width: '100%', marginTop: '6px', height: '46px',
@@ -274,12 +274,35 @@ export default function KerilEventsPage() {
 
                     <div style={{ paddingTop: '10px', borderTop: '1px solid var(--line)' }}>
                       <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--mute)', textTransform: 'uppercase' }}>Pass ({evt.passes.length}) :</span>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginTop: '5px' }}>
-                        {evt.passes.map((p) => (
-                          <span key={p.name} style={{ background: 'var(--soft)', border: '1px solid var(--line)', padding: '3px 8px', borderRadius: '8px', fontSize: '0.72rem', fontWeight: 700 }}>
-                            {p.name} : <b style={{ color: 'var(--p)' }}>{p.price.toLocaleString('fr-FR')} F</b>
-                          </span>
-                        ))}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginTop: '6px' }}>
+                        {evt.passes.map((p: any) => {
+                          const capacity = p.quantity;
+                          const sold = p.soldCount || 0;
+                          const remaining = capacity !== undefined ? Math.max(0, capacity - sold) : null;
+                          const isSoldOut = remaining !== null && remaining === 0;
+                          const isCritical = remaining !== null && !isSoldOut && (remaining <= 10 || (capacity && remaining / capacity <= 0.1));
+                          const isLow = remaining !== null && !isSoldOut && !isCritical && (remaining <= 20 || (capacity && remaining / capacity <= 0.3));
+                          return (
+                            <div key={p.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+                              <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>{p.name}</span>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--p)' }}>{p.price.toLocaleString('fr-FR')} F</span>
+                                {remaining !== null && (
+                                  <span style={{
+                                    fontSize: '0.65rem', fontWeight: 800, padding: '1px 7px', borderRadius: '99px',
+                                    background: isSoldOut ? 'rgba(239,68,68,0.12)' : isCritical ? 'rgba(245,158,11,0.12)' : isLow ? 'rgba(234,179,8,0.1)' : 'rgba(16,185,129,0.1)',
+                                    color: isSoldOut ? '#ef4444' : isCritical ? '#f59e0b' : isLow ? '#ca8a04' : '#10b981',
+                                    border: `1px solid ${isSoldOut ? 'rgba(239,68,68,0.3)' : isCritical ? 'rgba(245,158,11,0.3)' : isLow ? 'rgba(234,179,8,0.25)' : 'rgba(16,185,129,0.25)'}`,
+                                    display: 'inline-flex', alignItems: 'center', gap: '3px',
+                                  }}>
+                                    <Users style={{ width: '9px', height: '9px' }} />
+                                    {isSoldOut ? 'SOLD OUT' : `${remaining}/${capacity}`}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
 

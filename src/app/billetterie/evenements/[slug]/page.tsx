@@ -1,16 +1,17 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Calendar, MapPin, Users, Plus, Minus, ArrowLeft, Shield, Zap } from 'lucide-react';
+import { Calendar, MapPin, Users, Plus, Minus, ArrowLeft, Shield, Zap, AlertTriangle } from 'lucide-react';
 import { useParams } from 'next/navigation';
 
 interface TicketPass {
   id?: string;
   name: string;
   price: number;
-  quantity?: number;
+  quantity?: number;   // total capacity
+  soldCount?: number;  // tickets sold (injected by API)
   description?: string;
 }
 
@@ -32,6 +33,26 @@ const inputStyle: React.CSSProperties = {
   border: '1.5px solid var(--line)', background: 'var(--soft)',
   padding: '0 14px', fontSize: '0.9rem', boxSizing: 'border-box', color: 'var(--ink)',
 };
+
+// ── Stock helper ──────────────────────────────────────────────────────────────
+function getPassStock(pass: TicketPass): {
+  capacity: number | null;
+  remaining: number | null;
+  soldOut: boolean;
+  critical: boolean;   // ≤ 10% or ≤ 10 remaining
+  warning: boolean;    // ≤ 30% remaining
+} {
+  if (pass.quantity === undefined || pass.quantity === null || pass.quantity <= 0) {
+    return { capacity: null, remaining: null, soldOut: false, critical: false, warning: false };
+  }
+  const sold = pass.soldCount || 0;
+  const remaining = Math.max(0, pass.quantity - sold);
+  const pct = remaining / pass.quantity;
+  const soldOut = remaining === 0;
+  const critical = !soldOut && (remaining <= 10 || pct <= 0.1);
+  const warning = !soldOut && !critical && (remaining <= 20 || pct <= 0.3);
+  return { capacity: pass.quantity, remaining, soldOut, critical, warning };
+}
 
 export default function EventDetailPage() {
   const params = useParams();
@@ -65,6 +86,12 @@ export default function EventDetailPage() {
       .finally(() => setLoading(false));
   }, [slug]);
 
+  // Compute selected pass stock
+  const passStock = useMemo(() => selectedPass ? getPassStock(selectedPass) : null, [selectedPass]);
+
+  // Max quantity: remaining stock or 10 (whichever smaller)
+  const maxQty = passStock?.remaining !== null ? Math.min(10, passStock!.remaining!) : 10;
+
   const total = selectedPass ? selectedPass.price * quantity : 0;
 
   const handleBuy = async (e: React.FormEvent) => {
@@ -83,7 +110,7 @@ export default function EventDetailPage() {
         body: JSON.stringify({
           eventId: event.id, eventTitle: event.title, eventSlug: event.slug,
           passId: selectedPass.id || selectedPass.name, passName: selectedPass.name,
-          unitPrice: selectedPass.price, quantity,
+          quantity,
           buyerName: buyerName.trim(), buyerEmail: buyerEmail.trim(), buyerPhone: buyerPhone.trim(),
         }),
       });
@@ -117,6 +144,32 @@ export default function EventDetailPage() {
 
   const hasHtml = Boolean(event.htmlContent && event.htmlContent.trim().length > 50);
 
+  /* ── Pass stock badge ── */
+  const StockBadge = ({ pass }: { pass: TicketPass }) => {
+    const s = getPassStock(pass);
+    if (s.capacity === null) return null;
+    if (s.soldOut) return (
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(239,68,68,0.12)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '99px', padding: '2px 9px', fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.04em' }}>
+        🔴 SOLD OUT
+      </span>
+    );
+    if (s.critical) return (
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(245,158,11,0.12)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.3)', borderRadius: '99px', padding: '2px 9px', fontSize: '0.7rem', fontWeight: 800 }}>
+        ⚠️ Plus que {s.remaining} place{s.remaining! > 1 ? 's' : ''} !
+      </span>
+    );
+    if (s.warning) return (
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(234,179,8,0.1)', color: '#ca8a04', border: '1px solid rgba(234,179,8,0.25)', borderRadius: '99px', padding: '2px 9px', fontSize: '0.7rem', fontWeight: 700 }}>
+        🟡 {s.remaining} places restantes
+      </span>
+    );
+    return (
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--mute)', fontSize: '0.72rem', fontWeight: 600 }}>
+        <Users style={{ width: '11px', height: '11px' }} /> {s.remaining} / {s.capacity} dispo
+      </span>
+    );
+  };
+
   /* ── Purchase form (reused in both mobile and desktop) ── */
   const purchaseForm = (
     <div style={{ background: 'var(--bg)', borderRadius: '20px', padding: '24px', border: '1.5px solid var(--line)', boxShadow: '0 8px 32px rgba(39,20,159,0.1)' }}>
@@ -125,73 +178,107 @@ export default function EventDetailPage() {
       </h2>
 
       {selectedPass ? (
-        <form onSubmit={handleBuy} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          {/* Quantity */}
-          <div>
-            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, marginBottom: '8px' }}>Nombre de places</label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <button type="button" onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                style={{ width: '38px', height: '38px', borderRadius: '10px', border: '1.5px solid var(--line)', background: 'var(--soft)', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
-                <Minus style={{ width: '16px', height: '16px' }} />
-              </button>
-              <span style={{ fontWeight: 900, fontSize: '1.3rem', minWidth: '32px', textAlign: 'center' }}>{quantity}</span>
-              <button type="button" onClick={() => setQuantity(Math.min(10, quantity + 1))}
-                style={{ width: '38px', height: '38px', borderRadius: '10px', border: '1.5px solid var(--line)', background: 'var(--soft)', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
-                <Plus style={{ width: '16px', height: '16px' }} />
-              </button>
-              <span style={{ fontSize: '0.78rem', color: 'var(--mute)' }}>max 10</span>
+        (() => {
+          const stock = getPassStock(selectedPass);
+          if (stock.soldOut) return (
+            <div style={{ textAlign: 'center', padding: '28px 0' }}>
+              <div style={{ fontSize: '2.8rem', marginBottom: '12px' }}>😔</div>
+              <p style={{ fontWeight: 800, fontSize: '1.1rem', color: '#ef4444', marginBottom: '8px' }}>Pass épuisé</p>
+              <p style={{ color: 'var(--mute)', fontSize: '0.85rem' }}>Ce pass est sold out. Choisissez un autre type de billet.</p>
             </div>
-          </div>
+          );
+          return (
+            <form onSubmit={handleBuy} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
 
-          <div>
-            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px' }}>Nom complet *</label>
-            <input type="text" required placeholder="Jean DUPONT" value={buyerName} onChange={(e) => setBuyerName(e.target.value)} style={inputStyle} />
-          </div>
-          <div>
-            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px' }}>Email *</label>
-            <input type="email" required placeholder="votre@email.com" value={buyerEmail} onChange={(e) => setBuyerEmail(e.target.value)} style={inputStyle} />
-          </div>
-          <div>
-            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px' }}>Téléphone Mobile Money *</label>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <div style={{ background: 'var(--soft)', border: '1.5px solid var(--line)', borderRadius: '12px', padding: '0 12px', height: '44px', display: 'flex', alignItems: 'center', fontSize: '0.85rem', fontWeight: 700, flexShrink: 0 }}>
-                🇨🇲 +237
+              {/* Stock warning banner */}
+              {(stock.critical || stock.warning) && stock.remaining !== null && (
+                <div style={{
+                  background: stock.critical ? 'rgba(245,158,11,0.12)' : 'rgba(234,179,8,0.08)',
+                  border: `1.5px solid ${stock.critical ? 'rgba(245,158,11,0.4)' : 'rgba(234,179,8,0.3)'}`,
+                  borderRadius: '12px', padding: '10px 14px',
+                  display: 'flex', alignItems: 'center', gap: '8px',
+                  color: stock.critical ? '#b45309' : '#92400e',
+                  fontSize: '0.82rem', fontWeight: 700,
+                }}>
+                  <AlertTriangle style={{ width: '15px', height: '15px', flexShrink: 0 }} />
+                  {stock.critical
+                    ? `⚠️ Attention ! Seulement ${stock.remaining} place${stock.remaining > 1 ? 's' : ''} disponible${stock.remaining > 1 ? 's' : ''} — réservez maintenant !`
+                    : `🟡 Stock limité — ${stock.remaining} places restantes`}
+                </div>
+              )}
+
+              {/* Quantity */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, marginBottom: '8px' }}>Nombre de places</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <button type="button" onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    style={{ width: '38px', height: '38px', borderRadius: '10px', border: '1.5px solid var(--line)', background: 'var(--soft)', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
+                    <Minus style={{ width: '16px', height: '16px' }} />
+                  </button>
+                  <span style={{ fontWeight: 900, fontSize: '1.3rem', minWidth: '32px', textAlign: 'center' }}>{quantity}</span>
+                  <button type="button"
+                    onClick={() => setQuantity(Math.min(maxQty, quantity + 1))}
+                    disabled={quantity >= maxQty}
+                    style={{ width: '38px', height: '38px', borderRadius: '10px', border: '1.5px solid var(--line)', background: quantity >= maxQty ? 'var(--line)' : 'var(--soft)', cursor: quantity >= maxQty ? 'not-allowed' : 'pointer', display: 'grid', placeItems: 'center', opacity: quantity >= maxQty ? 0.5 : 1 }}>
+                    <Plus style={{ width: '16px', height: '16px' }} />
+                  </button>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--mute)' }}>
+                    {stock.remaining !== null ? `max ${maxQty}` : 'max 10'}
+                  </span>
+                </div>
               </div>
-              <input type="tel" required placeholder="690 000 000" value={buyerPhone} onChange={(e) => setBuyerPhone(e.target.value)} style={{ ...inputStyle, flex: 1 }} />
-            </div>
-          </div>
 
-          {error && (
-            <div style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', padding: '10px 14px', borderRadius: '10px', fontSize: '0.84rem', fontWeight: 600 }}>
-              {error}
-            </div>
-          )}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px' }}>Nom complet *</label>
+                <input type="text" required placeholder="Jean DUPONT" value={buyerName} onChange={(e) => setBuyerName(e.target.value)} style={inputStyle} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px' }}>Email *</label>
+                <input type="email" required placeholder="votre@email.com" value={buyerEmail} onChange={(e) => setBuyerEmail(e.target.value)} style={inputStyle} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px' }}>Téléphone Mobile Money *</label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <div style={{ background: 'var(--soft)', border: '1.5px solid var(--line)', borderRadius: '12px', padding: '0 12px', height: '44px', display: 'flex', alignItems: 'center', fontSize: '0.85rem', fontWeight: 700, flexShrink: 0 }}>
+                    🇨🇲 +237
+                  </div>
+                  <input type="tel" required placeholder="690 000 000" value={buyerPhone} onChange={(e) => setBuyerPhone(e.target.value)} style={{ ...inputStyle, flex: 1 }} />
+                </div>
+              </div>
 
-          {/* Total */}
-          <div style={{ background: 'var(--soft)', borderRadius: '12px', padding: '14px', border: '1.5px solid var(--line)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--mute)', marginBottom: '6px' }}>
-              <span>{selectedPass.name} × {quantity}</span>
-              <span>{(selectedPass.price * quantity).toLocaleString('fr-FR')} FCFA</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 900, fontSize: '1.1rem' }}>
-              <span>Total</span>
-              <span style={{ color: 'var(--p)' }}>{total.toLocaleString('fr-FR')} FCFA</span>
-            </div>
-          </div>
+              {error && (
+                <div style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', padding: '10px 14px', borderRadius: '10px', fontSize: '0.84rem', fontWeight: 600 }}>
+                  {error}
+                </div>
+              )}
 
-          <button type="submit" disabled={submitting} style={{
-            width: '100%', padding: '16px', borderRadius: '14px', border: 'none',
-            background: submitting ? '#9ca3af' : 'linear-gradient(135deg,#27149F,#4B2CE0)',
-            color: '#fff', fontWeight: 800, fontSize: '1rem',
-            cursor: submitting ? 'not-allowed' : 'pointer',
-            boxShadow: submitting ? 'none' : '0 8px 24px rgba(39,20,159,0.35)',
-          }}>
-            {submitting ? '⏳ Redirection…' : `🎟️ Payer ${total.toLocaleString('fr-FR')} FCFA`}
-          </button>
-          <p style={{ textAlign: 'center', fontSize: '0.76rem', color: 'var(--mute)', margin: 0 }}>
-            🔒 Paiement sécurisé · Orange Money & MTN MoMo
-          </p>
-        </form>
+              {/* Total */}
+              <div style={{ background: 'var(--soft)', borderRadius: '12px', padding: '14px', border: '1.5px solid var(--line)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--mute)', marginBottom: '6px' }}>
+                  <span>{selectedPass.name} × {quantity}</span>
+                  <span>{(selectedPass.price * quantity).toLocaleString('fr-FR')} FCFA</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 900, fontSize: '1.1rem' }}>
+                  <span>Total</span>
+                  <span style={{ color: 'var(--p)' }}>{total.toLocaleString('fr-FR')} FCFA</span>
+                </div>
+              </div>
+
+              <button type="submit" disabled={submitting} style={{
+                width: '100%', padding: '16px', borderRadius: '14px', border: 'none',
+                background: submitting ? '#9ca3af' : 'linear-gradient(135deg,#27149F,#4B2CE0)',
+                color: '#fff', fontWeight: 800, fontSize: '1rem',
+                cursor: submitting ? 'not-allowed' : 'pointer',
+                boxShadow: submitting ? 'none' : '0 8px 24px rgba(39,20,159,0.35)',
+              }}>
+                {submitting ? '⏳ Redirection…' : `🎟️ Payer ${total.toLocaleString('fr-FR')} FCFA`}
+              </button>
+              <p style={{ textAlign: 'center', fontSize: '0.76rem', color: 'var(--mute)', margin: 0 }}>
+                🔒 Paiement sécurisé · Orange Money & MTN MoMo
+              </p>
+            </form>
+          );
+        })()
       ) : (
         <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--mute)' }}>
           <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>🎟️</div>
@@ -206,37 +293,50 @@ export default function EventDetailPage() {
     <div style={{ background: 'var(--bg)', borderRadius: '20px', padding: '24px', border: '1.5px solid var(--line)' }}>
       <h2 style={{ margin: '0 0 16px', fontSize: '1.05rem', fontWeight: 800 }}>🎟️ Choisissez votre pass</h2>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        {event.passes.map((pass) => (
-          <div key={pass.name} onClick={() => setSelectedPass(pass)} style={{
-            padding: '16px 18px', borderRadius: '14px', cursor: 'pointer',
-            border: selectedPass?.name === pass.name ? '2px solid var(--p)' : '1.5px solid var(--line)',
-            background: selectedPass?.name === pass.name ? 'rgba(91,61,245,0.06)' : 'var(--soft)',
-            transition: 'all 0.18s', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{
-                width: '14px', height: '14px', borderRadius: '50%', flexShrink: 0,
-                background: selectedPass?.name === pass.name ? 'var(--p)' : 'var(--line)',
-                boxShadow: selectedPass?.name === pass.name ? '0 0 0 4px rgba(91,61,245,0.2)' : 'none',
-              }} />
-              <div>
-                <p style={{ margin: 0, fontWeight: 800, fontSize: '0.95rem' }}>{pass.name}</p>
-                {pass.description && <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: 'var(--mute)' }}>{pass.description}</p>}
-                {pass.quantity !== undefined && (
-                  <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: 'var(--mute)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <Users style={{ width: '11px', height: '11px' }} /> {pass.quantity} places
+        {event.passes.map((pass) => {
+          const s = getPassStock(pass);
+          const isSelected = selectedPass?.name === pass.name;
+          return (
+            <div
+              key={pass.name}
+              onClick={() => { if (!s.soldOut) { setSelectedPass(pass); setQuantity(1); } }}
+              style={{
+                padding: '16px 18px', borderRadius: '14px',
+                cursor: s.soldOut ? 'not-allowed' : 'pointer',
+                border: isSelected ? '2px solid var(--p)' : s.soldOut ? '1.5px solid rgba(239,68,68,0.3)' : '1.5px solid var(--line)',
+                background: isSelected ? 'rgba(91,61,245,0.06)' : s.soldOut ? 'rgba(239,68,68,0.03)' : 'var(--soft)',
+                opacity: s.soldOut ? 0.65 : 1,
+                transition: 'all 0.18s',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
+                <div style={{
+                  width: '14px', height: '14px', borderRadius: '50%', flexShrink: 0,
+                  background: s.soldOut ? '#ef4444' : isSelected ? 'var(--p)' : 'var(--line)',
+                  boxShadow: isSelected ? '0 0 0 4px rgba(91,61,245,0.2)' : 'none',
+                }} />
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ margin: 0, fontWeight: 800, fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    {pass.name}
+                    {s.soldOut && <span style={{ fontSize: '0.68rem', fontWeight: 900, color: '#ef4444', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '99px', padding: '1px 7px', letterSpacing: '0.04em' }}>SOLD OUT</span>}
                   </p>
-                )}
+                  {pass.description && <p style={{ margin: '2px 0 4px', fontSize: '0.8rem', color: 'var(--mute)' }}>{pass.description}</p>}
+                  {/* Stock badge */}
+                  <div style={{ marginTop: '4px' }}>
+                    <StockBadge pass={pass} />
+                  </div>
+                </div>
+              </div>
+              <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '8px' }}>
+                <p style={{ margin: 0, fontWeight: 900, fontSize: '1.15rem', color: s.soldOut ? '#ef4444' : 'var(--p)', whiteSpace: 'nowrap', textDecoration: s.soldOut ? 'line-through' : 'none' }}>
+                  {pass.price.toLocaleString('fr-FR')}
+                </p>
+                <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--mute)', fontWeight: 700 }}>FCFA</p>
               </div>
             </div>
-            <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '12px' }}>
-              <p style={{ margin: 0, fontWeight: 900, fontSize: '1.15rem', color: 'var(--p)', whiteSpace: 'nowrap' }}>
-                {pass.price.toLocaleString('fr-FR')}
-              </p>
-              <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--mute)', fontWeight: 700 }}>FCFA</p>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

@@ -55,6 +55,8 @@ function generateOrgToken(): string {
 }
 
 function mapRow(e: any) {
+  const passes: any[] = Array.isArray(e.passes) ? e.passes
+    : (typeof e.passes === 'string' ? JSON.parse(e.passes || '[]') : []);
   return {
     id: e.id,
     slug: e.slug,
@@ -65,7 +67,7 @@ function mapRow(e: any) {
     city: e.city || 'Yaoundé',
     bannerImage: e.banner_image || '/images/hero_bg.png',
     htmlContent: e.html_content || '',
-    passes: Array.isArray(e.passes) ? e.passes : (typeof e.passes === 'string' ? JSON.parse(e.passes || '[]') : []),
+    passes,
     organizerToken: e.organizer_token || '',
     organizerName: e.organizer_name || '',
     organizerEmail: e.organizer_email || '',
@@ -91,6 +93,39 @@ export async function GET(request: Request) {
     }
 
     const events = rows.map(mapRow);
+
+    // — Enrich with sold counts per pass from the tickets table —
+    if (events.length > 0) {
+      const eventIds = events.map((ev) => ev.id);
+      try {
+        // Count PAID tickets grouped by event_id + pass_name
+        const soldRows = await queryDb<any>(
+          `SELECT t.event_id, t.pass_name, COUNT(*)::int AS sold
+           FROM public.tickets t
+           INNER JOIN public.ticket_orders o ON o.id = t.order_ref
+           WHERE o.payment_status = 'PAID'
+             AND t.event_id = ANY($1::text[])
+           GROUP BY t.event_id, t.pass_name`,
+          [eventIds]
+        ).catch(() => [] as any[]);
+
+        // Build a map: eventId -> passName -> soldCount
+        const soldMap: Record<string, Record<string, number>> = {};
+        for (const row of soldRows) {
+          if (!soldMap[row.event_id]) soldMap[row.event_id] = {};
+          soldMap[row.event_id][row.pass_name] = Number(row.sold) || 0;
+        }
+
+        // Inject soldCount into each pass
+        for (const ev of events) {
+          const passSold = soldMap[ev.id] || {};
+          ev.passes = ev.passes.map((p: any) => ({
+            ...p,
+            soldCount: passSold[p.name] || 0,
+          }));
+        }
+      } catch { /* if tickets table absent, gracefully skip */ }
+    }
 
     // Return single object when querying by token or slug
     if ((token || slug) && events.length <= 1) {
