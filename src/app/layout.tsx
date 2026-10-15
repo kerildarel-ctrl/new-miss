@@ -33,8 +33,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className={poppins.variable}>
-      <body className="min-h-screen flex flex-col font-poppins selection:bg-[var(--p)] selection:text-white">
+    <html lang="fr" className={poppins.variable} suppressHydrationWarning>
+      <body className="min-h-screen flex flex-col font-poppins selection:bg-[var(--p)] selection:text-white" suppressHydrationWarning>
         <ClientProviders>{children}</ClientProviders>
       </body>
     </html>
