@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { CheckCircle, XCircle, RefreshCw, Download, Mail } from 'lucide-react';
+import { CheckCircle, XCircle, RefreshCw, Download } from 'lucide-react';
 
 interface IssuedTicket {
   ticketCode: string;
@@ -54,9 +54,62 @@ export default function ConfirmationPage() {
     }
   }, [orderId, transId]);
 
-  useEffect(() => {
-    verify();
-  }, [verify]);
+  useEffect(() => { verify(); }, [verify]);
+
+  // ── PDF download via print window ────────────────────────────────────────
+  const handleDownloadPDF = (ticket: IssuedTicket, index: number) => {
+    if (!result) return;
+    const qrImg = ticket.qrDataUrl ? `<img src="${ticket.qrDataUrl}" width="140" height="140" style="display:block;border-radius:10px;" />` : '';
+    const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"/><title>Billet ${result.passName} — ${result.eventTitle}</title>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+      *{margin:0;padding:0;box-sizing:border-box}
+      body{font-family:'Inter',sans-serif;background:#0f0a1e;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+      .ticket{background:linear-gradient(135deg,#1B0E78,#4B2CE0);border-radius:24px;max-width:520px;width:100%;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,0.7)}
+      .top{display:flex;min-height:200px}
+      .left{flex:1;padding:28px 22px;background:linear-gradient(135deg,#1B0E78,#2D1EA0)}
+      .divider{width:2px;background:repeating-linear-gradient(to bottom,transparent 0,transparent 5px,rgba(255,255,255,0.15) 5px,rgba(255,255,255,0.15) 10px)}
+      .right{width:180px;padding:20px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(135deg,#2D1EA0,#1B0E78)}
+      .label{font-size:9px;letter-spacing:4px;color:#a78bfa;font-weight:800;text-transform:uppercase;margin-bottom:10px}
+      .title{font-size:18px;font-weight:900;color:#fff;line-height:1.3;margin-bottom:18px}
+      .info{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:12px;color:rgba(255,255,255,0.75)}
+      .badge{display:inline-block;background:#a78bfa;color:#0f0a1e;font-size:11px;font-weight:900;padding:6px 16px;border-radius:99px;letter-spacing:1px;text-transform:uppercase}
+      .qr-label{font-size:8px;letter-spacing:3px;color:#a78bfa;font-weight:700;text-transform:uppercase;margin-bottom:10px}
+      .qr-wrap{background:#fff;border-radius:12px;padding:8px;display:inline-block;box-shadow:0 8px 24px rgba(0,0,0,0.4)}
+      .code{margin-top:10px;font-size:9px;color:rgba(255,255,255,0.4);font-family:monospace;word-break:break-all}
+      .bottom{background:rgba(0,0,0,0.35);padding:10px 22px;display:flex;justify-content:space-between;align-items:center}
+      .bottom-ref{font-size:10px;color:rgba(255,255,255,0.35)}
+      .bottom-brand{font-size:10px;color:rgba(255,255,255,0.2)}
+      .accent{color:#a78bfa;font-family:monospace;font-weight:700}
+      @media print{body{background:#fff}}
+    </style></head><body>
+    <div class="ticket">
+      <div class="top">
+        <div class="left">
+          <div class="label">◆ BILLET D\'ENTRÉE ${index + 1}/${result.tickets.length}</div>
+          <div class="title">${result.eventTitle}</div>
+          <div class="info">&#128197; ${result.eventDate || 'Date à confirmer'}</div>
+          <div class="info">&#128205; ${result.eventVenue || 'Lieu à confirmer'}</div>
+          <div class="badge">${result.passName}</div>
+        </div>
+        <div class="divider"></div>
+        <div class="right">
+          <div class="qr-label">SCANNER À L\'ENTRÉE</div>
+          <div class="qr-wrap">${qrImg}</div>
+          <div class="code">${ticket.ticketCode}</div>
+        </div>
+      </div>
+      <div class="bottom">
+        <div class="bottom-ref">RÉF <span class="accent">${ticket.ticketCode}</span></div>
+        <div class="bottom-brand">VoteMoi × MK PROG © 2026</div>
+      </div>
+    </div>
+    <script>window.onload=function(){window.print();setTimeout(function(){window.close();},1000);}<\/script>
+    </body></html>`;
+
+    const win = window.open('', '_blank', 'width=620,height=400');
+    if (win) { win.document.write(html); win.document.close(); }
+  };
 
   if (loading) {
     return (
@@ -116,7 +169,7 @@ export default function ConfirmationPage() {
           </p>
           <div style={{ display: 'inline-flex', gap: '16px', flexWrap: 'wrap', justifyContent: 'center' }}>
             <div style={{ background: 'rgba(255,255,255,0.12)', borderRadius: '12px', padding: '8px 16px', fontSize: '0.82rem', color: '#D9D4FA' }}>
-              <Mail style={{ width: '14px', height: '14px', display: 'inline', marginRight: '6px' }} />
+              📧
               Email envoyé
             </div>
             <div style={{ background: 'rgba(255,255,255,0.12)', borderRadius: '12px', padding: '8px 16px', fontSize: '0.82rem', color: '#D9D4FA' }}>
@@ -164,9 +217,17 @@ export default function ConfirmationPage() {
 
               {/* Validate link */}
               <div style={{ padding: '0 20px 16px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => handleDownloadPDF(ticket, i)}
+                  style={{ padding: '10px 18px', borderRadius: '10px', background: 'linear-gradient(135deg,#4B2CE0,#6d28d9)', color: '#fff', fontWeight: 800, border: 'none', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '7px', cursor: 'pointer', boxShadow: '0 4px 16px rgba(91,61,245,0.35)' }}
+                >
+                  <Download style={{ width: '16px', height: '16px' }} />
+                  Télécharger mon billet (PDF)
+                </button>
                 <Link
                   href={`/billetterie/${ticket.ticketCode}`}
-                  style={{ padding: '9px 16px', borderRadius: '10px', background: '#10b981', color: '#fff', fontWeight: 700, textDecoration: 'none', fontSize: '0.82rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                  style={{ padding: '10px 16px', borderRadius: '10px', background: 'rgba(255,255,255,0.06)', border: '1.5px solid rgba(255,255,255,0.12)', color: 'var(--ink)', fontWeight: 700, textDecoration: 'none', fontSize: '0.82rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                 >
                   Voir mon billet
                 </Link>

@@ -1,31 +1,40 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { AdminAuthGuard } from '@/components/AdminAuthGuard';
 import { StatisticsCard } from '@/components/StatisticsCard';
 import { getCompetitions, getCandidates } from '@/services/dbService';
 import { Competition, Candidate } from '@/data/mockData';
-import { Trophy, Users, Vote, UserCheck, TrendingUp, Sparkles, Activity, DollarSign, ArrowRight, ShieldCheck, Wallet } from 'lucide-react';
+import { Trophy, Users, Vote, Ticket, Calendar, TrendingUp, Activity, DollarSign, ArrowRight, Wallet, RefreshCw } from 'lucide-react';
 import { calculateTierRevenue } from '@/utils/revenueTiers';
 
 export default function KerilDashboardPage() {
   const [competitions, setCompetitions] = useState<Competition[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [ticketCount, setTicketCount] = useState<number>(0);
+  const [eventCount, setEventCount] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    async function loadLiveData() {
-      setIsLoading(true);
-      const comps = await getCompetitions();
-      const cands = await getCandidates();
+  const loadLiveData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const [comps, cands, ticketsRes, eventsRes] = await Promise.all([
+        getCompetitions(),
+        getCandidates(),
+        fetch('/api/tickets?_t=' + Date.now(), { cache: 'no-store' }).then(r => r.json()).catch(() => ({ data: [] })),
+        fetch('/api/tickets/events?_t=' + Date.now(), { cache: 'no-store' }).then(r => r.json()).catch(() => ({ data: [] })),
+      ]);
       setCompetitions(comps);
       setCandidates(cands);
-      setIsLoading(false);
-    }
-    loadLiveData();
+      setTicketCount(Array.isArray(ticketsRes?.data) ? ticketsRes.data.length : (Array.isArray(ticketsRes) ? ticketsRes.length : 0));
+      setEventCount(Array.isArray(eventsRes?.data) ? eventsRes.data.length : (Array.isArray(eventsRes) ? eventsRes.length : 0));
+    } catch { /* continue */ }
+    finally { setIsLoading(false); }
   }, []);
+
+  useEffect(() => { loadLiveData(); }, [loadLiveData]);
 
   const totalVotes = candidates.reduce((sum, c) => sum + c.voteCount, 0);
   const globalTier = calculateTierRevenue(totalVotes);
@@ -76,7 +85,7 @@ export default function KerilDashboardPage() {
               </h1>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <span
                 style={{
                   padding: '6px 14px',
@@ -91,24 +100,26 @@ export default function KerilDashboardPage() {
                   gap: '6px',
                 }}
               >
-                <span
-                  style={{
-                    width: '8px',
-                    height: '8px',
-                    borderRadius: '50%',
-                    background: '#10b981',
-                  }}
-                />
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981' }} />
                 Système Actif
               </span>
+              <button
+                type="button"
+                onClick={loadLiveData}
+                disabled={isLoading}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 14px', borderRadius: '99px', background: 'var(--bg)', border: '1.5px solid var(--line)', color: 'var(--ink)', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}
+              >
+                <RefreshCw style={{ width: '14px', height: '14px', animation: isLoading ? 'spin 1s linear infinite' : 'none' }} />
+                Actualiser
+              </button>
             </div>
           </div>
 
-          {/* 4 DYNAMIC STATISTICAL KPI CARDS */}
+          {/* 6 DYNAMIC STATISTICAL KPI CARDS */}
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
               gap: '18px',
             }}
           >
@@ -137,12 +148,28 @@ export default function KerilDashboardPage() {
               isPositive={true}
             />
             <StatisticsCard
-              title="Sessions Votants"
-              value={isLoading ? '...' : Math.ceil(totalVotes * 0.7).toString()}
-              icon={UserCheck}
-              subtitle="Sessions de vote vérifiées"
-              change={totalVotes > 0 ? `+${Math.ceil(totalVotes * 0.7)} uniques` : '0 session'}
-              isPositive={true}
+              title="Billets Vendus"
+              value={isLoading ? '...' : ticketCount.toLocaleString('fr-FR')}
+              icon={Ticket}
+              subtitle="Billets payés et émis"
+              change={ticketCount > 0 ? `+${ticketCount} billet(s)` : '0 billet'}
+              isPositive={ticketCount > 0}
+            />
+            <StatisticsCard
+              title="Événements"
+              value={isLoading ? '...' : eventCount.toString()}
+              icon={Calendar}
+              subtitle="Événements billetterie"
+              change={eventCount > 0 ? `+${eventCount} événement(s)` : '0 événement'}
+              isPositive={eventCount > 0}
+            />
+            <StatisticsCard
+              title="Revenus Bruts"
+              value={isLoading ? '...' : `${globalTier.totalGross.toLocaleString('fr-FR')} F`}
+              icon={DollarSign}
+              subtitle="Volume total collecté"
+              change={globalTier.totalGross > 0 ? `Net: ${globalTier.voteMoiNetProfit.toLocaleString('fr-FR')} F` : '0 FCFA'}
+              isPositive={globalTier.totalGross > 0}
             />
           </div>
 
