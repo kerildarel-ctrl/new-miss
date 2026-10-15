@@ -27,8 +27,8 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="top">
-      <div className="wd" style={{ position: 'relative' }}>
+    <header className="top" suppressHydrationWarning>
+      <div className="wd" style={{ position: 'relative' }} suppressHydrationWarning>
         {/* LOGO */}
         <Link href="/" className="logo" onClick={() => setMobileMenuOpen(false)}>
           <Image
@@ -42,7 +42,7 @@ export const Header: React.FC = () => {
         </Link>
 
         {/* DESKTOP NAVIGATION */}
-        <nav className="desktop-nav">
+        <nav className="desktop-nav" suppressHydrationWarning>
           {navLinks.slice(0, 5).map((link) => {
             const active = isActive(link.href);
             return (
@@ -50,6 +50,7 @@ export const Header: React.FC = () => {
                 key={link.href}
                 href={link.href}
                 className={active ? 'on' : ''}
+                suppressHydrationWarning
               >
                 {link.label}
               </Link>
@@ -58,7 +59,7 @@ export const Header: React.FC = () => {
         </nav>
 
         {/* ACTIONS: LANG + MOBILE MENU BUTTON */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} suppressHydrationWarning>
           <button
             type="button"
             className="lgb"
