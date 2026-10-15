@@ -94,7 +94,7 @@ export default function EventDetailPage() {
   const passStock = useMemo(() => selectedPass ? getPassStock(selectedPass) : null, [selectedPass]);
 
   // Max quantity: remaining stock or 10 (whichever smaller)
-  const maxQty = passStock?.remaining !== null ? Math.min(10, passStock!.remaining!) : 10;
+  const maxQty = passStock?.remaining != null ? Math.min(10, passStock.remaining) : 10;
 
   const total = selectedPass ? selectedPass.price * quantity : 0;
 
