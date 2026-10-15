@@ -414,7 +414,7 @@ export default function KerilEventsPage() {
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '10px' }}>
                     <div>
                       <label style={LABEL}>Nom</label>
-                      <input type="text" placeholder="Jean DUPONT" value={organizerName} onChange={(e) => setOrganizerName(e.target.value)} style={SMALL_INPUT} />
+                      <input type="text" placeholder="Keril Kousso" value={organizerName} onChange={(e) => setOrganizerName(e.target.value)} style={SMALL_INPUT} />
                     </div>
                     <div>
                       <label style={LABEL}>Téléphone MoMo</label>

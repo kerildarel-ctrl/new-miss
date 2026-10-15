@@ -4,8 +4,9 @@ import QRCode from 'qrcode';
 
 export const dynamic = 'force-dynamic';
 
-const FAPSHI_API_USER = process.env.FAPSHI_API_USER || '2aa10fd5-e2e0-4f94-bc2f-01585657f418';
-const FAPSHI_API_KEY  = process.env.FAPSHI_API_KEY  || 'FAK_f8e3d6d682775ca2f34e34c80da6ccc6';
+const FAPSHI_API_USER = process.env.FAPSHI_API_USER || '';
+const FAPSHI_API_KEY  = process.env.FAPSHI_API_KEY  || '';
+
 const FAPSHI_BASE_URL = 'https://live.fapshi.com';
 const BREVO_API_KEY   = process.env.BREVO_API_KEY   || '';
 
