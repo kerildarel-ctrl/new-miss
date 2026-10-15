@@ -60,6 +60,7 @@ export default function EventDetailPage() {
 
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const [selectedPass, setSelectedPass] = useState<TicketPass | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [isMobile, setIsMobile] = useState(false);
@@ -78,12 +79,15 @@ export default function EventDetailPage() {
   }, []);
 
   useEffect(() => {
-    if (!slug) return;
-    fetch(`/api/tickets/events?slug=${slug}`)
+    if (!slug) { setLoading(false); return; }
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000);
+    fetch(`/api/tickets/events?slug=${encodeURIComponent(slug)}`, { signal: controller.signal })
       .then((r) => r.json())
-      .then((d) => { if (d.success && d.data) setEvent(d.data); })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+      .then((d) => { if (d.success && d.data) setEvent(d.data); else setFetchError(true); })
+      .catch(() => setFetchError(true))
+      .finally(() => { clearTimeout(timeout); setLoading(false); });
+    return () => { controller.abort(); clearTimeout(timeout); };
   }, [slug]);
 
   // Compute selected pass stock
@@ -130,14 +134,19 @@ export default function EventDetailPage() {
     </div>
   );
 
-  if (!event) return (
+  if (fetchError || !event) return (
     <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: 'var(--soft)' }}>
-      <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🔍</div>
-        <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>Événement introuvable</h2>
-        <Link href="/billetterie/evenements" style={{ color: 'var(--p)', fontWeight: 700, marginTop: '12px', display: 'block' }}>
+      <div style={{ textAlign: 'center', padding: '24px' }}>
+        <div style={{ fontSize: '3rem', marginBottom: '16px' }}>{fetchError ? '⚠️' : '🔍'}</div>
+        <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>
+          {fetchError ? 'Erreur de chargement' : 'Événement introuvable'}
+        </h2>
+        <p style={{ color: 'var(--mute)', fontSize: '0.9rem', margin: '8px 0 20px' }}>
+          {fetchError ? 'Impossible de charger cet événement. Réessayez.' : "Cet événement n'existe pas ou a été supprimé."}
+        </p>
+        <a href="/billetterie/evenements" style={{ color: 'var(--p)', fontWeight: 700, display: 'inline-block' }}>
           ← Retour aux événements
-        </Link>
+        </a>
       </div>
     </div>
   );
