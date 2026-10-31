@@ -67,6 +67,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Champs requis manquants.' }, { status: 400 });
     }
 
+    // ── Validate email format ──────────────────────────────────────────
+    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    if (!emailRe.test(String(buyerEmail))) {
+      return NextResponse.json({ success: false, error: 'Adresse email invalide.' }, { status: 400 });
+    }
+
+    // ── Validate Cameroonian phone format: 6XXXXXXXX (9 digits, starts with 6) ──
+    const cleanPhone = String(buyerPhone).replace(/[\s\-+()]/g, '').replace(/^237/, '');
+    if (!/^6[5-9]\d{7}$/.test(cleanPhone)) {
+      return NextResponse.json({ success: false, error: 'Numéro de téléphone invalide (format: 6XXXXXXXX).' }, { status: 400 });
+    }
+
     // ── Quantity cap (never trust the client) ──────────────────────────
     const qty = Math.min(Math.max(1, parseInt(String(quantity), 10) || 1), MAX_QUANTITY);
 

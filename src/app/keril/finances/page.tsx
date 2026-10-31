@@ -37,6 +37,10 @@ export default function KerilFinancesPage() {
   const [processingPayoutId, setProcessingPayoutId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [fapshiBalance, setFapshiBalance] = useState<number | null>(null);
+  // Toast notification
+  const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+  // Confirmation modal for Fapshi disburse
+  const [confirmModal, setConfirmModal] = useState<{ payout: PayoutRequest; txRef: string } | null>(null);
   const [previewCompCard, setPreviewCompCard] = useState<{
     comp: Competition;
     votes: number;
@@ -153,6 +157,11 @@ export default function KerilFinancesPage() {
     }
   };
 
+  const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 4000);
+  };
+
   const handleRegenerateToken = async (slug: string) => {
     setRegeneratingSlug(slug);
     try {
@@ -164,68 +173,64 @@ export default function KerilFinancesPage() {
       const data = await res.json();
       if (data.success) {
         await loadAllFinancials();
+        showToast('Token régénéré avec succès.');
       } else {
-        alert(data.error || 'Erreur lors de la régénération');
+        showToast(data.error || 'Erreur lors de la régénération', 'error');
       }
     } catch {
-      alert('Erreur réseau');
+      showToast('Erreur réseau', 'error');
     } finally {
       setRegeneratingSlug(null);
     }
   };
 
-  const handleUpdatePayoutStatus = async (id: string, newStatus: 'PAID' | 'REJECTED') => {
-    const promptRef = newStatus === 'PAID' ? prompt('Référence de transaction MoMo / Orange Money (optionnel) :') : null;
+  const handleUpdatePayoutStatus = async (id: string, newStatus: 'PAID' | 'REJECTED', txRef?: string) => {
     setProcessingPayoutId(id);
-
     try {
       const res = await fetch('/api/organizer/payouts', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id,
-          status: newStatus,
-          transactionRef: promptRef || undefined,
-        }),
+        body: JSON.stringify({ id, status: newStatus, transactionRef: txRef || undefined }),
       });
       const data = await res.json();
       if (data.success) {
         await loadAllFinancials();
+        showToast(newStatus === 'PAID' ? 'Reversement marqué comme payé ✅' : 'Reversement rejeté.');
       } else {
-        alert(data.error || 'Erreur lors de la mise à jour');
+        showToast(data.error || 'Erreur lors de la mise à jour', 'error');
       }
     } catch {
-      alert('Erreur réseau');
+      showToast('Erreur réseau', 'error');
     } finally {
       setProcessingPayoutId(null);
     }
   };
 
-  const handlePayWithFapshi = async (payout: PayoutRequest) => {
-    const confirmMsg = `Confirmez-vous le virement automatique de ${payout.amount.toLocaleString('fr-FR')} FCFA via l'API FAPSHI DISBURSE vers ${payout.organizerName} (${payout.organizerPhone}) ?`;
-    if (!confirm(confirmMsg)) {
-      return;
-    }
+  const handlePayWithFapshi = (payout: PayoutRequest) => {
+    // Ouvre le modal de confirmation au lieu d'un confirm() natif
+    setConfirmModal({ payout, txRef: '' });
+  };
 
+  const executePayWithFapshi = async () => {
+    if (!confirmModal) return;
+    const { payout, txRef } = confirmModal;
+    setConfirmModal(null);
     setProcessingPayoutId(payout.id);
     try {
       const res = await fetch('/api/organizer/payouts', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: payout.id,
-          useFapshiDisburse: true,
-        }),
+        body: JSON.stringify({ id: payout.id, useFapshiDisburse: true }),
       });
       const data = await res.json();
       if (data.success) {
-        alert(data.message || 'Reversement Fapshi Disburse envoyé avec succès !');
+        showToast(data.message || 'Virement Fapshi Disburse envoyé ✅');
         await loadAllFinancials();
       } else {
-        alert(data.error || 'Erreur lors du virement Fapshi Disburse');
+        showToast(data.error || 'Erreur Fapshi Disburse', 'error');
       }
     } catch {
-      alert('Erreur réseau lors de la communication avec Fapshi.');
+      showToast('Erreur réseau Fapshi', 'error');
     } finally {
       setProcessingPayoutId(null);
     }
@@ -241,6 +246,45 @@ export default function KerilFinancesPage() {
     <AdminAuthGuard>
       <div className="min-h-screen bg-[var(--soft)] text-[var(--ink)] flex flex-col w-full font-poppins">
         <AdminSidebar />
+
+        {/* TOAST NOTIFICATION */}
+        {toast && (
+          <div className={`fixed top-5 right-5 z-[9999] flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl text-sm font-bold text-white transition-all animate-fade-in ${toast.type === 'error' ? 'bg-red-600' : 'bg-emerald-600'}`}>
+            {toast.type === 'error' ? '❌' : '✅'} {toast.msg}
+            <button onClick={() => setToast(null)} className="ml-2 opacity-70 hover:opacity-100 cursor-pointer">×</button>
+          </div>
+        )}
+
+        {/* MODAL CONFIRMATION FAPSHI */}
+        {confirmModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="w-full max-w-md bg-white dark:bg-[#111827] rounded-[28px] p-7 shadow-2xl border border-slate-100 dark:border-slate-800">
+              <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2">Confirmer le virement Fapshi</h3>
+              <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">
+                Vous allez virer <span className="font-black text-indigo-600">{confirmModal.payout.amount.toLocaleString('fr-FR')} FCFA</span> vers{' '}
+                <span className="font-bold">{confirmModal.payout.organizerName}</span> ({confirmModal.payout.organizerPhone}) via <span className="font-bold">Fapshi Disburse</span>.
+              </p>
+              <div className="mb-5">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Référence transaction (optionnel)</label>
+                <input
+                  type="text"
+                  placeholder="Ex: TXN-123456"
+                  value={confirmModal.txRef}
+                  onChange={(e) => setConfirmModal({ ...confirmModal, txRef: e.target.value })}
+                  className="w-full py-2.5 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm outline-none focus:border-indigo-500"
+                />
+              </div>
+              <div className="flex gap-3">
+                <button onClick={() => setConfirmModal(null)} className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-600 dark:text-slate-300 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800">
+                  Annuler
+                </button>
+                <button onClick={executePayWithFapshi} className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold cursor-pointer shadow-md shadow-indigo-500/25">
+                  Confirmer le virement →
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <main className="lg:ml-64 flex-1 min-w-0 p-4 sm:p-8 flex flex-col gap-6">
           

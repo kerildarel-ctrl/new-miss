@@ -18,10 +18,12 @@ export function getDbPool(): Pool {
 
     globalForPg.pgPool = new Pool({
       connectionString: cleanUrl,
-      ssl: { rejectUnauthorized: false },
-      max: 5,                         // lower max for serverless
-      idleTimeoutMillis: 30000,       // 30s idle (serverless resets anyway)
-      connectionTimeoutMillis: 10000, // 10s — enough for Netlify cold start
+      // Neon uses valid TLS certs — rejectUnauthorized: true is safe and prevents MITM
+      ssl: { rejectUnauthorized: true },
+      max: 5,                          // lower max for serverless
+      idleTimeoutMillis: 30000,        // 30s idle
+      connectionTimeoutMillis: 10000,  // 10s max to acquire a connection
+      statement_timeout: 8000,         // 8s per query — prevents pool exhaustion
     });
 
     // Catch pool-level errors silently so they don't crash the process
