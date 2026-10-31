@@ -464,11 +464,13 @@ export default function EventDetailPage() {
               {passList}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 {[
-                  { icon: <Shield style={{ width: '20px', height: '20px', color: '#10b981' }} />, title: 'Paiement sécurisé', desc: 'Orange Money & MTN MoMo' },
-                  { icon: <Zap style={{ width: '20px', height: '20px', color: '#f59e0b' }} />, title: 'E-billet instantané', desc: 'Reçu par email immédiatement' },
+                  { Icon: Shield, color: '#10b981', bg: 'rgba(16,185,129,0.1)', title: 'Paiement sécurisé', desc: 'Orange Money & MTN MoMo' },
+                  { Icon: Zap, color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', title: 'E-billet instantané', desc: 'Reçu par email immédiatement' },
                 ].map((g) => (
-                  <div key={g.title} style={{ background: 'var(--bg)', borderRadius: '14px', padding: '16px', border: '1.5px solid var(--line)', display: 'flex', gap: '10px' }}>
-                    {g.icon}
+                  <div key={g.title} style={{ background: 'var(--bg)', borderRadius: '14px', padding: '16px', border: '1.5px solid var(--line)', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                    <div style={{ width: 36, height: 36, borderRadius: '10px', background: g.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <g.Icon style={{ width: '18px', height: '18px', color: g.color }} />
+                    </div>
                     <div>
                       <p style={{ margin: '0 0 2px', fontWeight: 800, fontSize: '0.85rem' }}>{g.title}</p>
                       <p style={{ margin: 0, fontSize: '0.76rem', color: 'var(--mute)' }}>{g.desc}</p>
