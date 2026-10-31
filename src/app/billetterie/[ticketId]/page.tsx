@@ -2,41 +2,19 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import Link from 'next/link';
 import { Header } from '@/components/Header';
-import { Footer } from '@/components/Footer';
-import {
-  Lock,
-  ShieldCheck,
-  CheckCircle2,
-  XCircle,
-  RotateCcw,
-  Ticket,
-  ArrowLeft,
-  KeyRound,
-  Download,
-} from 'lucide-react';
 import { getAutoDomain } from '@/utils/domain';
 
-interface TicketFullData {
+interface TicketData {
   id: string;
   ticketCode: string;
   buyerName?: string;
-  buyerEmail?: string;
-  buyerPhone?: string;
   eventTitle: string;
-  eventId?: string;
   passName: string;
   quantity?: number;
-  unitPrice?: number;
-  totalPrice?: number;
-  orderRef?: string;
-  paymentStatus?: string;
   status: 'VALID' | 'USED';
   purchasedAt?: string;
-  scannedAt?: string;
-  scannedByAgentName?: string;
-  qrDataUrl?: string;  // stored at ticket issuance — preferred over external QR API
+  qrDataUrl?: string;
 }
 
 export default function SingleTicketPage() {
@@ -45,732 +23,304 @@ export default function SingleTicketPage() {
   const cleanCode = rawCode.trim().toUpperCase();
 
   const [loading, setLoading] = useState(true);
-  const [ticketExists, setTicketExists] = useState(false);
-  const [isAuthorized, setIsAuthorized] = useState(false);
-  const [ticket, setTicket] = useState<TicketFullData | null>(null);
-  const [publicEventTitle, setPublicEventTitle] = useState('');
-
-  // Admin login popup / inline form
-  const [showLoginForm, setShowLoginForm] = useState(false);
-  const [loginPassword, setLoginPassword] = useState('');
-  const [loginError, setLoginError] = useState<string | null>(null);
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
-
-  // Validation Action state
-  const [isValidating, setIsValidating] = useState(false);
-  const [validationResult, setValidationResult] = useState<{
-    code: 'VALIDATED' | 'ALREADY_USED' | 'UNPAID' | 'INVALID' | 'ERROR';
-    message: string;
-    scannedAt?: string;
-    scannedByAgentName?: string;
-  } | null>(null);
-
-  // Reset state (admin only)
-  const [isResetting, setIsResetting] = useState(false);
-
-  // Determine current site domain dynamically
+  const [ticket, setTicket] = useState<TicketData | null>(null);
+  const [notFound, setNotFound] = useState(false);
   const [siteOrigin, setSiteOrigin] = useState('');
+
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setSiteOrigin(getAutoDomain());
-    }
+    if (typeof window !== 'undefined') setSiteOrigin(getAutoDomain());
   }, []);
 
-  // Fetch ticket details
-  const fetchTicketDetails = async () => {
-    if (!cleanCode) return;
-    setLoading(true);
-
-    try {
-      const res = await fetch(`/api/tickets/${encodeURIComponent(cleanCode)}`, {
-        cache: 'no-store',
-      });
-      const data = await res.json();
-
-      if (!data.exists) {
-        setTicketExists(false);
-        setLoading(false);
-        return;
-      }
-
-      setTicketExists(true);
-      if (data.authorized && data.ticket) {
-        setIsAuthorized(true);
-        setTicket(data.ticket);
-      } else {
-        setIsAuthorized(false);
-        setPublicEventTitle(data.eventTitle || '');
-      }
-    } catch {
-      setTicketExists(false);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchTicketDetails();
+    if (!cleanCode) { setLoading(false); return; }
+    const controller = new AbortController();
+    fetch(`/api/tickets/${encodeURIComponent(cleanCode)}`, {
+      cache: 'no-store',
+      signal: controller.signal,
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (!data.exists) { setNotFound(true); return; }
+        // Build minimal public ticket from whatever we receive
+        const t = data.ticket || {};
+        setTicket({
+          id: t.id || cleanCode,
+          ticketCode: t.ticketCode || t.ticket_code || cleanCode,
+          buyerName: t.buyerName || t.buyer_name || '',
+          eventTitle: t.eventTitle || t.event_title || data.eventTitle || 'Événement',
+          passName: t.passName || t.pass_name || 'Pass',
+          quantity: t.quantity || 1,
+          status: t.status || 'VALID',
+          purchasedAt: t.purchasedAt || t.purchased_at || '',
+          qrDataUrl: t.qrDataUrl || t.qr_data_url || '',
+        });
+      })
+      .catch(() => setNotFound(true))
+      .finally(() => setLoading(false));
+    return () => controller.abort();
   }, [cleanCode]);
 
-  // Handle Admin Quick Login on this page
-  const handleAdminLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoggingIn(true);
-    setLoginError(null);
+  const publicTicketUrl = `${siteOrigin}/billetterie/${encodeURIComponent(cleanCode)}`;
+  const qrSrc = ticket?.qrDataUrl ||
+    `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(publicTicketUrl)}&bgcolor=ffffff&color=1B0E78&margin=10`;
 
-    try {
-      const res = await fetch('/api/auth/agent-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: loginPassword }),
-      });
-      const data = await res.json();
-
-      if (data.success) {
-        sessionStorage.setItem('keril_admin_auth', 'true');
-        setShowLoginForm(false);
-        setLoginPassword('');
-        await fetchTicketDetails();
-      } else {
-        setLoginError(data.error || 'Mot de passe incorrect');
-      }
-    } catch {
-      setLoginError('Erreur de connexion au serveur');
-    } finally {
-      setIsLoggingIn(false);
-    }
+  /* ── Styles ───────────────────────────────────────────── */
+  const page: React.CSSProperties = {
+    minHeight: '100vh',
+    background: 'linear-gradient(160deg,#0f0820 0%,#1B0E78 60%,#4B2CE0 100%)',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    padding: '32px 16px 64px',
   };
 
-  // Handle Entrance Validation
-  const handleValidateEntry = async () => {
-    setIsValidating(true);
-    setValidationResult(null);
+  if (loading) return (
+    <>
+      <Header />
+      <div style={{ ...page, justifyContent: 'center' }}>
+        <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '1rem' }}>⏳ Chargement du billet…</div>
+      </div>
+    </>
+  );
 
-    try {
-      const res = await fetch('/api/tickets/validate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ticketCode: cleanCode }),
-      });
-      const data = await res.json();
+  if (notFound) return (
+    <>
+      <Header />
+      <div style={{ ...page, justifyContent: 'center' }}>
+        <div style={{
+          background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(12px)',
+          borderRadius: '24px', border: '1.5px solid rgba(255,255,255,0.15)',
+          padding: '40px 32px', textAlign: 'center', maxWidth: '360px',
+        }}>
+          <div style={{ fontSize: '3rem', marginBottom: '12px' }}>⛔</div>
+          <h2 style={{ color: '#fff', fontWeight: 900, fontSize: '1.3rem', marginBottom: '8px' }}>Billet introuvable</h2>
+          <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.9rem' }}>
+            Le code <code style={{ color: '#D9D4FA' }}>{cleanCode}</code> ne correspond à aucun billet officiel.
+          </p>
+          <a href="/billetterie" style={{
+            display: 'inline-block', marginTop: '20px', padding: '10px 24px',
+            borderRadius: '12px', background: 'rgba(255,255,255,0.12)',
+            color: '#fff', fontWeight: 700, textDecoration: 'none',
+          }}>← Retour à la billetterie</a>
+        </div>
+      </div>
+    </>
+  );
 
-      setValidationResult({
-        code: data.code || (data.success ? 'VALIDATED' : 'ERROR'),
-        message: data.message,
-        scannedAt: data.ticket?.scanned_at || data.scannedAt,
-        scannedByAgentName: data.ticket?.scanned_by_agent_name || data.scannedByAgentName,
-      });
-
-      if (data.ticket) {
-        setTicket((prev) =>
-          prev
-            ? {
-                ...prev,
-                status: 'USED',
-                scannedAt: data.ticket.scanned_at || new Date().toISOString(),
-                scannedByAgentName: data.ticket.scanned_by_agent_name || 'Admin /keril',
-              }
-            : null
-        );
-      }
-    } catch {
-      setValidationResult({
-        code: 'ERROR',
-        message: 'Erreur réseau lors de la validation.',
-      });
-    } finally {
-      setIsValidating(false);
-    }
-  };
-
-  // Handle Reset to VALID
-  const handleResetTicket = async () => {
-    if (!confirm('Voulez-vous réinitialiser ce billet pour le marquer à nouveau comme VALIDE ?')) {
-      return;
-    }
-    setIsResetting(true);
-    try {
-      const res = await fetch('/api/tickets/reset', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ticketCode: cleanCode }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        alert('✅ Billet réinitialisé avec succès à l’état VALIDE.');
-        setValidationResult(null);
-        await fetchTicketDetails();
-      } else {
-        alert(`⚠️ ${data.error}`);
-      }
-    } catch {
-      alert('Erreur lors de la réinitialisation');
-    } finally {
-      setIsResetting(false);
-    }
-  };
-
-  // QR Code: prefer stored data URL, fall back to external API only if needed
-  const publicTicketUrl = `${siteOrigin || ''}/billetterie/${encodeURIComponent(cleanCode)}`;
-  const externalQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodeURIComponent(publicTicketUrl)}`;
-  const qrCodeImageUrl = ticket?.qrDataUrl || externalQrUrl;
-  // For public (unauthorized) view, use external QR since we don’t have the stored URL
-  const publicQrUrl = externalQrUrl;
+  const isUsed = ticket?.status === 'USED';
 
   return (
     <>
       <Header />
+      <div style={page}>
+        {/* Title */}
+        <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '8px' }}>
+          🎟️ Billet Officiel
+        </p>
+        <h1 style={{ color: '#fff', fontWeight: 900, fontSize: 'clamp(1.3rem,5vw,1.7rem)', marginBottom: '28px', textAlign: 'center' }}>
+          {ticket?.eventTitle}
+        </h1>
 
-      <main style={{ minHeight: '80vh', padding: '40px 20px', background: 'var(--soft)' }}>
-        <div style={{ maxWidth: '560px', margin: '0 auto' }}>
-          {/* BACK BREADCRUMB */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <Link
-              href="/billetterie"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                color: 'var(--p)',
-                fontWeight: 700,
-                fontSize: '0.88rem',
-                textDecoration: 'none',
-              }}
-            >
-              <ArrowLeft className="w-4 h-4" /> Retour à la Billetterie
-            </Link>
+        {/* ── TICKET CARD ────────────────────────────────── */}
+        <div style={{
+          width: '100%', maxWidth: '480px',
+          borderRadius: '20px',
+          overflow: 'hidden',
+          boxShadow: '0 24px 80px rgba(0,0,0,0.5)',
+          background: '#fff',
+          position: 'relative',
+        }}>
 
-            {isAuthorized && (
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  color: 'var(--p)',
-                  fontWeight: 700,
-                  fontSize: '0.82rem',
-                  background: 'rgba(91, 61, 245, 0.1)',
-                  padding: '4px 12px',
-                  borderRadius: '99px',
-                }}
-              >
-                <ShieldCheck className="w-3.5 h-3.5" /> Espace /keril
-              </span>
-            )}
-          </div>
-
-          {loading ? (
-            <div
-              className="db"
-              style={{
-                textAlign: 'center',
-                padding: '60px 20px',
-                background: 'var(--bg)',
-                borderRadius: '24px',
-                border: '1.5px solid var(--line)',
-              }}
-            >
-              <p className="mute">Vérification du Billet...</p>
-            </div>
-          ) : !ticketExists ? (
-            <div
-              className="db"
-              style={{
-                textAlign: 'center',
-                padding: '48px 24px',
-                background: 'var(--bg)',
-                borderRadius: '24px',
-                border: '1.5px solid var(--a)',
-              }}
-            >
-              <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>⛔</div>
-              <h2 style={{ fontSize: '1.4rem', color: 'var(--a)', fontWeight: 800 }}>BILLET INVALIDE</h2>
-              <p className="mute sm" style={{ marginTop: '8px' }}>
-                Le code <b>{cleanCode}</b> ne correspond à aucun billet officiel enregistré.
+          {/* Top colored band */}
+          <div style={{
+            background: 'linear-gradient(135deg,#1B0E78,#4B2CE0)',
+            padding: '20px 24px 18px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+          }}>
+            <div>
+              <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.1em', margin: 0 }}>
+                BILLET D&apos;ENTRÉE
+              </p>
+              <p style={{ color: '#fff', fontWeight: 900, fontSize: '1.1rem', margin: '4px 0 0' }}>
+                {ticket?.passName}
               </p>
             </div>
-          ) : !isAuthorized ? (
-            /* =========================================================================
-               VUE PUBLIQUE ANONYMISÉE — PALETTE HARMONISÉE SITE
-               ========================================================================= */
-            <div
-              className="db"
-              style={{
-                background: 'var(--bg)',
-                borderRadius: '24px',
-                border: '1.5px solid var(--line)',
-                boxShadow: 'var(--shadow)',
-                overflow: 'hidden',
-                padding: 0,
-              }}
-            >
-              {/* HEADER WITH HERO PALETTE */}
-              <div
-                style={{
-                  background: 'var(--hero)',
-                  color: '#ffffff',
-                  padding: '28px 20px',
-                  textAlign: 'center',
-                }}
-              >
-                <p className="eb" style={{ color: 'rgba(255, 255, 255, 0.85)', fontSize: '0.76rem' }}>
-                  Billet Officiel Identifié
-                </p>
-                <h1 style={{ fontSize: '1.4rem', fontWeight: 800, marginTop: '6px' }}>
-                  {publicEventTitle || 'Événement VoteMoi'}
-                </h1>
-                <p style={{ fontSize: '0.84rem', opacity: 0.85, marginTop: '4px', fontFamily: 'monospace' }}>
-                  Code : {cleanCode}
-                </p>
-              </div>
-
-              {/* QR CODE & NEUTRAL NOTICE */}
-              <div style={{ padding: '28px 24px', textAlign: 'center' }}>
-                <div
-                  style={{
-                    padding: '16px',
-                    background: '#ffffff',
-                    borderRadius: '20px',
-                    display: 'inline-block',
-                    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.08)',
-                    border: '1px solid var(--line)',
-                  }}
-                >
-                  {/* QR: use stored data URL when available, external API as fallback */}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={publicQrUrl}
-                    alt={`QR Code ${cleanCode}`}
-                    width={200}
-                    height={200}
-                    style={{ display: 'block', borderRadius: '8px' }}
-                  />
-                  <div
-                    style={{
-                      marginTop: '8px',
-                      fontSize: '0.85rem',
-                      fontWeight: 800,
-                      color: 'var(--ink)',
-                      letterSpacing: '0.05em',
-                      fontFamily: 'monospace',
-                    }}
-                  >
-                    {cleanCode}
-                  </div>
-                </div>
-
-                {/* NEUTRAL NOTICE */}
-                <div
-                  style={{
-                    marginTop: '24px',
-                    padding: '16px',
-                    borderRadius: '16px',
-                    background: 'var(--soft)',
-                    border: '1px solid var(--line)',
-                    textAlign: 'left',
-                    display: 'flex',
-                    gap: '12px',
-                    alignItems: 'flex-start',
-                  }}
-                >
-                  <Lock className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--p)', marginTop: '2px' }} />
-                  <div>
-                    <h3 style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--ink)' }}>
-                      Billet identifié
-                    </h3>
-                    <p className="mute sm" style={{ marginTop: '4px', lineHeight: 1.5 }}>
-                      Connectez-vous avec un compte administrateur autorisé pour consulter les informations et
-                      vérifier son statut.
-                    </p>
-                  </div>
-                </div>
-
-                {/* ADMIN LOGIN */}
-                {!showLoginForm ? (
-                  <button
-                    type="button"
-                    onClick={() => setShowLoginForm(true)}
-                    style={{
-                      width: '100%',
-                      marginTop: '20px',
-                      padding: '12px',
-                      borderRadius: '12px',
-                      background: 'var(--soft)',
-                      border: '1px solid var(--line)',
-                      color: 'var(--ink)',
-                      fontWeight: 700,
-                      fontSize: '0.88rem',
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px',
-                    }}
-                  >
-                    <KeyRound className="w-4 h-4" style={{ color: 'var(--p)' }} />
-                    <span>Accès Contrôleur / Administrateur (/keril)</span>
-                  </button>
-                ) : (
-                  <form
-                    onSubmit={handleAdminLogin}
-                    style={{
-                      marginTop: '20px',
-                      padding: '18px',
-                      borderRadius: '16px',
-                      background: 'var(--soft)',
-                      border: '1px solid var(--line)',
-                      textAlign: 'left',
-                    }}
-                  >
-                    <label style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--ink)', display: 'block' }}>
-                      Mot de passe administrateur /keril :
-                    </label>
-                    <input
-                      type="password"
-                      required
-                      placeholder="Mot de passe..."
-                      value={loginPassword}
-                      onChange={(e) => setLoginPassword(e.target.value)}
-                      style={{
-                        width: '100%',
-                        height: '42px',
-                        background: 'var(--bg)',
-                        border: '1.5px solid var(--line)',
-                        borderRadius: '10px',
-                        padding: '0 12px',
-                        color: 'var(--ink)',
-                        fontSize: '0.9rem',
-                        marginTop: '6px',
-                        outline: 'none',
-                      }}
-                    />
-
-                    {loginError && (
-                      <div style={{ color: 'var(--err)', fontSize: '0.8rem', marginTop: '6px', fontWeight: 600 }}>
-                        ⚠️ {loginError}
-                      </div>
-                    )}
-
-                    <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                      <button
-                        type="submit"
-                        disabled={isLoggingIn}
-                        className="btn"
-                        style={{ flex: 1, height: '40px', fontSize: '0.85rem' }}
-                      >
-                        {isLoggingIn ? 'Connexion...' : 'Se connecter'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setShowLoginForm(false)}
-                        style={{
-                          padding: '0 14px',
-                          borderRadius: '10px',
-                          background: 'var(--bg)',
-                          border: '1px solid var(--line)',
-                          color: 'var(--ink)',
-                          fontWeight: 600,
-                          fontSize: '0.85rem',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        Annuler
-                      </button>
-                    </div>
-                  </form>
-                )}
-              </div>
+            <div style={{
+              background: isUsed ? 'rgba(239,68,68,0.25)' : 'rgba(16,185,129,0.25)',
+              border: `1.5px solid ${isUsed ? '#ef4444' : '#10b981'}`,
+              borderRadius: '99px', padding: '4px 14px',
+              color: isUsed ? '#fca5a5' : '#6ee7b7',
+              fontSize: '0.72rem', fontWeight: 900,
+              letterSpacing: '0.08em', whiteSpace: 'nowrap',
+            }}>
+              {isUsed ? '✗ UTILISÉ' : '✓ VALIDE'}
             </div>
-          ) : ticket ? (
-            /* =========================================================================
-               VUE ADMINISTRATEUR / CONTRÔLEUR CONNECTÉ — PALETTE HARMONISÉE
-               ========================================================================= */
-            <div
-              className="db"
-              style={{
-                background: 'var(--bg)',
-                borderRadius: '24px',
-                border: '1.5px solid var(--line)',
-                boxShadow: 'var(--shadow)',
-                overflow: 'hidden',
-                padding: 0,
-              }}
-            >
-              {/* TOP SESSION NOTICE */}
-              <div
-                style={{
-                  background: 'rgba(91, 61, 245, 0.08)',
-                  borderBottom: '1px solid var(--line)',
-                  padding: '10px 16px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  fontSize: '0.78rem',
-                }}
-              >
-                <span style={{ color: 'var(--p)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <ShieldCheck className="w-3.5 h-3.5" /> Session Administrateur /keril
-                </span>
-                <span className="mute">Contrôle d&apos;Entrée</span>
-              </div>
+          </div>
 
-              {/* TICKET HEADER */}
-              <div
-                style={{
-                  background: 'var(--hero)',
-                  color: '#ffffff',
-                  padding: '24px 20px',
-                  textAlign: 'center',
-                }}
-              >
-                <span
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.2)',
-                    color: '#ffffff',
-                    padding: '3px 12px',
-                    borderRadius: '99px',
-                    fontSize: '0.76rem',
-                    fontWeight: 800,
-                  }}
-                >
-                  🎟️ {ticket.passName}
-                </span>
-                <h1 style={{ fontSize: '1.4rem', fontWeight: 800, marginTop: '8px' }}>
-                  {ticket.eventTitle}
-                </h1>
-                <p style={{ fontSize: '0.86rem', opacity: 0.9, marginTop: '2px', fontFamily: 'monospace' }}>
-                  N° {ticket.ticketCode}
-                </p>
-              </div>
+          {/* Perforated divider */}
+          <div style={{ position: 'relative', height: '1px', background: '#e5e7eb', margin: '0' }}>
+            {/* Left notch */}
+            <div style={{
+              position: 'absolute', left: '-14px', top: '-14px',
+              width: '28px', height: '28px', borderRadius: '50%',
+              background: 'linear-gradient(160deg,#0f0820,#1B0E78)',
+            }} />
+            {/* Right notch */}
+            <div style={{
+              position: 'absolute', right: '-14px', top: '-14px',
+              width: '28px', height: '28px', borderRadius: '50%',
+              background: 'linear-gradient(160deg,#0f0820,#1B0E78)',
+            }} />
+            {/* Dashed line */}
+            <div style={{
+              position: 'absolute', left: '14px', right: '14px', top: '0',
+              borderTop: '2px dashed #d1d5db',
+            }} />
+          </div>
 
-              <div style={{ padding: '24px' }}>
-                {/* STATUS BADGE */}
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    padding: '10px 16px',
-                    borderRadius: '12px',
-                    fontWeight: 800,
-                    fontSize: '0.88rem',
-                    background:
-                      ticket.status === 'VALID' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(255, 90, 126, 0.12)',
-                    border:
-                      ticket.status === 'VALID' ? '1.5px solid #10b981' : '1.5px solid var(--a)',
-                    color: ticket.status === 'VALID' ? '#10b981' : 'var(--a)',
-                    textAlign: 'center',
-                  }}
-                >
-                  {ticket.status === 'VALID' ? (
-                    <>
-                      <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
-                      <span>BILLET NON ENCORE UTILISÉ — PRÊT POUR VALIDATION</span>
-                    </>
-                  ) : (
-                    <>
-                      <XCircle className="w-5 h-5 flex-shrink-0" />
-                      <span>
-                        BILLET DÉJÀ UTILISÉ
-                        {ticket.scannedAt &&
-                          ` (${new Date(ticket.scannedAt).toLocaleTimeString('fr-FR', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })})`}
-                      </span>
-                    </>
-                  )}
-                </div>
-
-                {/* VALIDATION ACTION RESULT BANNER */}
-                {validationResult && (
-                  <div
-                    style={{
-                      marginTop: '16px',
-                      padding: '14px',
-                      borderRadius: '12px',
-                      textAlign: 'center',
-                      background:
-                        validationResult.code === 'VALIDATED'
-                          ? 'rgba(16, 185, 129, 0.15)'
-                          : 'rgba(255, 90, 126, 0.15)',
-                      border:
-                        validationResult.code === 'VALIDATED'
-                          ? '1.5px solid #10b981'
-                          : '1.5px solid var(--a)',
-                      color: validationResult.code === 'VALIDATED' ? '#10b981' : 'var(--a)',
-                      fontWeight: 800,
-                      fontSize: '0.92rem',
-                    }}
-                  >
-                    {validationResult.code === 'VALIDATED'
-                      ? '🟢 ENTRÉE VALIDÉE — Billet accepté.'
-                      : validationResult.code === 'ALREADY_USED'
-                      ? '🔴 BILLET DÉJÀ UTILISÉ — Entrée refusée.'
-                      : validationResult.code === 'UNPAID'
-                      ? '⚠️ PAIEMENT NON CONFIRMÉ — Entrée refusée.'
-                      : '⛔ BILLET INVALIDE — Entrée refusée.'}
-                    <div style={{ fontSize: '0.8rem', color: 'var(--ink)', marginTop: '4px', fontWeight: 600 }}>
-                      {validationResult.message}
-                    </div>
-                  </div>
-                )}
-
-                {/* ACTION BUTTON: VALIDATE ENTRY */}
-                {ticket.status === 'VALID' ? (
-                  <button
-                    type="button"
-                    onClick={handleValidateEntry}
-                    disabled={isValidating}
-                    className="btn full"
-                    style={{
-                      marginTop: '20px',
-                      height: '48px',
-                      fontSize: '1rem',
-                      fontWeight: 800,
-                      gap: '8px',
-                      cursor: isValidating ? 'not-allowed' : 'pointer',
-                    }}
-                  >
-                    <CheckCircle2 className="w-5 h-5" />
-                    <span>{isValidating ? 'Validation en cours...' : 'VALIDER L’ENTRÉE ✅'}</span>
-                  </button>
-                ) : (
-                  <div style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
-                    <div
-                      style={{
-                        flex: 1,
-                        padding: '12px',
-                        borderRadius: '12px',
-                        background: 'rgba(255, 90, 126, 0.1)',
-                        border: '1px solid var(--a)',
-                        textAlign: 'center',
-                        fontSize: '0.84rem',
-                        fontWeight: 700,
-                        color: 'var(--a)',
-                      }}
-                    >
-                      Entrée refusée — Billet déjà consommé
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={handleResetTicket}
-                      disabled={isResetting}
-                      style={{
-                        padding: '0 14px',
-                        borderRadius: '12px',
-                        background: 'var(--soft)',
-                        border: '1px solid var(--line)',
-                        color: 'var(--ink)',
-                        fontSize: '0.8rem',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                      }}
-                    >
-                      <RotateCcw className="w-4 h-4" />
-                      <span>{isResetting ? '...' : 'Réinitialiser'}</span>
-                    </button>
-                  </div>
-                )}
-
-                {/* DETAILS TABLE */}
-                <div
-                  style={{
-                    marginTop: '24px',
-                    padding: '18px',
-                    borderRadius: '16px',
-                    background: 'var(--soft)',
-                    border: '1px solid var(--line)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '10px',
-                    fontSize: '0.88rem',
-                  }}
-                >
-                  <p className="eb" style={{ color: 'var(--p)', fontSize: '0.74rem' }}>
-                    Détails du Billet :
+          {/* Body: info left + QR right */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '20px',
+            padding: '24px 24px 20px',
+          }}>
+            {/* Left: details */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              {ticket?.buyerName && (
+                <div style={{ marginBottom: '14px' }}>
+                  <p style={{ color: '#9ca3af', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.08em', margin: '0 0 2px', textTransform: 'uppercase' }}>Participant</p>
+                  <p style={{ color: '#111827', fontWeight: 800, fontSize: '0.95rem', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {ticket.buyerName}
                   </p>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--line)', paddingBottom: '6px' }}>
-                    <span className="mute">Numéro unique :</span>
-                    <span style={{ fontFamily: 'monospace', fontWeight: 800, color: 'var(--p)' }}>
-                      {ticket.ticketCode}
-                    </span>
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--line)', paddingBottom: '6px' }}>
-                    <span className="mute">Participant :</span>
-                    <span style={{ fontWeight: 700, color: 'var(--ink)' }}>
-                      {ticket.buyerName || 'Non renseigné'}
-                    </span>
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--line)', paddingBottom: '6px' }}>
-                    <span className="mute">Événement :</span>
-                    <span style={{ fontWeight: 600, color: 'var(--ink)', textAlign: 'right', maxWidth: '60%' }}>
-                      {ticket.eventTitle}
-                    </span>
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--line)', paddingBottom: '6px' }}>
-                    <span className="mute">Catégorie :</span>
-                    <span style={{ fontWeight: 700, color: 'var(--p)' }}>
-                      {ticket.passName} ({ticket.quantity || 1})
-                    </span>
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--line)', paddingBottom: '6px' }}>
-                    <span className="mute">Réf. Commande :</span>
-                    <span style={{ fontFamily: 'monospace', color: 'var(--ink)' }}>
-                      {ticket.orderRef || `CMD-${ticket.id.slice(-6)}`}
-                    </span>
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--line)', paddingBottom: '6px' }}>
-                    <span className="mute">Paiement :</span>
-                    <span style={{ fontWeight: 800, color: '#10b981' }}>
-                      {(ticket.paymentStatus || 'PAID') === 'PAID' ? 'CONFIRMÉ' : ticket.paymentStatus}
-                    </span>
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--line)', paddingBottom: '6px' }}>
-                    <span className="mute">Statut Validation :</span>
-                    <span style={{ fontWeight: 800, color: ticket.status === 'VALID' ? '#10b981' : 'var(--a)' }}>
-                      {ticket.status === 'VALID' ? 'NON UTILISÉ' : 'UTILISÉ'}
-                    </span>
-                  </div>
-
-                  {ticket.status === 'USED' && ticket.scannedAt && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--line)', paddingBottom: '6px' }}>
-                      <span className="mute">Date & Heure :</span>
-                      <span style={{ color: 'var(--ink)', fontWeight: 600 }}>
-                        {new Date(ticket.scannedAt).toLocaleDateString('fr-FR')} à{' '}
-                        {new Date(ticket.scannedAt).toLocaleTimeString('fr-FR')}
-                      </span>
-                    </div>
-                  )}
-
-                  {ticket.status === 'USED' && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span className="mute">Agent responsable :</span>
-                      <span style={{ fontWeight: 700, color: 'var(--p)' }}>
-                        {ticket.scannedByAgentName || 'Admin /keril'}
-                      </span>
-                    </div>
-                  )}
                 </div>
+              )}
+
+              <div style={{ marginBottom: '14px' }}>
+                <p style={{ color: '#9ca3af', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.08em', margin: '0 0 2px', textTransform: 'uppercase' }}>Catégorie</p>
+                <p style={{ color: '#1B0E78', fontWeight: 800, fontSize: '0.9rem', margin: 0 }}>{ticket?.passName}</p>
+              </div>
+
+              {(ticket?.quantity || 1) > 1 && (
+                <div style={{ marginBottom: '14px' }}>
+                  <p style={{ color: '#9ca3af', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.08em', margin: '0 0 2px', textTransform: 'uppercase' }}>Places</p>
+                  <p style={{ color: '#111827', fontWeight: 800, fontSize: '0.9rem', margin: 0 }}>{ticket?.quantity}</p>
+                </div>
+              )}
+
+              <div>
+                <p style={{ color: '#9ca3af', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.08em', margin: '0 0 2px', textTransform: 'uppercase' }}>Référence</p>
+                <p style={{ color: '#4B2CE0', fontWeight: 900, fontSize: '0.85rem', fontFamily: 'monospace', margin: 0, letterSpacing: '0.05em' }}>
+                  {ticket?.ticketCode}
+                </p>
               </div>
             </div>
-          ) : null}
-        </div>
-      </main>
 
-      <Footer />
+            {/* Right: QR code */}
+            <div style={{ flexShrink: 0, textAlign: 'center' }}>
+              <div style={{
+                padding: '10px', background: '#fff',
+                borderRadius: '14px', border: '2px solid #e5e7eb',
+                boxShadow: '0 4px 16px rgba(27,14,120,0.1)',
+              }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={qrSrc}
+                  alt={`QR ${cleanCode}`}
+                  width={120} height={120}
+                  style={{ display: 'block', borderRadius: '6px' }}
+                />
+              </div>
+              <p style={{ margin: '6px 0 0', fontSize: '0.62rem', fontWeight: 700, color: '#6b7280', fontFamily: 'monospace', letterSpacing: '0.04em' }}>
+                SCANNER À L&apos;ENTRÉE
+              </p>
+            </div>
+          </div>
+
+          {/* Bottom footer of ticket */}
+          <div style={{
+            background: '#f9fafb',
+            borderTop: '1px solid #e5e7eb',
+            padding: '12px 24px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}>
+            <p style={{ margin: 0, fontSize: '0.72rem', color: '#9ca3af', fontWeight: 600 }}>
+              🔒 Billet sécurisé & unique
+            </p>
+            <p style={{ margin: 0, fontSize: '0.72rem', color: '#9ca3af', fontWeight: 600 }}>
+              MK Prog © 2025
+            </p>
+          </div>
+        </div>
+
+        {/* ── CAPTURE NOTICE ────────────────────────────── */}
+        <div style={{
+          marginTop: '28px',
+          maxWidth: '480px',
+          width: '100%',
+          background: 'rgba(255,255,255,0.08)',
+          backdropFilter: 'blur(10px)',
+          border: '1.5px solid rgba(255,255,255,0.15)',
+          borderRadius: '16px',
+          padding: '16px 20px',
+          display: 'flex',
+          gap: '14px',
+          alignItems: 'flex-start',
+        }}>
+          <span style={{ fontSize: '1.6rem', lineHeight: 1 }}>📸</span>
+          <div>
+            <p style={{ color: '#fff', fontWeight: 800, fontSize: '0.92rem', margin: '0 0 4px' }}>
+              Faites une capture d&apos;écran de votre billet !
+            </p>
+            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.82rem', margin: 0, lineHeight: 1.5 }}>
+              Enregistrez ce billet sur votre téléphone. Il vous sera demandé à l&apos;entrée. Le QR code sera scanné par nos agents pour valider votre accès.
+            </p>
+          </div>
+        </div>
+
+        {/* ── INSTRUCTIONS ──────────────────────────────── */}
+        <div style={{
+          marginTop: '16px',
+          maxWidth: '480px',
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '10px',
+        }}>
+          {[
+            { icon: '1️⃣', text: 'Faites une capture d\'écran de cette page maintenant' },
+            { icon: '2️⃣', text: 'Présentez le QR code à l\'entrée de l\'événement' },
+            { icon: '3️⃣', text: 'Un agent scannera votre billet pour valider l\'accès' },
+          ].map((step, i) => (
+            <div key={i} style={{
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: '12px',
+              padding: '12px 16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+            }}>
+              <span style={{ fontSize: '1.2rem' }}>{step.icon}</span>
+              <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.84rem', margin: 0, fontWeight: 500 }}>
+                {step.text}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* Back link */}
+        <a href="/billetterie" style={{
+          display: 'inline-block', marginTop: '32px',
+          color: 'rgba(255,255,255,0.45)', fontSize: '0.82rem',
+          textDecoration: 'none', fontWeight: 600,
+        }}>
+          ← Retour à la billetterie
+        </a>
+      </div>
     </>
   );
 }
