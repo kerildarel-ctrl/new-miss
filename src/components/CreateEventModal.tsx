@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import { saveEventRequest } from '@/services/dbService';
@@ -279,7 +279,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
                     </div>
                     <input
                       type="text"
-                      placeholder="Ex. Jean-Paul Mbarga"
+                      placeholder="Ex. Keril Kousso"
                       value={formData.organizerName}
                       onChange={(e) => setFormData({ ...formData, organizerName: e.target.value })}
                       className="w-full py-3 px-3 bg-transparent text-slate-900 dark:text-white text-xs sm:text-sm font-semibold outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 placeholder:font-normal"

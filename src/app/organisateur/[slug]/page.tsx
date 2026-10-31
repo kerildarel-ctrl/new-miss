@@ -559,7 +559,7 @@ export default function OrganisateurDashboardPage() {
                   <input
                     type="text"
                     required
-                    placeholder="Ex: Jean-Paul Mbarga"
+                    placeholder="Ex: Keril Kousso"
                     value={payoutOwnerName}
                     onChange={(e) => setPayoutOwnerName(e.target.value)}
                     className="w-full py-3 px-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40 text-slate-900 dark:text-white text-xs sm:text-sm font-semibold outline-none focus:border-indigo-500"
