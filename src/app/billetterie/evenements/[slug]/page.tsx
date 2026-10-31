@@ -241,7 +241,7 @@ export default function EventDetailPage() {
 
               <div>
                 <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px' }}>Nom complet *</label>
-                <input type="text" required placeholder="Jean DUPONT" value={buyerName} onChange={(e) => setBuyerName(e.target.value)} style={inputStyle} />
+                <input type="text" required placeholder="Keril Kousso" value={buyerName} onChange={(e) => setBuyerName(e.target.value)} style={inputStyle} />
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px' }}>Email *</label>
