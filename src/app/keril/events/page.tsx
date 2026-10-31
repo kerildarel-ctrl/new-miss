@@ -45,6 +45,7 @@ export default function KerilEventsPage() {
   const [organizerName, setOrganizerName] = useState('');
   const [organizerEmail, setOrganizerEmail] = useState('');
   const [organizerPhone, setOrganizerPhone] = useState('');
+  const [organizerPercentage, setOrganizerPercentage] = useState(80);
 
   // Passes
   const [selectedPasses, setSelectedPasses] = useState<TicketPassCategory[]>([...TICKET_PASS_TEMPLATES]);
@@ -117,7 +118,7 @@ export default function KerilEventsPage() {
   const resetForm = () => {
     setTitle(''); setSubtitle(''); setDate(''); setVenue(''); setCity('Yaoundé');
     setBannerImage(''); setBannerPreview('');
-    setOrganizerName(''); setOrganizerEmail(''); setOrganizerPhone('');
+    setOrganizerName(''); setOrganizerEmail(''); setOrganizerPhone(''); setOrganizerPercentage(80);
     setSelectedPasses([...TICKET_PASS_TEMPLATES]);
     setErrorMessage(null); setCreatedOrgLink(null);
   };
@@ -136,6 +137,7 @@ export default function KerilEventsPage() {
     setOrganizerName((evt as any).organizerName || '');
     setOrganizerEmail((evt as any).organizerEmail || '');
     setOrganizerPhone((evt as any).organizerPhone || '');
+    setOrganizerPercentage((evt as any).organizerPercentage ?? 80);
     setSelectedPasses(evt.passes?.length ? evt.passes : [...TICKET_PASS_TEMPLATES]);
     setErrorMessage(null); setCreatedOrgLink(null);
     setModalMode('edit');
@@ -159,7 +161,7 @@ export default function KerilEventsPage() {
     setIsSubmitting(true); setErrorMessage(null); setCreatedOrgLink(null);
 
     try {
-      const payload = { title, subtitle, date, venue, city, bannerImage, organizerName, organizerEmail, organizerPhone, passes: selectedPasses };
+      const payload = { title, subtitle, date, venue, city, bannerImage, organizerName, organizerEmail, organizerPhone, organizerPercentage, passes: selectedPasses };
 
       let res: Response;
       if (modalMode === 'edit' && editingEvent) {
@@ -447,6 +449,31 @@ export default function KerilEventsPage() {
                   <div style={{ marginTop: '10px' }}>
                     <label style={LABEL}>Email</label>
                     <input type="email" placeholder="organisateur@email.com" value={organizerEmail} onChange={(e) => setOrganizerEmail(e.target.value)} style={SMALL_INPUT} />
+                  </div>
+                  {/* Percentage slider */}
+                  <div style={{ marginTop: '14px', padding: '14px', borderRadius: '12px', background: 'rgba(129,140,248,0.08)', border: '1.5px solid rgba(129,140,248,0.25)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                      <label style={{ ...LABEL, margin: 0 }}>💰 Pourcentage reversé à l&apos;organisateur</label>
+                      <span style={{ fontWeight: 900, fontSize: '1.3rem', color: '#818cf8' }}>{organizerPercentage}%</span>
+                    </div>
+                    <input
+                      type="range" min={50} max={95} step={5}
+                      value={organizerPercentage}
+                      onChange={(e) => setOrganizerPercentage(Number(e.target.value))}
+                      style={{ width: '100%', accentColor: '#818cf8', cursor: 'pointer' }}
+                    />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#64748b', marginTop: '4px' }}>
+                      <span>50% (min)</span>
+                      <span>95% (max)</span>
+                    </div>
+                    <div style={{ marginTop: '10px', display: 'flex', gap: '8px' }}>
+                      <div style={{ flex: organizerPercentage, background: '#818cf8', height: '8px', borderRadius: '99px', transition: 'flex 0.3s' }} title={`Organisateur ${organizerPercentage}%`} />
+                      <div style={{ flex: 100 - organizerPercentage, background: 'rgba(255,255,255,0.1)', height: '8px', borderRadius: '99px' }} title={`Plateforme ${100 - organizerPercentage}%`} />
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', marginTop: '5px', color: '#94a3b8' }}>
+                      <span>🟣 Organisateur : <b style={{ color: '#818cf8' }}>{organizerPercentage}%</b></span>
+                      <span>⚪ Plateforme : <b>{100 - organizerPercentage}%</b></span>
+                    </div>
                   </div>
                 </div>
 

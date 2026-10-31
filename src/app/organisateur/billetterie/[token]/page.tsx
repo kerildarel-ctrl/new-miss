@@ -13,6 +13,7 @@ interface TicketPass { name: string; price: number; quantity?: number; descripti
 interface EventData {
   id: string; title: string; date: string; venue: string;
   organizerPhone?: string; passes: TicketPass[];
+  organizerPercentage?: number;
 }
 interface SoldTicket {
   id: string; ticketCode: string; buyerName: string; buyerEmail: string;
@@ -219,7 +220,8 @@ export default function OrganizerDashboardPage() {
 
   const paidTickets = tickets.filter((t) => t.paymentStatus === 'PAID');
   const totalRevenue = paidTickets.reduce((s, t) => s + (t.totalPrice || t.unitPrice * (t.quantity || 1)), 0);
-  const orgPct = getOrgPct(totalRevenue);
+  // Use the organizer_percentage agreed during event creation (default 80%)
+  const orgPct = event?.organizerPercentage ?? 80;
   const orgRevenue = Math.floor(totalRevenue * orgPct / 100);
   const totalSeats = paidTickets.reduce((s, t) => s + (t.quantity || 1), 0);
 

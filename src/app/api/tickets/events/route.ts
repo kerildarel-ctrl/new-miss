@@ -41,6 +41,7 @@ async function ensureEventsTable() {
     `ALTER TABLE public.events ADD COLUMN IF NOT EXISTS organizer_phone TEXT DEFAULT ''`,
     `ALTER TABLE public.events ADD COLUMN IF NOT EXISTS organizer_token TEXT`,
     `ALTER TABLE public.events ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'ACTIVE'`,
+    `ALTER TABLE public.events ADD COLUMN IF NOT EXISTS organizer_percentage INTEGER DEFAULT 80`,
   ];
   for (const sql of migrations) {
     await queryDb(sql).catch(() => { /* ignore if already exists */ });
@@ -72,6 +73,7 @@ function mapRow(e: any) {
     organizerName: e.organizer_name || '',
     organizerEmail: e.organizer_email || '',
     organizerPhone: e.organizer_phone || '',
+    organizerPercentage: e.organizer_percentage ?? 80,
     status: e.status || 'ACTIVE',
   };
 }
@@ -153,6 +155,7 @@ export async function POST(request: Request) {
       organizerName = '',
       organizerEmail = '',
       organizerPhone = '',
+      organizerPercentage = 80,
     } = body;
 
     if (!title || !date || !venue) {
@@ -174,13 +177,15 @@ export async function POST(request: Request) {
     await queryDb(
       `INSERT INTO public.events
         (id, slug, title, subtitle, date, venue, city, banner_image, html_content,
-         passes, organizer_name, organizer_email, organizer_phone, organizer_token, status, created_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,'ACTIVE',NOW())`,
+         passes, organizer_name, organizer_email, organizer_phone, organizer_token,
+         organizer_percentage, status, created_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,'ACTIVE',NOW())`,
       [
         eventId, slug, title, subtitle, date, venue, city,
         bannerImage, htmlContent,
         JSON.stringify(Array.isArray(passes) ? passes : []),
         organizerName, organizerEmail, organizerPhone, organizerToken,
+        Math.min(95, Math.max(50, Number(organizerPercentage) || 80)),
       ]
     );
 
@@ -189,7 +194,8 @@ export async function POST(request: Request) {
       data: {
         id: eventId, slug, title, subtitle, date, venue, city,
         bannerImage, htmlContent, passes, organizerToken,
-        organizerName, organizerEmail, organizerPhone, status: 'ACTIVE',
+        organizerName, organizerEmail, organizerPhone,
+        organizerPercentage, status: 'ACTIVE',
       },
       organizerToken,
     });
@@ -229,7 +235,8 @@ export async function PUT(request: Request) {
 
     const body = await request.json();
     const { title, subtitle, date, venue, city, bannerImage, passes,
-            organizerName, organizerEmail, organizerPhone } = body;
+            organizerName, organizerEmail, organizerPhone,
+            organizerPercentage = 80 } = body;
 
     if (!title || !date || !venue)
       return NextResponse.json({ success: false, error: 'Titre, date et lieu sont requis' }, { status: 400 });
@@ -238,13 +245,15 @@ export async function PUT(request: Request) {
       `UPDATE public.events
          SET title=$1, subtitle=$2, date=$3, venue=$4, city=$5,
              banner_image=$6, passes=$7,
-             organizer_name=$8, organizer_email=$9, organizer_phone=$10
-       WHERE id=$11`,
+             organizer_name=$8, organizer_email=$9, organizer_phone=$10,
+             organizer_percentage=$11
+       WHERE id=$12`,
       [
         title, subtitle || '', date, venue, city || 'Yaoundé',
         bannerImage || '',
         JSON.stringify(Array.isArray(passes) ? passes : []),
         organizerName || '', organizerEmail || '', organizerPhone || '',
+        Math.min(95, Math.max(50, Number(organizerPercentage) || 80)),
         id,
       ]
     );
@@ -263,6 +272,7 @@ export async function PUT(request: Request) {
         organizerName: organizerName || '',
         organizerEmail: organizerEmail || '',
         organizerPhone: organizerPhone || '',
+        organizerPercentage: evt?.organizer_percentage ?? organizerPercentage ?? 80,
       },
       organizerToken: evt?.organizer_token || '',
     });
