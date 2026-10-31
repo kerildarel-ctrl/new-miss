@@ -37,8 +37,7 @@ export default function ResultatsPage() {
   const currentCompetition = competitions.find((c) => c.slug === selectedSlug) || competitions[0];
   const sortedCandidates = [...candidates].sort((a, b) => b.voteCount - a.voteCount);
   const totalVotes = candidates.reduce((sum, c) => sum + c.voteCount, 0);
-  const votePrice = currentCompetition?.votePrice || 100;
-  const totalCollected = totalVotes * votePrice;
+  const activeCandidates = candidates.filter(c => c.voteCount > 0).length;
 
   // Colors for donut chart & legend
   const sliceColors = [
@@ -181,12 +180,12 @@ export default function ResultatsPage() {
                     Total des votes enregistrés
                   </div>
                   <div>
-                    <b>{totalCollected.toLocaleString('fr-FR')} FCFA</b>
-                    Volume collecté sécurisé
+                    <b>{candidates.length}</b>
+                    Candidats en compétition
                   </div>
                   <div>
-                    <b>99.9%</b>
-                    Taux de réussite Mobile Money
+                    <b>{activeCandidates}</b>
+                    Candidats avec des votes
                   </div>
                 </div>
               </>
