@@ -457,7 +457,7 @@ export default function KerilEventsPage() {
                       <span style={{ fontWeight: 900, fontSize: '1.3rem', color: '#818cf8' }}>{organizerPercentage}%</span>
                     </div>
                     <input
-                      type="range" min={50} max={95} step={5}
+                      type="range" min={50} max={95}
                       value={organizerPercentage}
                       onChange={(e) => setOrganizerPercentage(Number(e.target.value))}
                       style={{ width: '100%', accentColor: '#818cf8', cursor: 'pointer' }}

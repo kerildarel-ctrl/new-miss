@@ -341,7 +341,7 @@ export const CompetitionFormModal: React.FC<CompetitionFormModalProps> = ({
               </div>
               <input
                 type="range"
-                min={50} max={95} step={5}
+                min={50} max={95}
                 value={formData.organizerPercentage ?? 80}
                 onChange={(e) => setFormData({ ...formData, organizerPercentage: Number(e.target.value) })}
                 className="w-full accent-indigo-600 cursor-pointer"
