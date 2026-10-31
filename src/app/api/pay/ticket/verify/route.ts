@@ -9,6 +9,8 @@ const FAPSHI_API_KEY  = process.env.FAPSHI_API_KEY  || '';
 
 const FAPSHI_BASE_URL = 'https://live.fapshi.com';
 const BREVO_API_KEY   = process.env.BREVO_API_KEY   || '';
+// Always use the canonical site URL — never trust the request Origin header
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://miss-template.netlify.app').replace(/\/$/, '');
 
 function genTicketCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -280,15 +282,14 @@ export async function POST(request: Request) {
     // Déjà payé ?
     if (order.payment_status === 'PAID') {
       const tickets = await queryDb<any>('SELECT * FROM public.tickets WHERE order_ref = $1', [orderId]);
-      const origin = request.headers.get('origin') || 'https://miss-template.netlify.app';
       const evtRows = await queryDb<any>('SELECT title,date,venue FROM public.events WHERE id = $1 LIMIT 1', [order.event_id]).catch(() => []);
       const evt = evtRows[0] || {};
       return NextResponse.json({
         success: true, alreadyPaid: true, orderId,
         tickets: tickets.map((t: any) => ({
           ticketCode: t.ticket_code,
-          ticketUrl: `${origin}/billetterie/${t.ticket_code}`,
-          qrDataUrl: t.qr_data_url || '',  // include stored QR for PDF download
+          ticketUrl: `${SITE_URL}/billetterie/${t.ticket_code}`,
+          qrDataUrl: t.qr_data_url || '',
         })),
         buyerName: order.buyer_name, buyerEmail: order.buyer_email,
         eventTitle: evt.title || order.event_title,
@@ -356,12 +357,11 @@ export async function POST(request: Request) {
       const existingOrder = await queryDb<any>('SELECT * FROM public.ticket_orders WHERE id = $1 LIMIT 1', [orderId]);
       if (existingOrder[0]?.payment_status === 'PAID') {
         const existingTickets = await queryDb<any>('SELECT * FROM public.tickets WHERE order_ref = $1', [orderId]);
-        const origin = request.headers.get('origin') || 'https://miss-template.netlify.app';
         return NextResponse.json({
           success: true, alreadyPaid: true, orderId,
           tickets: existingTickets.map((t: any) => ({
             ticketCode: t.ticket_code,
-            ticketUrl: `${origin}/billetterie/${t.ticket_code}`,
+            ticketUrl: `${SITE_URL}/billetterie/${t.ticket_code}`,
             qrDataUrl: t.qr_data_url || '',
           })),
           buyerName: order.buyer_name, buyerEmail: order.buyer_email,
@@ -375,46 +375,59 @@ export async function POST(request: Request) {
       }, { status: 409 });
     }
 
-    // 5. Générer les billets (un par place)
+    // 5. Générer les billets dans une transaction atomique
     const qty = order.quantity || 1;
-    const origin = request.headers.get('origin') || 'https://miss-template.netlify.app';
     const issuedTickets: { ticketCode: string; ticketUrl: string; qrDataUrl: string }[] = [];
+    const emailJobs: Array<Parameters<typeof sendTicketEmail>[0]> = [];
 
-    for (let i = 0; i < qty; i++) {
-      const ticketCode = genTicketCode();
-      const ticketId   = `tck_${Date.now()}_${i}_${Math.random().toString(36).slice(2, 5)}`;
-      const ticketUrl  = `${origin}/billetterie/${ticketCode}`;
-      const qrDataUrl  = await generateQRDataUrl(ticketUrl).catch(() => '');
+    // BEGIN transaction — si une insertion échoue, on rollback tout
+    await queryDb('BEGIN').catch(() => {});
+    try {
+      for (let i = 0; i < qty; i++) {
+        const ticketCode = genTicketCode();
+        const ticketId   = `tck_${Date.now()}_${i}_${Math.random().toString(36).slice(2, 7)}`;
+        const ticketUrl  = `${SITE_URL}/billetterie/${ticketCode}`;
+        const qrDataUrl  = await generateQRDataUrl(ticketUrl).catch(() => '');
 
+        await queryDb(
+          `INSERT INTO public.tickets
+            (id, ticket_code, event_id, event_title, pass_name, unit_price, quantity,
+             total_price, buyer_name, buyer_email, buyer_phone, order_ref,
+             payment_status, status, qr_data_url, purchased_at)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'PAID','VALID',$13,NOW())
+           ON CONFLICT (ticket_code) DO NOTHING`,
+          [ticketId, ticketCode, order.event_id, eventTitle, order.pass_name,
+           order.unit_price, 1, order.unit_price,
+           order.buyer_name, order.buyer_email, order.buyer_phone, orderId,
+           qrDataUrl]
+        );
+
+        issuedTickets.push({ ticketCode, ticketUrl, qrDataUrl });
+        emailJobs.push({
+          to: order.buyer_email, buyerName: order.buyer_name,
+          eventTitle, eventDate, eventVenue,
+          passName: order.pass_name, ticketCode, qrDataUrl,
+          seatIndex: i + 1, totalTickets: qty,
+        });
+      }
+
+      // 6. Marquer la commande PAID dans la même transaction
       await queryDb(
-        `INSERT INTO public.tickets
-          (id, ticket_code, event_id, event_title, pass_name, unit_price, quantity,
-           total_price, buyer_name, buyer_email, buyer_phone, order_ref,
-           payment_status, status, qr_data_url, purchased_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'PAID','VALID',$13,NOW())
-         ON CONFLICT (ticket_code) DO NOTHING`,
-        [ticketId, ticketCode, order.event_id, eventTitle, order.pass_name,
-         order.unit_price, 1, order.unit_price,
-         order.buyer_name, order.buyer_email, order.buyer_phone, orderId,
-         qrDataUrl]  // <-- store QR data URL in DB
-      ).catch((e) => console.warn('Ticket insert warn:', e?.message));
+        'UPDATE public.ticket_orders SET payment_status = $1, fapshi_trans_id = $2 WHERE id = $3',
+        ['PAID', fapshiTransId || '', orderId]
+      );
 
-      issuedTickets.push({ ticketCode, ticketUrl, qrDataUrl });
-
-      // Envoyer l'email
-      await sendTicketEmail({
-        to: order.buyer_email, buyerName: order.buyer_name,
-        eventTitle, eventDate, eventVenue,
-        passName: order.pass_name, ticketCode, qrDataUrl,
-        seatIndex: i + 1, totalTickets: qty,
-      });
+      await queryDb('COMMIT').catch(() => {});
+    } catch (txErr: any) {
+      await queryDb('ROLLBACK').catch(() => {});
+      console.error('[verify] transaction rollback:', txErr?.message);
+      return NextResponse.json({ success: false, error: 'Erreur lors de la création des billets. Réessayez.' }, { status: 500 });
     }
 
-    // 5. Marquer la commande PAID
-    await queryDb(
-      'UPDATE public.ticket_orders SET payment_status = $1, fapshi_trans_id = $2 WHERE id = $3',
-      ['PAID', fapshiTransId || '', orderId]
-    ).catch(() => {});
+    // 7. Envoyer les emails en arrière-plan (fire-and-forget — ne bloque pas la réponse)
+    for (const job of emailJobs) {
+      sendTicketEmail(job).catch((e) => console.warn('[email] failed:', e?.message));
+    }
 
     return NextResponse.json({
       success: true, orderId,
@@ -431,6 +444,7 @@ export async function POST(request: Request) {
 
 /**
  * GET /api/pay/ticket/verify?orderId=...
+ * Retourne uniquement le statut de paiement — PAS les données personnelles
  */
 export async function GET(request: Request) {
   try {
@@ -438,15 +452,21 @@ export async function GET(request: Request) {
     const orderId = searchParams.get('orderId');
     if (!orderId) return NextResponse.json({ success: false, error: 'orderId requis' }, { status: 400 });
 
-    const rows = await queryDb<any>('SELECT * FROM public.ticket_orders WHERE id = $1 LIMIT 1', [orderId]);
+    const rows = await queryDb<any>(
+      'SELECT id, payment_status, quantity, pass_name, event_title FROM public.ticket_orders WHERE id = $1 LIMIT 1',
+      [orderId]
+    );
     const order = rows[0];
     if (!order) return NextResponse.json({ success: false, error: 'Commande introuvable' }, { status: 404 });
 
-    let tickets: any[] = [];
-    if (order.payment_status === 'PAID') {
-      tickets = await queryDb<any>('SELECT * FROM public.tickets WHERE order_ref = $1', [orderId]);
-    }
-    return NextResponse.json({ success: true, order, tickets });
+    // Ne retourner que le statut — jamais les données personnelles via GET non authentifié
+    return NextResponse.json({
+      success: true,
+      status: order.payment_status,
+      passName: order.pass_name,
+      eventTitle: order.event_title,
+      quantity: order.quantity,
+    });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }

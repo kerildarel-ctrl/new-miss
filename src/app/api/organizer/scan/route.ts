@@ -10,7 +10,10 @@ export const dynamic = 'force-dynamic';
  */
 export async function POST(request: Request) {
   try {
-    const { ticketCode, organizerToken, eventId, agentName = 'Organisateur' } = await request.json();
+    const body = await request.json();
+    const { ticketCode, organizerToken, eventId, agentName } = body;
+    // Sanitize agentName — strip HTML tags, cap length
+    const safeAgentName = String(agentName || 'Organisateur').replace(/<[^>]*>/g, '').trim().slice(0, 80) || 'Organisateur';
 
     if (!ticketCode || !organizerToken || !eventId) {
       return NextResponse.json({ success: false, error: 'ticketCode, organizerToken et eventId requis' }, { status: 400 });
@@ -76,13 +79,24 @@ export async function POST(request: Request) {
       }, { status: 402 });
     }
 
-    // ✅ Marquer le billet comme USED
-    await queryDb(
+    // ✅ Verrou atomique — marque USED uniquement si encore VALID (prévient le double-scan concurrent)
+    const markResult = await queryDb<any>(
       `UPDATE public.tickets
        SET status = 'USED', scanned_at = NOW(), scanned_by_agent_name = $1
-       WHERE ticket_code = $2`,
-      [agentName, ticket.ticket_code]
+       WHERE ticket_code = $2 AND status = 'VALID'
+       RETURNING id`,
+      [safeAgentName, ticket.ticket_code]
     );
+
+    if (!markResult.length) {
+      // Un autre scanner a marqué ce billet USED entre notre SELECT et cet UPDATE
+      return NextResponse.json({
+        success: false,
+        scanResult: 'ALREADY_USED',
+        error: '⚠️ Billet déjà utilisé (scan simultané détecté).',
+        ticket: { buyerName: ticket.buyer_name, passName: ticket.pass_name },
+      }, { status: 409 });
+    }
 
     return NextResponse.json({
       success: true,
@@ -102,19 +116,51 @@ export async function POST(request: Request) {
 }
 
 /**
- * GET /api/organizer/scan?ticketCode=TKT-XXXX-XXXX&token=...&eventId=...
- * Consultation uniquement (sans marquer USED)
+ * GET /api/organizer/scan?ticketCode=TKT-XXXX&token=...&eventId=...
+ * Consultation uniquement (sans marquer USED) — token organisateur obligatoire
  */
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const ticketCode = searchParams.get('ticketCode');
-    if (!ticketCode) return NextResponse.json({ success: false, error: 'ticketCode requis' }, { status: 400 });
+    const ticketCode     = searchParams.get('ticketCode');
+    const organizerToken = searchParams.get('token');
+    const eventId        = searchParams.get('eventId');
 
-    const rows = await queryDb<any>('SELECT * FROM public.tickets WHERE ticket_code = $1 LIMIT 1', [ticketCode.toUpperCase()]);
+    if (!ticketCode || !organizerToken || !eventId) {
+      return NextResponse.json(
+        { success: false, error: 'ticketCode, token et eventId requis' },
+        { status: 400 }
+      );
+    }
+
+    // Valider le token organisateur
+    const evtRows = await queryDb<any>(
+      'SELECT id FROM public.events WHERE id = $1 AND organizer_token = $2 LIMIT 1',
+      [eventId, organizerToken]
+    );
+    if (!evtRows.length) {
+      return NextResponse.json({ success: false, error: 'Token organisateur invalide' }, { status: 403 });
+    }
+
+    const rows = await queryDb<any>(
+      'SELECT ticket_code, pass_name, status, payment_status, purchased_at, scanned_at FROM public.tickets WHERE ticket_code = $1 LIMIT 1',
+      [ticketCode.toUpperCase()]
+    );
     if (!rows.length) return NextResponse.json({ success: false, error: 'Billet introuvable' }, { status: 404 });
 
-    return NextResponse.json({ success: true, ticket: rows[0] });
+    // Ne pas exposer email/nom de l'acheteur via GET
+    const t = rows[0];
+    return NextResponse.json({
+      success: true,
+      ticket: {
+        ticketCode: t.ticket_code,
+        passName: t.pass_name,
+        status: t.status,
+        paymentStatus: t.payment_status,
+        purchasedAt: t.purchased_at,
+        scannedAt: t.scanned_at,
+      },
+    });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }

@@ -368,7 +368,7 @@ export default function EventDetailPage() {
             srcDoc={event.htmlContent}
             style={{ width: '100%', minHeight: isMobile ? '280px' : '500px', border: 'none', display: 'block' }}
             title={event.title}
-            sandbox="allow-same-origin allow-scripts"
+            sandbox="allow-scripts"
             loading="lazy"
           />
         </div>
