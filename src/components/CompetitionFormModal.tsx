@@ -329,6 +329,48 @@ export const CompetitionFormModal: React.FC<CompetitionFormModalProps> = ({
               </div>
             </div>
 
+            {/* POURCENTAGE ORGANISATEUR */}
+            <div className="p-4 rounded-2xl border border-indigo-200 dark:border-indigo-900/60 bg-indigo-50/50 dark:bg-indigo-950/20 space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                  💰 Pourcentage reversé à l&apos;organisateur
+                </label>
+                <span className="text-xl font-black text-indigo-600 dark:text-indigo-400">
+                  {formData.organizerPercentage ?? 80}%
+                </span>
+              </div>
+              <input
+                type="range"
+                min={50} max={95} step={5}
+                value={formData.organizerPercentage ?? 80}
+                onChange={(e) => setFormData({ ...formData, organizerPercentage: Number(e.target.value) })}
+                className="w-full accent-indigo-600 cursor-pointer"
+              />
+              <div className="flex justify-between text-[10px] text-slate-400 font-semibold">
+                <span>50% (min)</span>
+                <span>95% (max)</span>
+              </div>
+              {/* Visual split bar */}
+              <div className="flex gap-1 h-2 rounded-full overflow-hidden">
+                <div
+                  className="bg-indigo-500 rounded-full transition-all duration-300"
+                  style={{ width: `${formData.organizerPercentage ?? 80}%` }}
+                />
+                <div
+                  className="bg-slate-200 dark:bg-slate-700 rounded-full"
+                  style={{ width: `${100 - (formData.organizerPercentage ?? 80)}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-[11px] font-bold">
+                <span className="text-indigo-600 dark:text-indigo-400">
+                  🟣 Organisateur : {formData.organizerPercentage ?? 80}%
+                </span>
+                <span className="text-slate-400">
+                  ⚪ Plateforme : {100 - (formData.organizerPercentage ?? 80)}%
+                </span>
+              </div>
+            </div>
+
             {/* BUTTONS */}
             <div className="pt-3 flex items-center justify-end gap-3 border-t border-slate-100 dark:border-slate-800">
               <button

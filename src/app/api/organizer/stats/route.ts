@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 import { queryDb } from '@/lib/pgDb';
-import { calculateTierRevenue } from '@/utils/revenueTiers';
 import { isServerAdminAuthorized } from '@/lib/adminAuth';
 import { PayoutRequest } from '../payouts/route';
 
@@ -102,9 +101,12 @@ export async function GET(request: Request) {
       }
     }
 
-    // 3. Calcul financier selon l'Alternative 1 (Paliers incitatifs)
+    // 3. Calcul financier selon le pourcentage convenu avec l'organisateur
     const unitPrice = compData.vote_price || compData.votePrice || 100;
-    const tiers = calculateTierRevenue(totalVotes, unitPrice);
+    const totalRevenue = totalVotes * unitPrice;
+    const orgPct = Math.min(95, Math.max(50, Number(compData.organizer_percentage || compData.organizerPercentage) || 80));
+    const organizerEarnings = Math.floor(totalRevenue * orgPct / 100);
+    const currentRateFCFA = Math.floor(unitPrice * orgPct / 100); // FCFA per vote
 
     // 4. Calcul des retraits
     let payouts: PayoutRequest[] = [];
@@ -146,7 +148,7 @@ export async function GET(request: Request) {
       .filter((p) => p.status === 'PENDING')
       .reduce((sum, p) => sum + p.amount, 0);
 
-    const availableBalance = Math.max(0, tiers.organizerEarnings - (totalPaid + pendingPayout));
+    const availableBalance = Math.max(0, organizerEarnings - (totalPaid + pendingPayout));
 
     // STRICTE CONFIDENTIALITÉ :
     // On ne renvoie AUCUNE métrique interne (VoteMoi profit et frais API ne sont PAS exposés ici)
@@ -167,13 +169,13 @@ export async function GET(request: Request) {
         },
         financials: {
           totalVotes,
-          organizerEarnings: tiers.organizerEarnings,
-          currentTierNumber: tiers.currentTierNumber,
-          currentTierName: tiers.currentTierName,
-          currentRateFCFA: tiers.currentRateFCFA,
-          nextTierThreshold: tiers.nextTierThreshold,
-          votesNeededForNextTier: tiers.votesNeededForNextTier,
-          progressPercent: tiers.progressPercent,
+          organizerEarnings,
+          currentTierNumber: 1 as const,
+          currentTierName: `${orgPct}%`,
+          currentRateFCFA,
+          nextTierThreshold: null,
+          votesNeededForNextTier: 0,
+          progressPercent: 100,
           totalPaid,
           pendingPayout,
           availableBalance,

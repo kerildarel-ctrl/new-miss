@@ -10,13 +10,14 @@ export interface Competition {
   status: 'EN COURS' | 'A VENIR' | 'TERMINE';
   totalCandidates: number;
   totalVotes: number;
-  votePrice: number; // Custom vote price per competition (e.g. 100 FCFA, 500 FCFA, etc.)
+  votePrice: number;
   primaryColor: string;
   gradientFrom: string;
   gradientTo: string;
   accentColor: string;
   rules?: string;
-  organizerToken?: string; // Clé secrète indevinable pour l'accès confidentiel organisateur
+  organizerToken?: string;
+  organizerPercentage?: number; // Pourcentage convenu avec l'organisateur (50-95%)
 }
 
 export interface Candidate {

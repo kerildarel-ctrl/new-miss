@@ -347,7 +347,7 @@ export default function OrganisateurDashboardPage() {
               </div>
 
 
-              {/* PROGRESSION PALIER SUPERIEUR (MOTIVATION SECTION) */}
+              {/* TAUX CONVENU */}
               <div className="bg-white dark:bg-[#111827] rounded-[28px] p-6 sm:p-8 border border-slate-100 dark:border-slate-800 shadow-sm space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div className="flex items-center gap-2.5">
@@ -356,51 +356,27 @@ export default function OrganisateurDashboardPage() {
                     </div>
                     <div>
                       <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
-                        Progression vers le palier de commission supérieur
+                        Taux de reversement convenu
                       </h3>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Plus vous mobilisez votre audience, plus chaque vote vous rapporte d&apos;argent !
+                        Taux fixé avec l&apos;organisateur lors de la création de la compétition.
                       </p>
                     </div>
                   </div>
-
-                  {data.financials.nextTierThreshold ? (
-                    <span className="text-xs font-extrabold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-3 py-1.5 rounded-xl border border-indigo-100 dark:border-indigo-900/40">
-                      Encore {data.financials.votesNeededForNextTier.toLocaleString('fr-FR')} vote(s) pour passer au niveau supérieur !
-                    </span>
-                  ) : (
-                    <span className="text-xs font-extrabold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1.5 rounded-xl border border-emerald-200">
-                      🎉 Palier Diamant Maximum Atteint (83 FCFA/vote) !
-                    </span>
-                  )}
+                  <span className="text-2xl font-black text-indigo-600 dark:text-indigo-400">
+                    {data.financials.currentRateFCFA} FCFA<span className="text-sm font-semibold text-slate-400"> / vote</span>
+                  </span>
                 </div>
 
-                {/* PROGRESS BAR */}
-                <div className="w-full h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden p-0.5">
-                  <div
-                    className="h-full bg-gradient-to-r from-indigo-500 via-indigo-600 to-purple-600 rounded-full transition-all duration-500"
-                    style={{ width: `${data.financials.progressPercent}%` }}
-                  />
-                </div>
-
-                {/* 3 TIERS ROADMAP */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                  <div className={`p-3.5 rounded-2xl border text-xs ${data.financials.currentTierNumber >= 1 ? 'border-indigo-500/40 bg-indigo-50/40 dark:bg-indigo-950/20' : 'border-slate-200 dark:border-slate-800 opacity-60'}`}>
-                    <div className="font-bold text-slate-900 dark:text-white">🥉 Palier 1 (1 - 2 000 votes)</div>
-                    <div className="text-indigo-600 font-extrabold text-sm mt-0.5">75 FCFA / vote</div>
-                    <div className="text-[10px] text-slate-500 mt-1">Démarrage officiel</div>
+                {/* Visual bar */}
+                <div className="p-4 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/40">
+                  <div className="flex justify-between text-xs font-bold mb-2">
+                    <span className="text-indigo-600 dark:text-indigo-400">🟣 Organisateur : {data.financials.currentTierName}</span>
+                    <span className="text-slate-400">⚪ Plateforme : {100 - parseInt(data.financials.currentTierName)}%</span>
                   </div>
-
-                  <div className={`p-3.5 rounded-2xl border text-xs ${data.financials.currentTierNumber >= 2 ? 'border-indigo-500/40 bg-indigo-50/40 dark:bg-indigo-950/20' : 'border-slate-200 dark:border-slate-800 opacity-60'}`}>
-                    <div className="font-bold text-slate-900 dark:text-white">🥈 Palier 2 (2 001 - 10 000 votes)</div>
-                    <div className="text-indigo-600 font-extrabold text-sm mt-0.5">80 FCFA / vote</div>
-                    <div className="text-[10px] text-slate-500 mt-1">+5 FCFA de gain supplémentaire par vote</div>
-                  </div>
-
-                  <div className={`p-3.5 rounded-2xl border text-xs ${data.financials.currentTierNumber >= 3 ? 'border-indigo-500/40 bg-indigo-50/40 dark:bg-indigo-950/20' : 'border-slate-200 dark:border-slate-800 opacity-60'}`}>
-                    <div className="font-bold text-slate-900 dark:text-white">💎 Palier 3 (10 001+ votes)</div>
-                    <div className="text-indigo-600 font-extrabold text-sm mt-0.5">83 FCFA / vote</div>
-                    <div className="text-[10px] text-slate-500 mt-1">Taux VIP Élite maximum</div>
+                  <div className="flex gap-1 h-3 rounded-full overflow-hidden">
+                    <div className="bg-indigo-500 rounded-full" style={{ width: data.financials.currentTierName }} />
+                    <div className="bg-slate-200 dark:bg-slate-700 rounded-full flex-1" />
                   </div>
                 </div>
               </div>

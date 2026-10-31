@@ -88,7 +88,8 @@ export async function createCompetition(compData: Partial<Competition>): Promise
     gradientFrom: compData.gradientFrom || '#EC4899',
     gradientTo: compData.gradientTo || '#2563EB',
     accentColor: compData.accentColor || '#3B82F6',
-    rules: compData.rules || 'Votes ouverts à tous.'
+    rules: compData.rules || 'Votes ouverts à tous.',
+    organizerPercentage: Math.min(95, Math.max(50, Number(compData.organizerPercentage) || 80)),
   };
 
   const res = await fetch('/api/competitions', {

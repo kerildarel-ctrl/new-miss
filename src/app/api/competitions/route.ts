@@ -61,6 +61,9 @@ export async function GET() {
       return NextResponse.json({ success: true, data: memoryCache.data }, { headers: noCacheHeaders });
     }
 
+    // Auto-migrate: add organizer_percentage if it doesn't exist yet
+    await queryDb(`ALTER TABLE public.competitions ADD COLUMN IF NOT EXISTS organizer_percentage INTEGER DEFAULT 80`).catch(() => {});
+
     const sql = `
       SELECT c.*,
         (SELECT COUNT(*)::int FROM public.candidates cand WHERE cand.competition_slug = c.slug) as dynamic_candidate_count,
@@ -99,6 +102,7 @@ export async function GET() {
           accentColor: item.accent_color || '#3B82F6',
           rules: item.rules || '',
           organizerToken: token,
+          organizerPercentage: item.organizer_percentage ?? diskComp?.organizerPercentage ?? 80,
         };
       });
 
@@ -140,6 +144,7 @@ export async function POST(request: Request) {
       accentColor: compData.accentColor || '#3B82F6',
       rules: compData.rules || 'Votes ouverts à tous.',
       organizerToken: compData.organizerToken || generateOrganizerToken(),
+      organizerPercentage: Math.min(95, Math.max(50, Number(compData.organizerPercentage) || 80)),
     };
 
     // 1. Sauvegarde dans PostgreSQL Neon
@@ -147,15 +152,17 @@ export async function POST(request: Request) {
       await queryDb(
         `INSERT INTO public.competitions (
           id, slug, title, description, banner_image, logo_image, start_date, end_date,
-          status, total_candidates, total_votes, vote_price, primary_color, rules, organizer_token
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+          status, total_candidates, total_votes, vote_price, primary_color, rules,
+          organizer_token, organizer_percentage
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
         ON CONFLICT (slug) DO UPDATE SET
           title = EXCLUDED.title,
           description = EXCLUDED.description,
           banner_image = EXCLUDED.banner_image,
           logo_image = EXCLUDED.logo_image,
           rules = EXCLUDED.rules,
-          organizer_token = EXCLUDED.organizer_token;`,
+          organizer_token = EXCLUDED.organizer_token,
+          organizer_percentage = EXCLUDED.organizer_percentage;`,
         [
           newComp.id,
           newComp.slug,
@@ -172,6 +179,7 @@ export async function POST(request: Request) {
           newComp.primaryColor,
           newComp.rules,
           newComp.organizerToken,
+          newComp.organizerPercentage ?? 80,
         ]
       );
     } catch (dbErr: any) {
