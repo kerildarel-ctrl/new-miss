@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { queryDb } from '@/lib/pgDb';
+import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,6 +55,22 @@ export async function POST(request: Request) {
     }
 
     await ensureOrdersTable();
+
+    // ── Rate limiting: max 5 payment initiations per IP per 60s ──────
+    const ip = getClientIp(request);
+    const { allowed, remaining, resetAt } = checkRateLimit(ip, 5, 60_000);
+    if (!allowed) {
+      return NextResponse.json(
+        { success: false, error: 'Trop de tentatives. Réessayez dans une minute.' },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(Math.ceil((resetAt - Date.now()) / 1000)),
+            'X-RateLimit-Remaining': '0',
+          },
+        }
+      );
+    }
 
     const body = await request.json();
     const {

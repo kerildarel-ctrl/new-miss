@@ -68,6 +68,33 @@ export default function KerilTicketsPage() {
     }
   };
 
+  const exportCSV = () => {
+    if (!filteredTickets.length) return;
+    const headers = ['Code Billet', 'Événement', 'Acheteur', 'Email', 'Téléphone', 'Type Pass', 'Prix (FCFA)', 'Qté', 'Statut', 'Paiement', 'Date Achat'];
+    const rows = filteredTickets.map(t => [
+      t.ticketCode,
+      `"${(t.eventTitle || '').replace(/"/g, '""')}"`,
+      `"${(t.buyerName || '').replace(/"/g, '""')}"`,
+      t.buyerEmail || '',
+      (t as any).buyerPhone || '',
+      `"${(t.passName || '').replace(/"/g, '""')}"`,
+      t.unitPrice ?? '',
+      t.quantity ?? 1,
+      t.status,
+      t.paymentStatus,
+      t.purchasedAt ? new Date(t.purchasedAt).toLocaleDateString('fr-FR') : '',
+    ].join(','));
+    const csv = [headers.join(','), ...rows].join('\n');
+    const bom = '\uFEFF';
+    const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `billets_votemoi_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   // Reset ticket handler (Admin only)
   const handleResetTicket = async (ticketCode: string) => {
     setIsResetting(ticketCode);
@@ -176,6 +203,28 @@ export default function KerilTicketsPage() {
               >
                 {copied ? <Check className="w-4 h-4" /> : <Mail className="w-4 h-4" />}
                 <span>{copied ? 'Emails copiés !' : `Copier ${allEmails.length} Emails`}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={exportCSV}
+                disabled={!filteredTickets.length}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '12px 20px',
+                  borderRadius: '14px',
+                  background: filteredTickets.length ? '#065f46' : '#374151',
+                  color: filteredTickets.length ? '#34d399' : '#6b7280',
+                  fontWeight: 800,
+                  fontSize: '0.92rem',
+                  border: 'none',
+                  cursor: filteredTickets.length ? 'pointer' : 'not-allowed',
+                  boxShadow: filteredTickets.length ? '0 8px 20px rgba(16, 185, 129, 0.25)' : 'none',
+                }}
+              >
+                <span>⬇ Export CSV ({filteredTickets.length})</span>
               </button>
             </div>
           </div>

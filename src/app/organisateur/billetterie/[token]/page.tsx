@@ -60,6 +60,33 @@ export default function OrganizerDashboardPage() {
   const [requestingPayout, setRequestingPayout] = useState(false);
   const [payoutMsg, setPayoutMsg] = useState<string | null>(null);
 
+  // Export CSV des acheteurs
+  const exportCSV = () => {
+    if (!tickets.length || !event) return;
+    const headers = ['Code Billet', 'Nom Acheteur', 'Email', 'T\u00e9l\u00e9phone', 'Type Pass', 'Prix Unit\u00e9 (FCFA)', 'Statut', 'Date Achat'];
+    const rows = tickets
+      .filter(t => t.paymentStatus === 'PAID')
+      .map(t => [
+        t.ticketCode,
+        `"${(t.buyerName || '').replace(/"/g, '""')}"`,
+        t.buyerEmail || '',
+        t.buyerPhone || '',
+        `"${(t.passName || '').replace(/"/g, '""')}"`,
+        t.unitPrice,
+        t.status,
+        t.purchasedAt ? new Date(t.purchasedAt).toLocaleDateString('fr-FR') : '',
+      ].join(','));
+    const csv = [headers.join(','), ...rows].join('\n');
+    const bom = '\uFEFF'; // UTF-8 BOM pour Excel
+    const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `acheteurs_${event.title.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   // Camera refs
   const videoRef    = useRef<HTMLVideoElement>(null);
   const canvasRef   = useRef<HTMLCanvasElement>(null);
@@ -512,9 +539,15 @@ export default function OrganizerDashboardPage() {
         <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px', overflow: 'hidden' }}>
           <div style={{ padding: '18px 24px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
             <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 800 }}>Liste des acheteurs</h2>
-            <button type="button" onClick={loadData} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', color: '#94a3b8', padding: '6px 12px', cursor: 'pointer', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <RefreshCw style={{ width: '13px', height: '13px' }} /> Actualiser
-            </button>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <button type="button" onClick={exportCSV} disabled={!tickets.length}
+                style={{ background: 'linear-gradient(135deg,#064e3b,#065f46)', border: 'none', borderRadius: '8px', color: '#34d399', padding: '6px 14px', cursor: tickets.length ? 'pointer' : 'not-allowed', fontSize: '0.8rem', fontWeight: 700, opacity: tickets.length ? 1 : 0.5 }}>
+                ⬇ Export CSV
+              </button>
+              <button type="button" onClick={loadData} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', color: '#94a3b8', padding: '6px 12px', cursor: 'pointer', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <RefreshCw style={{ width: '13px', height: '13px' }} /> Actualiser
+              </button>
+            </div>
           </div>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '560px' }}>

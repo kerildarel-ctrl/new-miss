@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Poppins } from 'next/font/google';
 import './globals.css';
 
@@ -9,10 +9,24 @@ const poppins = Poppins({
   display: 'swap',
 });
 
+export const viewport: Viewport = {
+  themeColor: '#27149F',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+};
+
 export const metadata: Metadata = {
   title: 'VoteMoi — Votre vote, votre choix, votre champion',
   description: 'Plateforme web professionnelle de vote pour compétitions, concours de beauté, événements campus et élections. Tarif unique : 100 FCFA.',
   keywords: ['VoteMoi', 'Vote', 'Compétition', 'COPA AHN', 'COPA MSP LSI', 'Élection', 'Concours', '100 FCFA'],
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'VoteMoi',
+  },
   icons: {
     icon: '/images/logo.png',
     shortcut: '/images/logo.png',
@@ -40,4 +54,3 @@ export default function RootLayout({
     </html>
   );
 }
-
