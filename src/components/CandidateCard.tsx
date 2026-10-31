@@ -3,6 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Medal } from 'lucide-react';
 import { Candidate } from '@/data/mockData';
 
 interface CandidateCardProps {
@@ -61,7 +62,14 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
 
         {/* RANK BADGE ONLY */}
         <em className={candidate.rank === 1 ? 'one' : ''}>
-          {candidate.rank === 1 ? '🥇 1ère place' : `${candidate.rank}e place`}
+          {candidate.rank === 1 ? (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+              <Medal className="w-3.5 h-3.5 inline" />
+              1ère place
+            </span>
+          ) : (
+            `${candidate.rank}e place`
+          )}
         </em>
       </div>
 
@@ -70,7 +78,7 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
         <h3 style={{ marginTop: '12px', fontSize: '1.05rem', fontWeight: 700, lineHeight: 1.3 }}>
           {candidate.firstName} {candidate.lastName}{' '}
           <span className="mute" style={{ fontWeight: 500, fontSize: '0.85rem' }}>
-            {candidate.candidateNumber} · {candidate.category}
+            {candidate.candidateNumber} - {candidate.category}
           </span>
         </h3>
 
@@ -89,7 +97,7 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
         className="btn full"
         onClick={() => onVoteClick && onVoteClick(candidate)}
       >
-        Voter · 100 FCFA
+        Voter - 100 FCFA
       </button>
     </article>
   );

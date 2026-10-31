@@ -140,11 +140,11 @@ export const CandidateFormModal: React.FC<CandidateFormModalProps> = ({
                 className="w-full px-4 py-3 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 text-indigo-950 dark:text-indigo-200 font-extrabold text-xs sm:text-sm focus:outline-none focus:border-indigo-500"
               >
                 {competitions.length === 0 ? (
-                  <option value="">⚠️ Aucune compétition disponible. Créez-en une d&apos;abord !</option>
+                  <option value="">Aucune compétition disponible. Créez-en une d&apos;abord !</option>
                 ) : (
                   competitions.map((comp) => (
                     <option key={comp.id} value={comp.slug}>
-                      🏆 {comp.title} (Slug: {comp.slug})
+                      {comp.title} (Slug: {comp.slug})
                     </option>
                   ))
                 )}

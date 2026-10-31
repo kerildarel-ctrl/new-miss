@@ -7,6 +7,7 @@ import {
   TrendingUp, Users, DollarSign, Ticket, RefreshCw,
   CheckCircle2, Clock, Mail, Phone, Calendar, MapPin,
   Camera, CameraOff, QrCode, X, AlertCircle,
+  User, Lock, Download, AlertTriangle, Send, Loader2, XCircle,
 } from 'lucide-react';
 
 interface TicketPass { name: string; price: number; quantity?: number; description?: string; }
@@ -147,7 +148,7 @@ export default function OrganizerDashboardPage() {
       if (data.success) {
         setScanResult({
           type: 'success',
-          title: '✅ Entrée autorisée !',
+          title: 'Entrée autorisée !',
           message: data.message,
           buyerName: data.ticket?.buyerName,
           passName: data.ticket?.passName,
@@ -157,14 +158,14 @@ export default function OrganizerDashboardPage() {
         const type = data.scanResult === 'ALREADY_USED' ? 'warning' : 'error';
         setScanResult({
           type,
-          title: type === 'warning' ? '⚠️ Déjà scanné' : '❌ Refusé',
+          title: type === 'warning' ? 'Déjà scanné' : 'Refusé',
           message: data.error,
           buyerName: data.ticket?.buyerName,
           passName: data.ticket?.passName,
         });
       }
     } catch {
-      setScanResult({ type: 'error', title: '❌ Erreur réseau', message: 'Vérifiez votre connexion.' });
+      setScanResult({ type: 'error', title: 'Erreur réseau', message: 'Vérifiez votre connexion.' });
     } finally {
       setScanning(false);
       setManualCode('');
@@ -290,7 +291,9 @@ export default function OrganizerDashboardPage() {
   if (notFound || !event) return (
     <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#0a0f1e', color: '#fff', padding: '20px' }}>
       <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🔒</div>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
+          <Lock style={{ width: '48px', height: '48px', color: '#94a3b8' }} />
+        </div>
         <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>Lien invalide ou expiré</h2>
       </div>
     </div>
@@ -306,8 +309,9 @@ export default function OrganizerDashboardPage() {
 
       {/* HEADER */}
       <div style={{ background: 'linear-gradient(135deg,#1B0E78,#27149F,#4B2CE0)', padding: 'clamp(24px,4vw,40px) clamp(16px,4vw,40px)' }}>
-        <p style={{ margin: '0 0 4px', fontSize: '0.75rem', color: '#BDB6EE', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-          Dashboard Organisateur 🎟️
+        <p style={{ margin: '0 0 4px', fontSize: '0.75rem', color: '#BDB6EE', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <Ticket style={{ width: '14px', height: '14px' }} />
+          <span>Dashboard Organisateur</span>
         </p>
         <h1 style={{ margin: '0 0 8px', color: '#fff', fontSize: 'clamp(1.3rem,3.5vw,1.8rem)', fontWeight: 900 }}>{event.title}</h1>
         <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', fontSize: '0.85rem', color: '#D9D4FA' }}>
@@ -400,8 +404,18 @@ export default function OrganizerDashboardPage() {
                     <div>
                       <p style={{ margin: '0 0 4px', fontWeight: 900, fontSize: '1rem', color: scanTextColor }}>{scanResult.title}</p>
                       <p style={{ margin: '0 0 8px', fontSize: '0.85rem', color: '#e2e8f0' }}>{scanResult.message}</p>
-                      {scanResult.buyerName && <p style={{ margin: '0 0 2px', fontSize: '0.82rem', color: '#94a3b8' }}>👤 {scanResult.buyerName}</p>}
-                      {scanResult.passName && <p style={{ margin: 0, fontSize: '0.82rem', color: '#94a3b8' }}>🎟️ {scanResult.passName}</p>}
+                      {scanResult.buyerName && (
+                        <p style={{ margin: '0 0 2px', fontSize: '0.82rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <User style={{ width: '13px', height: '13px' }} />
+                          <span>{scanResult.buyerName}</span>
+                        </p>
+                      )}
+                      {scanResult.passName && (
+                        <p style={{ margin: 0, fontSize: '0.82rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <Ticket style={{ width: '13px', height: '13px' }} />
+                          <span>{scanResult.passName}</span>
+                        </p>
+                      )}
                     </div>
                     <button type="button" onClick={() => { setScanResult(null); startCamera(); }}
                       style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', padding: '4px' }}>
@@ -444,9 +458,12 @@ export default function OrganizerDashboardPage() {
                       background: scanning ? '#374151' : 'linear-gradient(135deg,#27149F,#4B2CE0)',
                       color: '#fff', fontWeight: 800, cursor: 'pointer', fontSize: '0.88rem', height: '44px',
                       whiteSpace: 'nowrap',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                     }}
                   >
-                    {scanning ? '⏳' : 'Valider'}
+                    {scanning ? <Loader2 style={{ width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} /> : 'Valider'}
                   </button>
                 </div>
               </div>
@@ -493,8 +510,9 @@ export default function OrganizerDashboardPage() {
                           </span>
                         )}
                         {isLow && !isSoldOut && (
-                          <span style={{ fontSize: '0.65rem', fontWeight: 800, padding: '2px 8px', borderRadius: '99px', background: 'rgba(245,158,11,0.15)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.3)' }}>
-                            ⚠️ Stock bas ({remaining} restants)
+                          <span style={{ fontSize: '0.65rem', fontWeight: 800, padding: '2px 8px', borderRadius: '99px', background: 'rgba(245,158,11,0.15)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.3)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            <AlertTriangle style={{ width: '10px', height: '10px' }} />
+                            <span>Stock bas ({remaining} restants)</span>
                           </span>
                         )}
                       </div>
@@ -524,8 +542,18 @@ export default function OrganizerDashboardPage() {
               <p style={{ margin: 0, fontWeight: 800 }}>{event.organizerPhone || 'Non renseigné'}</p>
             </div>
             <button type="button" onClick={handleRequestPayout} disabled={requestingPayout || orgRevenue < 100}
-              style={{ padding: '13px 22px', borderRadius: '12px', border: 'none', background: requestingPayout ? '#374151' : 'linear-gradient(135deg,#27149F,#4B2CE0)', color: '#fff', fontWeight: 800, fontSize: '0.9rem', cursor: requestingPayout ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}>
-              {requestingPayout ? '⏳ Envoi…' : `💸 Demander ${orgRevenue.toLocaleString('fr-FR')} FCFA`}
+              style={{ padding: '13px 22px', borderRadius: '12px', border: 'none', background: requestingPayout ? '#374151' : 'linear-gradient(135deg,#27149F,#4B2CE0)', color: '#fff', fontWeight: 800, fontSize: '0.9rem', cursor: requestingPayout ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+              {requestingPayout ? (
+                <>
+                  <Loader2 style={{ width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} />
+                  <span>Envoi…</span>
+                </>
+              ) : (
+                <>
+                  <Send style={{ width: '16px', height: '16px' }} />
+                  <span>Demander {orgRevenue.toLocaleString('fr-FR')} FCFA</span>
+                </>
+              )}
             </button>
           </div>
           {payoutMsg && (
@@ -541,8 +569,9 @@ export default function OrganizerDashboardPage() {
             <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 800 }}>Liste des acheteurs</h2>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               <button type="button" onClick={exportCSV} disabled={!tickets.length}
-                style={{ background: 'linear-gradient(135deg,#064e3b,#065f46)', border: 'none', borderRadius: '8px', color: '#34d399', padding: '6px 14px', cursor: tickets.length ? 'pointer' : 'not-allowed', fontSize: '0.8rem', fontWeight: 700, opacity: tickets.length ? 1 : 0.5 }}>
-                ⬇ Export CSV
+                style={{ background: 'linear-gradient(135deg,#064e3b,#065f46)', border: 'none', borderRadius: '8px', color: '#34d399', padding: '6px 14px', cursor: tickets.length ? 'pointer' : 'not-allowed', fontSize: '0.8rem', fontWeight: 700, opacity: tickets.length ? 1 : 0.5, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <Download style={{ width: '13px', height: '13px' }} />
+                <span>Export CSV</span>
               </button>
               <button type="button" onClick={loadData} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', color: '#94a3b8', padding: '6px 12px', cursor: 'pointer', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <RefreshCw style={{ width: '13px', height: '13px' }} /> Actualiser

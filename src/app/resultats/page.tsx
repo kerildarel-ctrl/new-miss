@@ -5,6 +5,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { getCompetitions, getCandidates } from '@/services/dbService';
 import { Competition, Candidate } from '@/data/mockData';
+import { RefreshCw } from 'lucide-react';
 
 const POLL_INTERVAL_MS = 30_000; // 30 secondes
 
@@ -120,15 +121,16 @@ export default function ResultatsPage() {
               </span>
               {lastUpdated && (
                 <span style={{ fontSize: '0.75rem', color: 'var(--mute)', fontWeight: 500 }}>
-                  · Dernière mise à jour : {lastUpdated.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                  — Dernière mise à jour : {lastUpdated.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                 </span>
               )}
               <button
                 onClick={() => refreshCandidates(selectedSlug)}
                 disabled={isRefreshing}
-                style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--p)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', opacity: isRefreshing ? 0.5 : 1 }}
+                style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--p)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', opacity: isRefreshing ? 0.5 : 1, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
               >
-                {isRefreshing ? 'Actualisation...' : '↻ Actualiser'}
+                <RefreshCw className={`w-3 h-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <span>{isRefreshing ? 'Actualisation...' : 'Actualiser'}</span>
               </button>
             </div>
 

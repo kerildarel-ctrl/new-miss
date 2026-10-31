@@ -3,14 +3,14 @@
 import React, { useState } from 'react';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { AdminAuthGuard } from '@/components/AdminAuthGuard';
-import { Save, ShieldCheck, Database, RotateCcw, Trash2 } from 'lucide-react';
+import { Save, ShieldCheck, Database, RotateCcw, Trash2, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 export default function KerilSettingsPage() {
   const [platformName, setPlatformName] = useState('VoteMoi');
   const [slogan, setSlogan] = useState('Votre vote, votre choix, votre champion.');
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
-  const [resetMessage, setResetMessage] = useState<string | null>(null);
+  const [resetMessage, setResetMessage] = useState<{ type: 'success' | 'warning'; text: string } | null>(null);
   const [isSeeding, setIsSeeding] = useState(false);
 
   const handleSave = (e: React.FormEvent) => {
@@ -29,12 +29,12 @@ export default function KerilSettingsPage() {
       const res = await fetch('/api/admin/reset', { method: 'POST' });
       const data = await res.json();
       if (data.success) {
-        setResetMessage('✅ Toutes les données ont été réinitialisées à 0 avec succès !');
+        setResetMessage({ type: 'success', text: 'Toutes les données ont été réinitialisées à 0 avec succès !' });
       } else {
-        setResetMessage(`⚠️ ${data.error}`);
+        setResetMessage({ type: 'warning', text: data.error || 'Erreur lors de la réinitialisation.' });
       }
     } catch {
-      setResetMessage('✅ Réinitialisation locale effectuée à 0.');
+      setResetMessage({ type: 'success', text: 'Réinitialisation locale effectuée à 0.' });
     } finally {
       setIsResetting(false);
     }
@@ -47,12 +47,12 @@ export default function KerilSettingsPage() {
       const res = await fetch('/api/admin/seed', { method: 'POST' });
       const data = await res.json();
       if (data.success) {
-        setResetMessage('✅ Base Supabase synchronisée avec succès !');
+        setResetMessage({ type: 'success', text: 'Base Supabase synchronisée avec succès !' });
       } else {
-        setResetMessage(`⚠️ ${data.error}`);
+        setResetMessage({ type: 'warning', text: data.error || 'Erreur de synchronisation.' });
       }
     } catch {
-      setResetMessage('⚠️ Vérifiez la création des tables dans Supabase.');
+      setResetMessage({ type: 'warning', text: 'Vérifiez la création des tables dans Supabase.' });
     } finally {
       setIsSeeding(false);
     }
@@ -136,13 +136,17 @@ export default function KerilSettingsPage() {
                 style={{
                   padding: '12px 16px',
                   borderRadius: '12px',
-                  background: 'rgba(16, 185, 129, 0.12)',
-                  color: '#10b981',
+                  background: resetMessage.type === 'warning' ? 'rgba(245, 158, 11, 0.12)' : 'rgba(16, 185, 129, 0.12)',
+                  color: resetMessage.type === 'warning' ? '#f59e0b' : '#10b981',
                   fontSize: '0.85rem',
                   fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
                 }}
               >
-                {resetMessage}
+                {resetMessage.type === 'warning' ? <AlertTriangle className="w-4 h-4 flex-shrink-0" /> : <CheckCircle2 className="w-4 h-4 flex-shrink-0" />}
+                <span>{resetMessage.text}</span>
               </div>
             )}
 

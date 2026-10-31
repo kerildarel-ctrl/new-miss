@@ -12,6 +12,7 @@ import {
   RefreshCw,
   ArrowRight,
   ExternalLink,
+  Smartphone,
 } from 'lucide-react';
 
 interface VoteModalProps {
@@ -446,7 +447,7 @@ export const VoteModal: React.FC<VoteModalProps> = ({
               >
                 {isSubmitting
                   ? 'Initialisation du paiement...'
-                  : `Confirmer le vote · ${totalPrice.toLocaleString('fr-FR')} FCFA`}
+                  : `Confirmer le vote - ${totalPrice.toLocaleString('fr-FR')} FCFA`}
               </button>
             </form>
 
@@ -509,8 +510,9 @@ export const VoteModal: React.FC<VoteModalProps> = ({
                 textAlign: 'left',
               }}
             >
-              <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700, color: 'var(--ink)' }}>
-                📲 Action requise ({detectedOperator === 'ORANGE' ? 'Orange Money' : 'MTN Mobile Money'}) :
+              <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700, color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Smartphone className="w-4 h-4 text-indigo-500" />
+                <span>Action requise ({detectedOperator === 'ORANGE' ? 'Orange Money' : 'MTN Mobile Money'}) :</span>
               </p>
               <p style={{ margin: '6px 0 0', fontSize: '0.82rem', color: 'var(--mute)', lineHeight: 1.5 }}>
                 {detectedOperator === 'ORANGE' ? (

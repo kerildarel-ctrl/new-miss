@@ -461,7 +461,7 @@ export default function KerilDashboardPage() {
                               {cand.firstName} {cand.lastName}
                             </div>
                             <div className="mute" style={{ fontSize: '0.75rem' }}>
-                              {cand.competitionSlug} · #{cand.candidateNumber}
+                              {cand.competitionSlug} - #{cand.candidateNumber}
                             </div>
                           </div>
                           <span

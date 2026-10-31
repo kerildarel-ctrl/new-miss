@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Calendar, MapPin, Ticket, ArrowRight, Search } from 'lucide-react';
+import { Calendar, MapPin, Ticket, ArrowRight, Search, Clock } from 'lucide-react';
 
 interface TicketPass {
   id: string;
@@ -79,8 +79,8 @@ export default function EvenementsPage() {
         overflow: 'hidden',
       }}>
         <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 70% 30%, rgba(255,255,255,0.04) 0%, transparent 60%)', pointerEvents: 'none' }} />
-        <p style={{ color: '#BDB6EE', fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '12px' }}>
-          🎟️ VoteMoi Billetterie
+        <p style={{ color: '#BDB6EE', fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '12px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+          <Ticket style={{ width: '14px', height: '14px' }} /> VoteMoi Billetterie
         </p>
         <h1 style={{ color: '#ffffff', fontSize: 'clamp(2rem,5vw,3.2rem)', fontWeight: 900, margin: '0 0 16px', lineHeight: 1.15 }}>
           Tous les événements
@@ -119,7 +119,7 @@ export default function EvenementsPage() {
           </div>
         ) : filtered.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px' }}>
-            <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🎭</div>
+            <Ticket style={{ width: '48px', height: '48px', margin: '0 auto 16px', color: 'var(--mute)', display: 'block', opacity: 0.6 }} />
             <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '8px' }}>
               {search ? 'Aucun résultat' : 'Aucun événement disponible'}
             </h2>
@@ -173,7 +173,7 @@ export default function EvenementsPage() {
                       {/* Decorative pattern when no image */}
                       {(!evt.bannerImage || evt.bannerImage === '/images/hero_bg.png') && (
                         <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', opacity: 0.12 }}>
-                          <span style={{ fontSize: '5rem' }}>🎟️</span>
+                          <Ticket style={{ width: '72px', height: '72px', color: '#fff' }} />
                         </div>
                       )}
                       {minPrice > 0 && (
@@ -191,18 +191,18 @@ export default function EvenementsPage() {
                         const soldOut = isEventSoldOut(evt);
                         const expired = isEventExpired(evt.date);
                         if (soldOut) return (
-                          <div style={{ position: 'absolute', top: '12px', right: '12px', background: 'rgba(239,68,68,0.92)', color: '#fff', padding: '4px 10px', borderRadius: '99px', fontSize: '0.72rem', fontWeight: 800 }}>
-                            🔴 SOLD OUT
+                          <div style={{ position: 'absolute', top: '12px', right: '12px', background: 'rgba(239,68,68,0.92)', color: '#fff', padding: '4px 10px', borderRadius: '99px', fontSize: '0.72rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', display: 'inline-block' }} /> SOLD OUT
                           </div>
                         );
                         if (expired) return (
-                          <div style={{ position: 'absolute', top: '12px', right: '12px', background: 'rgba(100,116,139,0.92)', color: '#fff', padding: '4px 10px', borderRadius: '99px', fontSize: '0.72rem', fontWeight: 800 }}>
-                            ⏰ Terminé
+                          <div style={{ position: 'absolute', top: '12px', right: '12px', background: 'rgba(100,116,139,0.92)', color: '#fff', padding: '4px 10px', borderRadius: '99px', fontSize: '0.72rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                            <Clock style={{ width: '12px', height: '12px' }} /> Terminé
                           </div>
                         );
                         return (
-                          <div style={{ position: 'absolute', top: '12px', right: '12px', background: 'rgba(16,185,129,0.9)', color: '#fff', padding: '4px 10px', borderRadius: '99px', fontSize: '0.72rem', fontWeight: 800 }}>
-                            🟢 Disponible
+                          <div style={{ position: 'absolute', top: '12px', right: '12px', background: 'rgba(16,185,129,0.9)', color: '#fff', padding: '4px 10px', borderRadius: '99px', fontSize: '0.72rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', display: 'inline-block' }} /> Disponible
                           </div>
                         );
                       })()}

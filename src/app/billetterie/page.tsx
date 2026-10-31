@@ -7,7 +7,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import {
   Ticket, Bell, CheckCircle2, QrCode, CreditCard,
-  ArrowRight, Calendar, MapPin,
+  ArrowRight, Calendar, MapPin, Sparkles,
 } from 'lucide-react';
 
 interface EventSummary {
@@ -90,8 +90,8 @@ export default function BilletteriePage() {
 
               <div className="row" style={{ marginTop: '20px' }}>
                 {hasEvents ? (
-                  <Link href="/billetterie/evenements" className="btn wh">
-                    🎟️ Voir tous les événements
+                  <Link href="/billetterie/evenements" className="btn wh" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                    <Ticket className="w-4 h-4" /> Voir tous les événements
                   </Link>
                 ) : (
                   <Link href="/classement" className="btn wh">
@@ -112,8 +112,8 @@ export default function BilletteriePage() {
           {hasEvents ? (
             <div style={{ maxWidth: '960px', margin: '0 auto' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
-                <h2 style={{ margin: 0, fontSize: 'clamp(1.2rem,3vw,1.6rem)', fontWeight: 900, color: 'var(--ink)' }}>
-                  🎉 Événements disponibles ({events.length})
+                <h2 style={{ margin: 0, fontSize: 'clamp(1.2rem,3vw,1.6rem)', fontWeight: 900, color: 'var(--ink)', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                  <Sparkles className="w-5 h-5 text-yellow-500" /> Événements disponibles ({events.length})
                 </h2>
                 <Link href="/billetterie/evenements" style={{ color: 'var(--p)', fontWeight: 700, textDecoration: 'none', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   Voir tout <ArrowRight style={{ width: '14px', height: '14px' }} />

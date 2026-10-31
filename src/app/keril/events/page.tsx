@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { AdminAuthGuard } from '@/components/AdminAuthGuard';
 import { TicketEvent, TicketPassCategory, TICKET_PASS_TEMPLATES } from '@/data/mockTickets';
-import { Plus, Trash2, Calendar, MapPin, QrCode, ArrowLeft, Pencil, Upload, X, ImageIcon, Users } from 'lucide-react';
+import { Plus, Trash2, Calendar, MapPin, QrCode, ArrowLeft, Pencil, Upload, X, ImageIcon, Users, Ticket, Link2, CheckCircle2, Trophy, Camera, User, DollarSign, Copy, Save, Rocket } from 'lucide-react';
 
 const INPUT_STYLE: React.CSSProperties = {
   width: '100%', marginTop: '6px', height: '46px',
@@ -231,7 +231,9 @@ export default function KerilEventsPage() {
             <div style={{ padding: '40px', textAlign: 'center', color: 'var(--mute)' }}>Chargement…</div>
           ) : events.length === 0 ? (
             <div style={{ background: 'var(--bg)', borderRadius: '24px', padding: '48px 24px', textAlign: 'center', border: '1.5px solid var(--line)' }}>
-              <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🎟️</div>
+              <div style={{ marginBottom: '12px', display: 'flex', justifyContent: 'center' }}>
+                <Ticket style={{ width: '48px', height: '48px', color: 'var(--p)' }} />
+              </div>
               <h3 style={{ fontSize: '1.4rem', fontWeight: 800 }}>Aucun événement publié</h3>
               <button type="button" onClick={openCreate} style={{ marginTop: '16px', padding: '14px 28px', borderRadius: '99px', background: 'var(--p)', color: '#fff', fontWeight: 800, border: 'none', cursor: 'pointer', fontSize: '1rem', boxShadow: '0 10px 25px rgba(124,58,237,0.35)' }}>
                 + Créer mon premier Événement
@@ -259,7 +261,7 @@ export default function KerilEventsPage() {
                       {deletingEventId === evt.id ? (
                         <>
                           <button type="button" onClick={() => handleDeleteEvent(evt.id)} style={{ padding: '6px 10px', borderRadius: '99px', background: 'rgba(239,68,68,0.95)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700 }}>Confirmer</button>
-                          <button type="button" onClick={() => setDeletingEventId(null)} style={{ padding: '6px 10px', borderRadius: '99px', background: 'rgba(0,0,0,0.6)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700 }}>✕</button>
+                          <button type="button" onClick={() => setDeletingEventId(null)} style={{ padding: '6px 10px', borderRadius: '99px', background: 'rgba(0,0,0,0.6)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><X style={{ width: '14px', height: '14px' }} /></button>
                         </>
                       ) : (
                         <button type="button" onClick={() => setDeletingEventId(evt.id)} style={{ width: '34px', height: '34px', borderRadius: '50%', background: 'rgba(239,68,68,0.9)', color: '#fff', border: 'none', cursor: 'pointer', display: 'grid', placeItems: 'center' }} title="Supprimer">
@@ -310,11 +312,19 @@ export default function KerilEventsPage() {
 
                     {(evt as any).organizerToken && (
                       <div style={{ paddingTop: '10px', borderTop: '1px solid var(--line)' }}>
-                        <p style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--mute)', textTransform: 'uppercase', marginBottom: '5px' }}>🔗 Lien Organisateur</p>
+                        <p style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--mute)', textTransform: 'uppercase', marginBottom: '5px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <Link2 className="w-3.5 h-3.5" /> Lien Organisateur
+                        </p>
                         <button type="button" onClick={() => handleCopyOrgLink(getOrgLink((evt as any).organizerToken), (evt as any).organizerToken)} style={{ width: '100%', padding: '8px 12px', borderRadius: '10px', background: 'rgba(91,61,245,0.08)', border: '1px solid rgba(91,61,245,0.25)', color: 'var(--p)', fontSize: '0.73rem', fontWeight: 700, cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <QrCode className="w-3.5 h-3.5 flex-shrink-0" />
-                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
-                            {copiedToken === (evt as any).organizerToken ? '✅ Copié !' : `/organisateur/billetterie/${(evt as any).organizerToken}`}
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            {copiedToken === (evt as any).organizerToken ? (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#10b981' }}>
+                                <CheckCircle2 className="w-3.5 h-3.5" /> Copié !
+                              </span>
+                            ) : (
+                              `/organisateur/billetterie/${(evt as any).organizerToken}`
+                            )}
                           </span>
                         </button>
                       </div>
@@ -337,8 +347,16 @@ export default function KerilEventsPage() {
                 <X style={{ width: '20px', height: '20px' }} />
               </button>
 
-              <div style={{ color: '#818cf8', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                {modalMode === 'edit' ? '✏️ MODIFICATION D\'ÉVÉNEMENT' : '🏆 CRÉATION D\'ÉVÉNEMENT'}
+              <div style={{ color: '#818cf8', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                {modalMode === 'edit' ? (
+                  <>
+                    <Pencil style={{ width: '14px', height: '14px' }} /> MODIFICATION D&apos;ÉVÉNEMENT
+                  </>
+                ) : (
+                  <>
+                    <Trophy style={{ width: '14px', height: '14px' }} /> CRÉATION D&apos;ÉVÉNEMENT
+                  </>
+                )}
               </div>
               <h2 style={{ marginTop: '4px', fontSize: '1.45rem', fontWeight: 800 }}>
                 {modalMode === 'edit' ? `Modifier : ${editingEvent?.title}` : 'Nouvel Événement'}
@@ -375,7 +393,9 @@ export default function KerilEventsPage() {
 
                 {/* ── PHOTO DE L'ÉVÉNEMENT ── */}
                 <div style={{ marginTop: '18px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-                  <label style={{ ...LABEL, color: '#f59e0b', fontSize: '0.92rem' }}>📸 Photo de l&apos;événement</label>
+                  <label style={{ ...LABEL, color: '#f59e0b', fontSize: '0.92rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Camera className="w-4 h-4" /> Photo de l&apos;événement
+                  </label>
                   <p style={{ fontSize: '0.76rem', color: '#94a3b8', marginBottom: '10px' }}>
                     Uploadez une image (JPG/PNG, max 4 Mo) ou collez une URL.
                   </p>
@@ -407,7 +427,7 @@ export default function KerilEventsPage() {
                           <>
                             <Upload style={{ width: '28px', height: '28px', color: '#f59e0b', margin: '0 auto 8px' }} />
                             <div style={{ fontSize: '0.85rem', color: '#f59e0b', fontWeight: 700 }}>Cliquer pour uploader une photo</div>
-                            <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '4px' }}>JPG, PNG · Max 4 Mo</div>
+                            <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '4px' }}>JPG, PNG - Max 4 Mo</div>
                           </>
                         )}
                       </div>
@@ -435,7 +455,9 @@ export default function KerilEventsPage() {
 
                 {/* ── ORGANISATEUR ── */}
                 <div style={{ marginTop: '18px', paddingTop: '14px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-                  <label style={{ ...LABEL, color: '#818cf8', fontSize: '0.92rem' }}>👤 Informations Organisateur</label>
+                  <label style={{ ...LABEL, color: '#818cf8', fontSize: '0.92rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <User className="w-4 h-4" /> Informations Organisateur
+                  </label>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '10px' }}>
                     <div>
                       <label style={LABEL}>Nom</label>
@@ -453,7 +475,9 @@ export default function KerilEventsPage() {
                   {/* Percentage slider */}
                   <div style={{ marginTop: '14px', padding: '14px', borderRadius: '12px', background: 'rgba(129,140,248,0.08)', border: '1.5px solid rgba(129,140,248,0.25)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                      <label style={{ ...LABEL, margin: 0 }}>💰 Pourcentage reversé à l&apos;organisateur</label>
+                      <label style={{ ...LABEL, margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <DollarSign className="w-4 h-4" /> Pourcentage reversé à l&apos;organisateur
+                      </label>
                       <span style={{ fontWeight: 900, fontSize: '1.3rem', color: '#818cf8' }}>{organizerPercentage}%</span>
                     </div>
                     <input
@@ -471,15 +495,23 @@ export default function KerilEventsPage() {
                       <div style={{ flex: 100 - organizerPercentage, background: 'rgba(255,255,255,0.1)', height: '8px', borderRadius: '99px' }} title={`Plateforme ${100 - organizerPercentage}%`} />
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', marginTop: '5px', color: '#94a3b8' }}>
-                      <span>🟣 Organisateur : <b style={{ color: '#818cf8' }}>{organizerPercentage}%</b></span>
-                      <span>⚪ Plateforme : <b>{100 - organizerPercentage}%</b></span>
+                      <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#818cf8', display: 'inline-block', marginRight: 6 }} />
+                        Organisateur : <b style={{ color: '#818cf8', marginLeft: 4 }}>{organizerPercentage}%</b>
+                      </span>
+                      <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ffffff', display: 'inline-block', marginRight: 6 }} />
+                        Plateforme : <b style={{ marginLeft: 4 }}>{100 - organizerPercentage}%</b>
+                      </span>
                     </div>
                   </div>
                 </div>
 
                 {/* ── PASSES ── */}
                 <div style={{ marginTop: '18px', paddingTop: '14px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-                  <label style={{ ...LABEL, color: '#818cf8', fontSize: '0.92rem' }}>🎟️ Types de billets</label>
+                  <label style={{ ...LABEL, color: '#818cf8', fontSize: '0.92rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Ticket className="w-4 h-4" /> Types de billets
+                  </label>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px' }}>
                     {TICKET_PASS_TEMPLATES.map((tmpl) => {
                       const isSelected = selectedPasses.some((p) => p.name === tmpl.name);
@@ -514,7 +546,7 @@ export default function KerilEventsPage() {
                       <div key={p.name} style={{ padding: '10px 12px', borderRadius: '12px', background: 'rgba(129,140,248,0.12)', border: '1.5px solid #818cf8', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
                         <div style={{ flex: 1 }}>
                           <div style={{ fontSize: '0.9rem', fontWeight: 800 }}>{p.name}</div>
-                          <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{p.price.toLocaleString('fr-FR')} FCFA · {(p as any).quantity || '?'} places</div>
+                          <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{p.price.toLocaleString('fr-FR')} FCFA - {(p as any).quantity || '?'} places</div>
                         </div>
                         <button type="button" onClick={() => handleRemoveCustomPass(p.name)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}>
                           <X style={{ width: '16px', height: '16px' }} />
@@ -554,21 +586,40 @@ export default function KerilEventsPage() {
                 )}
                 {createdOrgLink && (
                   <div style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid #10b981', padding: '14px', borderRadius: '12px', marginTop: '14px' }}>
-                    <p style={{ color: '#10b981', fontSize: '0.82rem', fontWeight: 800, marginBottom: '8px' }}>
-                      {modalMode === 'edit' ? '✅ Événement modifié !' : '✅ Événement créé !'} Lien organisateur :
+                    <p style={{ color: '#10b981', fontSize: '0.82rem', fontWeight: 800, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <CheckCircle2 className="w-4 h-4" />
+                      {modalMode === 'edit' ? 'Événement modifié !' : 'Événement créé !'} Lien organisateur :
                     </p>
                     <div style={{ background: '#0f1526', borderRadius: '8px', padding: '10px 12px', fontSize: '0.78rem', color: '#a78bfa', wordBreak: 'break-all', fontFamily: 'monospace' }}>
                       {createdOrgLink}
                     </div>
-                    <button type="button" onClick={() => { navigator.clipboard?.writeText(createdOrgLink).catch(() => {}); setCopiedToken('modal'); setTimeout(() => setCopiedToken(null), 2000); }} style={{ marginTop: '8px', padding: '8px 16px', borderRadius: '8px', background: '#818cf8', border: 'none', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', cursor: 'pointer' }}>
-                      {copiedToken === 'modal' ? '✅ Copié !' : '📋 Copier le lien'}
+                    <button type="button" onClick={() => { navigator.clipboard?.writeText(createdOrgLink).catch(() => {}); setCopiedToken('modal'); setTimeout(() => setCopiedToken(null), 2000); }} style={{ marginTop: '8px', padding: '8px 16px', borderRadius: '8px', background: '#818cf8', border: 'none', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      {copiedToken === 'modal' ? (
+                        <>
+                          <CheckCircle2 className="w-4 h-4" /> Copié !
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-4 h-4" /> Copier le lien
+                        </>
+                      )}
                     </button>
                   </div>
                 )}
 
                 {/* ── SUBMIT ── */}
-                <button type="submit" disabled={isSubmitting} style={{ width: '100%', marginTop: '22px', padding: '15px', borderRadius: '99px', border: 'none', background: '#818cf8', color: '#0f172a', fontSize: '1rem', fontWeight: 800, cursor: isSubmitting ? 'not-allowed' : 'pointer', boxShadow: '0 8px 24px rgba(129,140,248,0.35)', opacity: isSubmitting ? 0.7 : 1 }}>
-                  {isSubmitting ? 'Enregistrement…' : modalMode === 'edit' ? '💾 Sauvegarder les modifications' : '🚀 Publier l\'Événement'}
+                <button type="submit" disabled={isSubmitting} style={{ width: '100%', marginTop: '22px', padding: '15px', borderRadius: '99px', border: 'none', background: '#818cf8', color: '#0f172a', fontSize: '1rem', fontWeight: 800, cursor: isSubmitting ? 'not-allowed' : 'pointer', boxShadow: '0 8px 24px rgba(129,140,248,0.35)', opacity: isSubmitting ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                  {isSubmitting ? (
+                    'Enregistrement…'
+                  ) : modalMode === 'edit' ? (
+                    <>
+                      <Save className="w-5 h-5" /> Sauvegarder les modifications
+                    </>
+                  ) : (
+                    <>
+                      <Rocket className="w-5 h-5" /> Publier l&apos;Événement
+                    </>
+                  )}
                 </button>
               </form>
             </div>

@@ -31,7 +31,7 @@ function getPassPalette(passName: string) {
   const n = passName.toLowerCase();
   if (n.includes('vvip') || n.includes('v.v.i.p'))
     return { bg1:'#0a0800', bg2:'#1a1200', bg3:'#2d1f00',
-             accent:'#F59E0B', accentLight:'#FDE68A', labelBg:'#92400E', label:'VVIP ✦' };
+             accent:'#F59E0B', accentLight:'#FDE68A', labelBg:'#92400E', label:'VVIP' };
   if (n.includes('vip'))
     return { bg1:'#2d1515', bg2:'#7f1d1d', bg3:'#991b1b',
              accent:'#FCA5A5', accentLight:'#FEE2E2', labelBg:'#b91c1c', label:'VIP' };
@@ -61,7 +61,7 @@ function buildTicketEmailHtml(p: {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>🎟️ ${p.eventTitle} — Votre billet</title>
+<title>${p.eventTitle} — Votre billet</title>
 </head>
 <body style="margin:0;padding:0;background:#0d0d1a;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
 
@@ -88,11 +88,10 @@ function buildTicketEmailHtml(p: {
   <tr><td style="background:${pal.bg1};padding:28px 32px 0;">
     <div style="text-align:center;margin-bottom:20px;">
       <div style="display:inline-block;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:12px 24px;">
-        <span style="font-size:24px;">🎉</span>
-        <span style="font-size:15px;font-weight:800;color:#fff;margin-left:8px;vertical-align:middle;">Réservation confirmée !</span>
+        <span style="font-size:15px;font-weight:800;color:#fff;vertical-align:middle;">Réservation confirmée !</span>
       </div>
       <div style="font-size:12px;color:rgba(255,255,255,0.35);margin-top:10px;">
-        Place ${p.seatIndex} sur ${p.totalTickets} &nbsp;•&nbsp; ${p.passName}
+        Place ${p.seatIndex} sur ${p.totalTickets} &nbsp;-&nbsp; ${p.passName}
       </div>
     </div>
     <p style="margin:0 0 24px;font-size:14px;color:rgba(255,255,255,0.65);line-height:1.7;">
@@ -110,14 +109,14 @@ function buildTicketEmailHtml(p: {
       <tr>
         <!-- LEFT: event info -->
         <td style="background:linear-gradient(135deg,${pal.bg2},${pal.bg3});padding:28px 22px;vertical-align:top;width:58%;">
-          <div style="font-size:9px;letter-spacing:4px;color:${pal.accent};font-weight:800;text-transform:uppercase;margin-bottom:10px;">◆ BILLET D&apos;ENTRÉE</div>
+          <div style="font-size:9px;letter-spacing:4px;color:${pal.accent};font-weight:800;text-transform:uppercase;margin-bottom:10px;">BILLET D&apos;ENTRÉE</div>
           <div style="font-size:18px;font-weight:900;color:#fff;line-height:1.25;margin-bottom:18px;">${p.eventTitle}</div>
 
           <table cellpadding="0" cellspacing="4">
             <tr>
               <td style="padding-bottom:10px;">
                 <table cellpadding="0" cellspacing="0"><tr>
-                  <td style="width:30px;height:30px;background:rgba(255,255,255,0.1);border-radius:8px;text-align:center;vertical-align:middle;font-size:13px;">📅</td>
+                  <td style="padding:4px 8px;background:rgba(255,255,255,0.1);border-radius:8px;text-align:center;vertical-align:middle;font-size:10px;font-weight:700;color:${pal.accent};white-space:nowrap;">Date</td>
                   <td style="padding-left:10px;font-size:12px;color:rgba(255,255,255,0.75);">${p.eventDate || 'Date à confirmer'}</td>
                 </tr></table>
               </td>
@@ -125,7 +124,7 @@ function buildTicketEmailHtml(p: {
             <tr>
               <td style="padding-bottom:18px;">
                 <table cellpadding="0" cellspacing="0"><tr>
-                  <td style="width:30px;height:30px;background:rgba(255,255,255,0.1);border-radius:8px;text-align:center;vertical-align:middle;font-size:13px;">📍</td>
+                  <td style="padding:4px 8px;background:rgba(255,255,255,0.1);border-radius:8px;text-align:center;vertical-align:middle;font-size:10px;font-weight:700;color:${pal.accent};white-space:nowrap;">Lieu</td>
                   <td style="padding-left:10px;font-size:12px;color:rgba(255,255,255,0.75);">${p.eventVenue || 'Lieu à confirmer'}</td>
                 </tr></table>
               </td>
@@ -174,19 +173,19 @@ function buildTicketEmailHtml(p: {
       <table cellpadding="0" cellspacing="0">
         <tr><td style="padding-bottom:12px;vertical-align:top;">
           <table cellpadding="0" cellspacing="0"><tr>
-            <td style="width:32px;height:32px;background:rgba(255,255,255,0.06);border-radius:8px;text-align:center;vertical-align:middle;font-size:15px;flex-shrink:0;">📱</td>
+            <td style="padding:4px 8px;background:rgba(255,255,255,0.06);border-radius:8px;text-align:center;vertical-align:middle;font-size:10px;font-weight:700;color:${pal.accent};white-space:nowrap;flex-shrink:0;">App</td>
             <td style="padding-left:12px;font-size:13px;color:rgba(255,255,255,0.65);vertical-align:middle;">Présentez le QR code à l&apos;entrée — sur téléphone ou imprimé</td>
           </tr></table>
         </td></tr>
         <tr><td style="padding-bottom:12px;vertical-align:top;">
           <table cellpadding="0" cellspacing="0"><tr>
-            <td style="width:32px;height:32px;background:rgba(255,255,255,0.06);border-radius:8px;text-align:center;vertical-align:middle;font-size:15px;">🔒</td>
+            <td style="padding:4px 8px;background:rgba(255,255,255,0.06);border-radius:8px;text-align:center;vertical-align:middle;font-size:10px;font-weight:700;color:${pal.accent};white-space:nowrap;flex-shrink:0;">Sécurisé</td>
             <td style="padding-left:12px;font-size:13px;color:rgba(255,255,255,0.65);vertical-align:middle;">Ce billet est nominatif — utilisable une seule fois</td>
           </tr></table>
         </td></tr>
         <tr><td style="vertical-align:top;">
           <table cellpadding="0" cellspacing="0"><tr>
-            <td style="width:32px;height:32px;background:rgba(255,255,255,0.06);border-radius:8px;text-align:center;vertical-align:middle;font-size:15px;">🪪</td>
+            <td style="padding:4px 8px;background:rgba(255,255,255,0.06);border-radius:8px;text-align:center;vertical-align:middle;font-size:10px;font-weight:700;color:${pal.accent};white-space:nowrap;flex-shrink:0;">ID</td>
             <td style="padding-left:12px;font-size:13px;color:rgba(255,255,255,0.65);vertical-align:middle;">Code de référence : <strong style="color:${pal.accent};font-family:monospace;">${p.ticketCode}</strong></td>
           </tr></table>
         </td></tr>
@@ -223,7 +222,7 @@ async function sendTicketEmail(p: {
     body: JSON.stringify({
       sender: { name: 'VoteMoi Billetterie', email: 'kerildarel@gmail.com' },
       to: [{ email: p.to, name: p.buyerName }],
-      subject: `🎟️ Votre billet — ${p.eventTitle} (${p.passName})`,
+      subject: `Votre billet — ${p.eventTitle} (${p.passName})`,
       htmlContent: html,
     }),
   }).catch((e) => { console.warn('Email send failed:', e?.message); return null; });

@@ -70,14 +70,14 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
 
     const waText =
       `Bonjour VoteMoi, nouvelle demande de création d'élection :\n\n` +
-      `🏆 Élection : ${formData.eventName}\n` +
-      `🏛️ Établissement/Campus : ${formData.campus || 'Non spécifié'}\n` +
-      `👤 Responsable : ${formData.organizerName || 'Organisateur'}\n` +
-      `📞 WhatsApp : ${formData.phone}\n` +
-      `✉️ Email : ${formData.email || 'Non spécifié'}\n` +
-      `💵 Prix du vote : ${formData.votePrice || '100'} FCFA\n` +
-      `👥 Candidats prévus : ${formData.candidateEstimate || '10'}` +
-      (formData.description ? `\n📝 Précisions : ${formData.description}` : '');
+      `Élection : ${formData.eventName}\n` +
+      `Établissement/Campus : ${formData.campus || 'Non spécifié'}\n` +
+      `Responsable : ${formData.organizerName || 'Organisateur'}\n` +
+      `WhatsApp : ${formData.phone}\n` +
+      `Email : ${formData.email || 'Non spécifié'}\n` +
+      `Prix du vote : ${formData.votePrice || '100'} FCFA\n` +
+      `Candidats prévus : ${formData.candidateEstimate || '10'}` +
+      (formData.description ? `\nPrécisions : ${formData.description}` : '');
 
     const waUrl = `https://wa.me/237692886326?text=${encodeURIComponent(waText)}`;
 

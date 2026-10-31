@@ -332,8 +332,9 @@ export const CompetitionFormModal: React.FC<CompetitionFormModalProps> = ({
             {/* POURCENTAGE ORGANISATEUR */}
             <div className="p-4 rounded-2xl border border-indigo-200 dark:border-indigo-900/60 bg-indigo-50/50 dark:bg-indigo-950/20 space-y-3">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-slate-900 dark:text-slate-100">
-                  💰 Pourcentage reversé à l&apos;organisateur
+                <label className="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                  <Coins className="w-4 h-4 text-indigo-500" />
+                  <span>Pourcentage reversé à l&apos;organisateur</span>
                 </label>
                 <span className="text-xl font-black text-indigo-600 dark:text-indigo-400">
                   {formData.organizerPercentage ?? 80}%
@@ -362,11 +363,13 @@ export const CompetitionFormModal: React.FC<CompetitionFormModalProps> = ({
                 />
               </div>
               <div className="flex justify-between text-[11px] font-bold">
-                <span className="text-indigo-600 dark:text-indigo-400">
-                  🟣 Organisateur : {formData.organizerPercentage ?? 80}%
+                <span className="text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
+                  <span className="inline-block w-2 h-2 rounded-full bg-indigo-500" />
+                  <span>Organisateur : {formData.organizerPercentage ?? 80}%</span>
                 </span>
-                <span className="text-slate-400">
-                  ⚪ Plateforme : {100 - (formData.organizerPercentage ?? 80)}%
+                <span className="text-slate-400 flex items-center gap-1.5">
+                  <span className="inline-block w-2 h-2 rounded-full bg-slate-400" />
+                  <span>Plateforme : {100 - (formData.organizerPercentage ?? 80)}%</span>
                 </span>
               </div>
             </div>

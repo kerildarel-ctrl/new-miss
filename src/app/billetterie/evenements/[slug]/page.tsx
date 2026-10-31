@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Calendar, MapPin, Users, Plus, Minus, ArrowLeft, Shield, Zap, AlertTriangle } from 'lucide-react';
+import { Calendar, MapPin, Users, Plus, Minus, ArrowLeft, Shield, Zap, AlertTriangle, Search, XCircle, AlertCircle, PackageX, Ticket, Lock, Loader2 } from 'lucide-react';
 import { useParams } from 'next/navigation';
 
 interface TicketPass {
@@ -137,16 +137,18 @@ export default function EventDetailPage() {
   if (fetchError || !event) return (
     <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: 'var(--soft)' }}>
       <div style={{ textAlign: 'center', padding: '24px' }}>
-        <div style={{ fontSize: '3rem', marginBottom: '16px' }}>{fetchError ? '⚠️' : '🔍'}</div>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
+          {fetchError ? <AlertTriangle className="w-12 h-12" style={{ color: '#f59e0b' }} /> : <Search className="w-12 h-12" style={{ color: 'var(--mute)' }} />}
+        </div>
         <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>
           {fetchError ? 'Erreur de chargement' : 'Événement introuvable'}
         </h2>
         <p style={{ color: 'var(--mute)', fontSize: '0.9rem', margin: '8px 0 20px' }}>
           {fetchError ? 'Impossible de charger cet événement. Réessayez.' : "Cet événement n'existe pas ou a été supprimé."}
         </p>
-        <a href="/billetterie/evenements" style={{ color: 'var(--p)', fontWeight: 700, display: 'inline-block' }}>
-          ← Retour aux événements
-        </a>
+        <Link href="/billetterie/evenements" style={{ color: 'var(--p)', fontWeight: 700, display: 'inline-flex', alignItems: 'center' }}>
+          <ArrowLeft className="w-4 h-4 inline mr-1" />Retour aux événements
+        </Link>
       </div>
     </div>
   );
@@ -159,17 +161,17 @@ export default function EventDetailPage() {
     if (s.capacity === null) return null;
     if (s.soldOut) return (
       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(239,68,68,0.12)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '99px', padding: '2px 9px', fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.04em' }}>
-        🔴 SOLD OUT
+        <XCircle className="w-3 h-3 inline mr-1" />SOLD OUT
       </span>
     );
     if (s.critical) return (
       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(245,158,11,0.12)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.3)', borderRadius: '99px', padding: '2px 9px', fontSize: '0.7rem', fontWeight: 800 }}>
-        ⚠️ Plus que {s.remaining} place{s.remaining! > 1 ? 's' : ''} !
+        <AlertTriangle className="w-3 h-3 inline mr-1" />Plus que {s.remaining} place{s.remaining! > 1 ? 's' : ''} !
       </span>
     );
     if (s.warning) return (
       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(234,179,8,0.1)', color: '#ca8a04', border: '1px solid rgba(234,179,8,0.25)', borderRadius: '99px', padding: '2px 9px', fontSize: '0.7rem', fontWeight: 700 }}>
-        🟡 {s.remaining} places restantes
+        <AlertCircle className="w-3 h-3 inline mr-1" />{s.remaining} places restantes
       </span>
     );
     return (
@@ -183,7 +185,7 @@ export default function EventDetailPage() {
   const purchaseForm = (
     <div style={{ background: 'var(--bg)', borderRadius: '20px', padding: '24px', border: '1.5px solid var(--line)', boxShadow: '0 8px 32px rgba(39,20,159,0.1)' }}>
       <h2 style={{ margin: '0 0 20px', fontSize: '1.05rem', fontWeight: 800 }}>
-        {selectedPass ? `Réserver — ${selectedPass.name}` : '👆 Sélectionnez un pass'}
+        {selectedPass ? `Réserver — ${selectedPass.name}` : 'Sélectionnez un pass'}
       </h2>
 
       {selectedPass ? (
@@ -191,7 +193,7 @@ export default function EventDetailPage() {
           const stock = getPassStock(selectedPass);
           if (stock.soldOut) return (
             <div style={{ textAlign: 'center', padding: '28px 0' }}>
-              <div style={{ fontSize: '2.8rem', marginBottom: '12px' }}>😔</div>
+              <div style={{ marginBottom: '12px' }}><PackageX style={{ width: 44, height: 44, color: '#64748b', margin: '0 auto' }} /></div>
               <p style={{ fontWeight: 800, fontSize: '1.1rem', color: '#ef4444', marginBottom: '8px' }}>Pass épuisé</p>
               <p style={{ color: 'var(--mute)', fontSize: '0.85rem' }}>Ce pass est sold out. Choisissez un autre type de billet.</p>
             </div>
@@ -211,8 +213,8 @@ export default function EventDetailPage() {
                 }}>
                   <AlertTriangle style={{ width: '15px', height: '15px', flexShrink: 0 }} />
                   {stock.critical
-                    ? `⚠️ Attention ! Seulement ${stock.remaining} place${stock.remaining > 1 ? 's' : ''} disponible${stock.remaining > 1 ? 's' : ''} — réservez maintenant !`
-                    : `🟡 Stock limité — ${stock.remaining} places restantes`}
+                    ? `Attention ! Seulement ${stock.remaining} place${stock.remaining > 1 ? 's' : ''} disponible${stock.remaining > 1 ? 's' : ''} — réservez maintenant !`
+                    : `Stock limité — ${stock.remaining} places restantes`}
                 </div>
               )}
 
@@ -249,7 +251,7 @@ export default function EventDetailPage() {
                 <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px' }}>Téléphone Mobile Money *</label>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <div style={{ background: 'var(--soft)', border: '1.5px solid var(--line)', borderRadius: '12px', padding: '0 12px', height: '44px', display: 'flex', alignItems: 'center', fontSize: '0.85rem', fontWeight: 700, flexShrink: 0 }}>
-                    🇨🇲 +237
+                    +237
                   </div>
                   <input type="tel" required placeholder="690 000 000" value={buyerPhone} onChange={(e) => setBuyerPhone(e.target.value)} style={{ ...inputStyle, flex: 1 }} />
                 </div>
@@ -279,18 +281,27 @@ export default function EventDetailPage() {
                 color: '#fff', fontWeight: 800, fontSize: '1rem',
                 cursor: submitting ? 'not-allowed' : 'pointer',
                 boxShadow: submitting ? 'none' : '0 8px 24px rgba(39,20,159,0.35)',
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
               }}>
-                {submitting ? '⏳ Redirection…' : `🎟️ Payer ${total.toLocaleString('fr-FR')} FCFA`}
+                {submitting ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" /> Redirection…
+                  </>
+                ) : (
+                  <>
+                    <Ticket className="w-5 h-5" /> Payer {total.toLocaleString('fr-FR')} FCFA
+                  </>
+                )}
               </button>
-              <p style={{ textAlign: 'center', fontSize: '0.76rem', color: 'var(--mute)', margin: 0 }}>
-                🔒 Paiement sécurisé · Orange Money & MTN MoMo
+              <p style={{ textAlign: 'center', fontSize: '0.76rem', color: 'var(--mute)', margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Lock className="w-3 h-3 inline mr-1" />Paiement sécurisé — Orange Money & MTN MoMo
               </p>
             </form>
           );
         })()
       ) : (
         <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--mute)' }}>
-          <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>🎟️</div>
+          <div style={{ marginBottom: '12px' }}><Ticket style={{ width: 40, height: 40, color: '#818cf8', margin: '0 auto' }} /></div>
           <p style={{ fontSize: '0.9rem', lineHeight: 1.6 }}>Choisissez un type de pass<br />dans la liste ci-dessous</p>
         </div>
       )}
@@ -300,7 +311,9 @@ export default function EventDetailPage() {
   /* ── Pass list (reused) ── */
   const passList = (
     <div style={{ background: 'var(--bg)', borderRadius: '20px', padding: '24px', border: '1.5px solid var(--line)' }}>
-      <h2 style={{ margin: '0 0 16px', fontSize: '1.05rem', fontWeight: 800 }}>🎟️ Choisissez votre pass</h2>
+      <h2 style={{ margin: '0 0 16px', fontSize: '1.05rem', fontWeight: 800 }}>
+        <Ticket className="w-4 h-4 inline mr-2" />Choisissez votre pass
+      </h2>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {event.passes.map((pass) => {
           const s = getPassStock(pass);
@@ -357,7 +370,7 @@ export default function EventDetailPage() {
         <Link href="/billetterie/evenements" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#D9D4FA', fontWeight: 700, fontSize: '0.85rem', textDecoration: 'none', whiteSpace: 'nowrap' }}>
           <ArrowLeft style={{ width: '15px', height: '15px' }} /> Événements
         </Link>
-        <span style={{ color: 'rgba(255,255,255,0.3)' }}>·</span>
+        <span style={{ color: 'rgba(255,255,255,0.3)' }}>|</span>
         <span style={{ color: '#fff', fontWeight: 700, fontSize: '0.88rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{event.title}</span>
       </div>
 
@@ -428,7 +441,9 @@ export default function EventDetailPage() {
                 </div>
               )}
               <div style={{ background: 'var(--bg)', borderRadius: '20px', padding: '24px', border: '1.5px solid var(--line)' }}>
-                <h2 style={{ margin: '0 0 16px', fontSize: '1.05rem', fontWeight: 800 }}>📅 Informations</h2>
+                <h2 style={{ margin: '0 0 16px', fontSize: '1.05rem', fontWeight: 800 }}>
+                  <Calendar className="w-4 h-4 inline mr-2" />Informations
+                </h2>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {[
                     { Icon: Calendar, label: 'Date', val: event.date },

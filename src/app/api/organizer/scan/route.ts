@@ -38,7 +38,7 @@ export async function POST(request: Request) {
       return NextResponse.json({
         success: false,
         scanResult: 'NOT_FOUND',
-        error: '❌ Billet introuvable. Code invalide.',
+        error: 'Billet introuvable. Code invalide.',
       }, { status: 404 });
     }
 
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
       return NextResponse.json({
         success: false,
         scanResult: 'WRONG_EVENT',
-        error: "❌ Ce billet n'appartient pas à cet événement.",
+        error: "Ce billet n'appartient pas à cet événement.",
         ticket: { buyerName: ticket.buyer_name, passName: ticket.pass_name },
       }, { status: 400 });
     }
@@ -59,7 +59,7 @@ export async function POST(request: Request) {
       return NextResponse.json({
         success: false,
         scanResult: 'ALREADY_USED',
-        error: `⚠️ Billet déjà utilisé le ${ticket.scanned_at ? new Date(ticket.scanned_at).toLocaleString('fr-FR') : '?'}.`,
+        error: `Billet déjà utilisé le ${ticket.scanned_at ? new Date(ticket.scanned_at).toLocaleString('fr-FR') : '?'}.`,
         ticket: {
           buyerName: ticket.buyer_name,
           passName: ticket.pass_name,
@@ -74,12 +74,12 @@ export async function POST(request: Request) {
       return NextResponse.json({
         success: false,
         scanResult: 'NOT_PAID',
-        error: '❌ Billet non payé.',
+        error: 'Billet non payé.',
         ticket: { buyerName: ticket.buyer_name, passName: ticket.pass_name },
       }, { status: 402 });
     }
 
-    // ✅ Verrou atomique — marque USED uniquement si encore VALID (prévient le double-scan concurrent)
+    // Verrou atomique — marque USED uniquement si encore VALID (prévient le double-scan concurrent)
     const markResult = await queryDb<any>(
       `UPDATE public.tickets
        SET status = 'USED', scanned_at = NOW(), scanned_by_agent_name = $1
@@ -93,7 +93,7 @@ export async function POST(request: Request) {
       return NextResponse.json({
         success: false,
         scanResult: 'ALREADY_USED',
-        error: '⚠️ Billet déjà utilisé (scan simultané détecté).',
+        error: 'Billet déjà utilisé (scan simultané détecté).',
         ticket: { buyerName: ticket.buyer_name, passName: ticket.pass_name },
       }, { status: 409 });
     }
@@ -101,7 +101,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       scanResult: 'VALID',
-      message: '✅ Billet valide — entrée autorisée !',
+      message: 'Billet valide — entrée autorisée !',
       ticket: {
         ticketCode: ticket.ticket_code,
         buyerName: ticket.buyer_name,

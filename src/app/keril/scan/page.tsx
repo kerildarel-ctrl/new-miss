@@ -361,9 +361,13 @@ function ScannerContent() {
               color: 'var(--a)',
               fontSize: '0.82rem',
               fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
             }}
           >
-            ⚠️ {cameraError}
+            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+            <span>{cameraError}</span>
           </div>
         )}
 
@@ -379,9 +383,14 @@ function ScannerContent() {
                 fontWeight: 700,
                 background: '#10b981',
                 borderRadius: '12px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
               }}
             >
-              📷 Réactiver la Caméra
+              <Camera className="w-4 h-4" />
+              <span>Réactiver la Caméra</span>
             </button>
           ) : (
             <button
@@ -516,10 +525,9 @@ function ScannerContent() {
               color: inspectedTicket.status === 'VALID' ? '#10b981' : 'var(--a)',
             }}
           >
-            <span>
-              {inspectedTicket.status === 'VALID'
-                ? '🟢 Statut : NON UTILISÉ'
-                : '🔴 Statut : DÉJÀ UTILISÉ'}
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: inspectedTicket.status === 'VALID' ? '#10b981' : '#ef4444', display: 'inline-block' }} />
+              Statut : {inspectedTicket.status === 'VALID' ? 'NON UTILISÉ' : 'DÉJÀ UTILISÉ'}
             </span>
             <span style={{ fontSize: '0.76rem', color: 'var(--mute)' }}>
               Paiement : {inspectedTicket.paymentStatus || 'CONFIRMÉ'}
@@ -536,6 +544,10 @@ function ScannerContent() {
                 textAlign: 'center',
                 fontWeight: 800,
                 fontSize: '0.9rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
                 background:
                   validationResult.code === 'VALIDATED'
                     ? 'rgba(16, 185, 129, 0.15)'
@@ -548,13 +560,27 @@ function ScannerContent() {
                   validationResult.code === 'VALIDATED' ? '#10b981' : 'var(--a)',
               }}
             >
-              {validationResult.code === 'VALIDATED'
-                ? '🟢 ENTRÉE VALIDÉE — Billet accepté.'
-                : validationResult.code === 'ALREADY_USED'
-                ? '🔴 BILLET DÉJÀ UTILISÉ — Entrée refusée.'
-                : validationResult.code === 'UNPAID'
-                ? '⚠️ PAIEMENT NON CONFIRMÉ — Entrée refusée.'
-                : '⛔ BILLET INVALIDE — Entrée refusée.'}
+              {validationResult.code === 'VALIDATED' ? (
+                <>
+                  <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
+                  <span>ENTRÉE VALIDÉE — Billet accepté.</span>
+                </>
+              ) : validationResult.code === 'ALREADY_USED' ? (
+                <>
+                  <XCircle className="w-5 h-5 flex-shrink-0" />
+                  <span>BILLET DÉJÀ UTILISÉ — Entrée refusée.</span>
+                </>
+              ) : validationResult.code === 'UNPAID' ? (
+                <>
+                  <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+                  <span>PAIEMENT NON CONFIRMÉ — Entrée refusée.</span>
+                </>
+              ) : (
+                <>
+                  <XCircle className="w-5 h-5 flex-shrink-0" />
+                  <span>BILLET INVALIDE — Entrée refusée.</span>
+                </>
+              )}
             </div>
           )}
 
@@ -576,7 +602,7 @@ function ScannerContent() {
               }}
             >
               <CheckCircle2 className="w-5 h-5" />
-              <span>{isValidating ? 'Validation...' : 'Valider l’Entrée Maintenant ✅'}</span>
+              <span>{isValidating ? 'Validation...' : 'Valider l’Entrée Maintenant'}</span>
             </button>
           ) : (
             <div
@@ -586,9 +612,14 @@ function ScannerContent() {
                 color: 'var(--a)',
                 fontSize: '0.84rem',
                 fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
               }}
             >
-              ⛔ Ce billet a déjà été utilisé et ne peut plus être validé.
+              <XCircle className="w-4 h-4 flex-shrink-0" />
+              <span>Ce billet a déjà été utilisé et ne peut plus être validé.</span>
             </div>
           )}
         </div>
@@ -646,8 +677,9 @@ function ScannerContent() {
                 }}
               >
                 <div>
-                  <b style={{ color: item.status === 'VALIDATED' ? '#10b981' : 'var(--a)' }}>
-                    {item.status === 'VALIDATED' ? '🟢 Accepté' : '🔴 Refusé'}
+                  <b style={{ color: item.status === 'VALIDATED' ? '#10b981' : 'var(--a)', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: item.status === 'VALIDATED' ? '#10b981' : '#ef4444', display: 'inline-block' }} />
+                    {item.status === 'VALIDATED' ? 'Accepté' : 'Refusé'}
                   </b>{' '}
                   — <span style={{ fontFamily: 'monospace' }}>{item.ticketCode}</span>
                   {item.buyerName && <span className="mute"> ({item.buyerName})</span>}

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { AdminAuthGuard } from '@/components/AdminAuthGuard';
 import { IssuedTicket } from '@/data/mockTickets';
-import { Mail, Check, QrCode, Search, Filter, RotateCcw, RefreshCw, CheckCircle2, XCircle } from 'lucide-react';
+import { Mail, Check, QrCode, Search, Filter, RotateCcw, RefreshCw, CheckCircle2, XCircle, Smartphone, Download, ExternalLink, X, Ticket } from 'lucide-react';
 
 export default function KerilTicketsPage() {
   const [tickets, setTickets] = useState<IssuedTicket[]>([]);
@@ -180,7 +180,8 @@ export default function KerilTicketsPage() {
                 }}
               >
                 <QrCode className="w-4 h-4" />
-                <span>Ouvrir Scanner d&apos;Entrée 📲</span>
+                <span>Ouvrir Scanner d&apos;Entrée</span>
+                <Smartphone className="w-4 h-4" />
               </Link>
 
               <button
@@ -224,7 +225,8 @@ export default function KerilTicketsPage() {
                   boxShadow: filteredTickets.length ? '0 8px 20px rgba(16, 185, 129, 0.25)' : 'none',
                 }}
               >
-                <span>⬇ Export CSV ({filteredTickets.length})</span>
+                <Download className="w-4 h-4" />
+                <span>Export CSV ({filteredTickets.length})</span>
               </button>
             </div>
           </div>
@@ -293,9 +295,12 @@ export default function KerilTicketsPage() {
                   background: statusFilter === 'VALID' ? '#10b981' : 'var(--bg)',
                   color: statusFilter === 'VALID' ? '#ffffff' : 'var(--ink)',
                   cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
                 }}
               >
-                🟢 Non Utilisés ({tickets.filter((t) => t.status === 'VALID').length})
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', display: 'inline-block', marginRight: 6 }} />
+                Non Utilisés ({tickets.filter((t) => t.status === 'VALID').length})
               </button>
 
               <button
@@ -310,9 +315,12 @@ export default function KerilTicketsPage() {
                   background: statusFilter === 'USED' ? '#ef4444' : 'var(--bg)',
                   color: statusFilter === 'USED' ? '#ffffff' : 'var(--ink)',
                   cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
                 }}
               >
-                🔴 Validés à l&apos;Entrée ({tickets.filter((t) => t.status === 'USED').length})
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444', display: 'inline-block', marginRight: 6 }} />
+                Validés à l&apos;Entrée ({tickets.filter((t) => t.status === 'USED').length})
               </button>
             </div>
           </div>
@@ -369,8 +377,9 @@ export default function KerilTicketsPage() {
                     filteredTickets.map((t) => (
                       <tr key={t.id} style={{ borderBottom: '1px solid var(--line)' }}>
                         <td style={{ padding: '16px 20px', fontFamily: 'monospace', fontWeight: 800, color: 'var(--p)' }}>
-                          <Link href={`/billetterie/${t.ticketCode}`} style={{ color: 'inherit', textDecoration: 'none' }}>
-                            {t.ticketCode} 🔗
+                          <Link href={`/billetterie/${t.ticketCode}`} style={{ color: 'inherit', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            <span>{t.ticketCode}</span>
+                            <ExternalLink className="w-3 h-3" />
                           </Link>
                         </td>
                         <td style={{ padding: '16px 20px', fontFamily: 'monospace', fontSize: '0.82rem', color: 'var(--mute)' }}>
@@ -384,8 +393,8 @@ export default function KerilTicketsPage() {
                         </td>
                         <td style={{ padding: '16px 20px' }}>
                           <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{t.buyerName}</div>
-                          <div style={{ fontSize: '0.78rem', color: 'var(--p)', marginTop: '2px' }}>
-                            ✉️ {t.buyerEmail}
+                          <div style={{ fontSize: '0.78rem', color: 'var(--p)', marginTop: '2px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            <Mail className="w-3 h-3" /> {t.buyerEmail}
                           </div>
                         </td>
                         <td style={{ padding: '16px 20px' }}>
@@ -472,9 +481,9 @@ export default function KerilTicketsPage() {
                                 <button
                                   type="button"
                                   onClick={() => setConfirmResetCode(null)}
-                                  style={{ padding: '5px 8px', borderRadius: '99px', background: 'var(--soft)', color: 'var(--mute)', border: '1px solid var(--line)', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 700 }}
+                                  style={{ padding: '5px 8px', borderRadius: '99px', background: 'var(--soft)', color: 'var(--mute)', border: '1px solid var(--line)', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                                 >
-                                  ✕
+                                  <X className="w-3.5 h-3.5" />
                                 </button>
                               </div>
                             ) : (
@@ -500,10 +509,11 @@ export default function KerilTicketsPage() {
                                 textDecoration: 'none',
                                 display: 'inline-flex',
                                 alignItems: 'center',
-                                gap: '4px',
+                                gap: '6px',
                               }}
                             >
-                              Valider 🎟️
+                              <Ticket className="w-3.5 h-3.5" />
+                              <span>Valider</span>
                             </Link>
                           )}
                         </td>

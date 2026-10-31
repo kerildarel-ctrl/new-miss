@@ -371,8 +371,14 @@ export default function OrganisateurDashboardPage() {
                 {/* Visual bar */}
                 <div className="p-4 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/40">
                   <div className="flex justify-between text-xs font-bold mb-2">
-                    <span className="text-indigo-600 dark:text-indigo-400">🟣 Organisateur : {data.financials.currentTierName}</span>
-                    <span className="text-slate-400">⚪ Plateforme : {100 - parseInt(data.financials.currentTierName)}%</span>
+                    <span className="text-indigo-600 dark:text-indigo-400 inline-flex items-center">
+                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#6366f1', display: 'inline-block', marginRight: 6 }} />
+                      Organisateur : {data.financials.currentTierName}
+                    </span>
+                    <span className="text-slate-400 inline-flex items-center">
+                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#94a3b8', display: 'inline-block', marginRight: 6 }} />
+                      Plateforme : {100 - parseInt(data.financials.currentTierName)}%
+                    </span>
                   </div>
                   <div className="flex gap-1 h-3 rounded-full overflow-hidden">
                     <div className="bg-indigo-500 rounded-full" style={{ width: data.financials.currentTierName }} />
@@ -431,7 +437,7 @@ export default function OrganisateurDashboardPage() {
                               {payout.amount.toLocaleString('fr-FR')} FCFA
                             </td>
                             <td className="py-3 px-3 font-medium">
-                              <span className="font-bold">{payout.operator === 'ORANGE_MONEY' ? 'Orange Money' : 'MTN MoMo'}</span> · {payout.organizerPhone}
+                              <span className="font-bold">{payout.operator === 'ORANGE_MONEY' ? 'Orange Money' : 'MTN MoMo'}</span> — {payout.organizerPhone}
                             </td>
                             <td className="py-3 px-3">
                               {payout.status === 'PAID' ? (
@@ -505,7 +511,7 @@ export default function OrganisateurDashboardPage() {
                 {/* CHOIX OPÉRATEUR */}
                 <div>
                   <label className="block text-xs font-bold text-slate-900 dark:text-slate-100 mb-1.5">
-                    Opérateur Mobile Money 🇨🇲
+                    Opérateur Mobile Money
                   </label>
                   <div className="grid grid-cols-2 gap-2">
                     <button
@@ -595,7 +601,14 @@ export default function OrganisateurDashboardPage() {
                   disabled={isSubmittingPayout}
                   className="w-full py-3.5 px-6 rounded-2xl font-bold text-sm text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.99] disabled:opacity-60"
                 >
-                  <span>{isSubmittingPayout ? 'Traitement en cours...' : 'Confirmer la demande de virement →'}</span>
+                  {isSubmittingPayout ? (
+                    <span>Traitement en cours...</span>
+                  ) : (
+                    <>
+                      <span>Confirmer la demande de virement</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
                 </button>
               </form>
             )}

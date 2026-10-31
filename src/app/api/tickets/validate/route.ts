@@ -98,7 +98,7 @@ export async function POST(request: Request) {
 
         return NextResponse.json({
           success: true, code: 'VALIDATED',
-          message: 'ENTRÉE VALIDÉE ✅ — Billet accepté.',
+          message: 'ENTRÉE VALIDÉE — Billet accepté.',
           ticket: updated[0],
         });
       }
@@ -132,7 +132,7 @@ export async function POST(request: Request) {
     mem.scannedByAgentName = agentName;
     inMemoryTickets.set(mem.ticketCode.toUpperCase(), mem);
 
-    return NextResponse.json({ success: true, code: 'VALIDATED', message: 'ENTRÉE VALIDÉE ✅ — Billet accepté.', ticket: mem });
+    return NextResponse.json({ success: true, code: 'VALIDATED', message: 'ENTRÉE VALIDÉE — Billet accepté.', ticket: mem });
   } catch (error: any) {
     return NextResponse.json(
       { success: false, code: 'ERROR', message: error.message || 'Erreur interne lors de la validation.' },

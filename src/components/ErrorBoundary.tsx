@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { AlertTriangle } from 'lucide-react';
 
 interface State { hasError: boolean; message: string }
 
@@ -27,7 +28,9 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
           padding: '24px', textAlign: 'center',
         }}>
           <div>
-            <div style={{ fontSize: '3rem', marginBottom: '16px' }}>⚠️</div>
+            <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
+              <AlertTriangle style={{ width: 48, height: 48, color: '#f59e0b' }} />
+            </div>
             <h2 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '12px' }}>
               Une erreur est survenue
             </h2>

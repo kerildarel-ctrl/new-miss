@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { CheckCircle, XCircle, RefreshCw, Download } from 'lucide-react';
+import { CheckCircle, XCircle, RefreshCw, Download, Sparkles, Mail, DollarSign, Ticket, Calendar, MapPin, ArrowLeft } from 'lucide-react';
 
 interface IssuedTicket {
   ticketCode: string;
@@ -88,10 +88,10 @@ export default function ConfirmationPage() {
     <div class="ticket">
       <div class="top">
         <div class="left">
-          <div class="label">◆ BILLET D\'ENTRÉE ${index + 1}/${result.tickets.length}</div>
+          <div class="label">BILLET D\'ENTRÉE ${index + 1}/${result.tickets.length}</div>
           <div class="title">${result.eventTitle}</div>
-          <div class="info">&#128197; ${result.eventDate || 'Date à confirmer'}</div>
-          <div class="info">&#128205; ${result.eventVenue || 'Lieu à confirmer'}</div>
+          <div class="info">${result.eventDate || 'Date à confirmer'}</div>
+          <div class="info">${result.eventVenue || 'Lieu à confirmer'}</div>
           <div class="badge">${result.passName}</div>
         </div>
         <div class="divider"></div>
@@ -153,9 +153,10 @@ export default function ConfirmationPage() {
             <button
               type="button"
               onClick={() => { setRetryCount(r => r + 1); verify(); }}
-              style={{ padding: '14px', borderRadius: '12px', background: 'var(--p)', color: '#fff', border: 'none', fontWeight: 800, cursor: 'pointer', fontSize: '0.95rem' }}
+              style={{ padding: '14px', borderRadius: '12px', background: 'var(--p)', color: '#fff', border: 'none', fontWeight: 800, cursor: 'pointer', fontSize: '0.95rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
             >
-              🔄 Réessayer {retryCount > 0 ? `(${retryCount})` : ''}
+              <RefreshCw style={{ width: '16px', height: '16px' }} />
+              Réessayer {retryCount > 0 ? `(${retryCount})` : ''}
             </button>
             <Link href="/billetterie/evenements" style={{ padding: '14px', borderRadius: '12px', background: 'var(--soft)', border: '1.5px solid var(--line)', fontWeight: 700, textDecoration: 'none', color: 'var(--ink)', fontSize: '0.9rem', display: 'block' }}>
               Retour aux événements
@@ -176,20 +177,22 @@ export default function ConfirmationPage() {
           borderRadius: '24px', padding: '36px', textAlign: 'center', marginBottom: '24px',
         }}>
           <CheckCircle style={{ width: '56px', height: '56px', color: '#6ee7b7', margin: '0 auto 16px', display: 'block' }} />
-          <h1 style={{ color: '#fff', fontWeight: 900, fontSize: 'clamp(1.4rem,4vw,2rem)', margin: '0 0 8px' }}>
-            Paiement confirmé ! 🎉
+          <h1 style={{ color: '#fff', fontWeight: 900, fontSize: 'clamp(1.4rem,4vw,2rem)', margin: '0 0 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+            <span>Paiement confirmé !</span>
+            <Sparkles style={{ width: '28px', height: '28px', color: '#6ee7b7' }} />
           </h1>
           <p style={{ color: '#D9D4FA', margin: '0 0 16px', fontSize: '0.95rem', lineHeight: 1.6 }}>
             {result.quantity} billet{result.quantity > 1 ? 's' : ''} pour <strong>{result.eventTitle}</strong><br />
             envoyé{result.quantity > 1 ? 's' : ''} à <strong>{result.buyerEmail}</strong>
           </p>
           <div style={{ display: 'inline-flex', gap: '16px', flexWrap: 'wrap', justifyContent: 'center' }}>
-            <div style={{ background: 'rgba(255,255,255,0.12)', borderRadius: '12px', padding: '8px 16px', fontSize: '0.82rem', color: '#D9D4FA' }}>
-              📧
+            <div style={{ background: 'rgba(255,255,255,0.12)', borderRadius: '12px', padding: '8px 16px', fontSize: '0.82rem', color: '#D9D4FA', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <Mail style={{ width: '14px', height: '14px' }} />
               Email envoyé
             </div>
-            <div style={{ background: 'rgba(255,255,255,0.12)', borderRadius: '12px', padding: '8px 16px', fontSize: '0.82rem', color: '#D9D4FA' }}>
-              💰 {result.totalPrice?.toLocaleString('fr-FR')} FCFA
+            <div style={{ background: 'rgba(255,255,255,0.12)', borderRadius: '12px', padding: '8px 16px', fontSize: '0.82rem', color: '#D9D4FA', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <DollarSign style={{ width: '14px', height: '14px' }} />
+              {result.totalPrice?.toLocaleString('fr-FR')} FCFA
             </div>
           </div>
         </div>
@@ -205,12 +208,12 @@ export default function ConfirmationPage() {
               <div style={{ background: 'linear-gradient(135deg,#1B0E78,#27149F)', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <p style={{ margin: 0, fontSize: '0.7rem', color: '#BDB6EE', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                    BILLET {i + 1}/{result.tickets.length} · {result.passName}
+                    BILLET {i + 1}/{result.tickets.length} — {result.passName}
                   </p>
                   <p style={{ margin: '4px 0 0', color: '#fff', fontWeight: 800, fontSize: '1rem' }}>{result.buyerName}</p>
                 </div>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '1.8rem' }}>🎟️</div>
+                  <Ticket style={{ width: '28px', height: '28px', color: '#BDB6EE' }} />
                 </div>
               </div>
 
@@ -226,8 +229,14 @@ export default function ConfirmationPage() {
                   <p style={{ margin: '0 0 12px', fontFamily: 'monospace', fontWeight: 900, fontSize: '1.1rem', color: 'var(--p)', letterSpacing: '0.05em' }}>
                     {ticket.ticketCode}
                   </p>
-                  <p style={{ margin: '0 0 4px', fontSize: '0.82rem', color: 'var(--mute)' }}>📅 {result.eventDate}</p>
-                  <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--mute)' }}>📍 {result.eventVenue}</p>
+                  <p style={{ margin: '0 0 4px', fontSize: '0.82rem', color: 'var(--mute)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Calendar style={{ width: '14px', height: '14px', flexShrink: 0 }} />
+                    {result.eventDate}
+                  </p>
+                  <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--mute)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <MapPin style={{ width: '14px', height: '14px', flexShrink: 0 }} />
+                    {result.eventVenue}
+                  </p>
                 </div>
               </div>
 
@@ -257,7 +266,10 @@ export default function ConfirmationPage() {
 
         {/* INFO */}
         <div style={{ background: 'var(--bg)', borderRadius: '16px', padding: '20px', border: '1.5px solid var(--line)', marginBottom: '20px' }}>
-          <p style={{ margin: '0 0 8px', fontWeight: 800, fontSize: '0.9rem' }}>📧 Vos billets sont dans votre boîte mail</p>
+          <p style={{ margin: '0 0 8px', fontWeight: 800, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Mail style={{ width: '16px', height: '16px', color: 'var(--p)' }} />
+            Vos billets sont dans votre boîte mail
+          </p>
           <p style={{ margin: 0, fontSize: '0.84rem', color: 'var(--mute)', lineHeight: 1.6 }}>
             Chaque billet a été envoyé à <strong>{result.buyerEmail}</strong> avec son QR code unique.
             Présentez ce QR code à l'entrée de l'événement.
@@ -265,8 +277,8 @@ export default function ConfirmationPage() {
         </div>
 
         <div style={{ textAlign: 'center' }}>
-          <Link href="/billetterie/evenements" style={{ color: 'var(--p)', fontWeight: 700, textDecoration: 'none', fontSize: '0.9rem' }}>
-            ← Voir d'autres événements
+          <Link href="/billetterie/evenements" style={{ color: 'var(--p)', fontWeight: 700, textDecoration: 'none', fontSize: '0.9rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <ArrowLeft className="w-4 h-4 inline mr-1" />Voir d'autres événements
           </Link>
         </div>
       </div>

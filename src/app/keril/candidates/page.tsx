@@ -7,7 +7,7 @@ import { AdminAuthGuard } from '@/components/AdminAuthGuard';
 import { CandidateFormModal } from '@/components/CandidateFormModal';
 import { INITIAL_CANDIDATES, INITIAL_COMPETITIONS, Candidate } from '@/data/mockData';
 import { getCandidates, createCandidate, deleteCandidate } from '@/services/dbService';
-import { UserPlus, Edit3, Trash2, Search } from 'lucide-react';
+import { UserPlus, Edit3, Trash2, Search, X } from 'lucide-react';
 
 export default function KerilCandidatesPage() {
   const [candidates, setCandidates] = useState<Candidate[]>(INITIAL_CANDIDATES);
@@ -214,7 +214,7 @@ export default function KerilCandidatesPage() {
                                 {cand.firstName} {cand.lastName}
                               </div>
                               <div className="mute" style={{ fontSize: '0.75rem', fontFamily: 'monospace' }}>
-                                N° {cand.candidateNumber} · Rang #{cand.rank}
+                                N° {cand.candidateNumber} - Rang #{cand.rank}
                               </div>
                             </div>
                           </div>
@@ -253,9 +253,9 @@ export default function KerilCandidatesPage() {
                                 <button
                                   type="button"
                                   onClick={() => setDeletingId(null)}
-                                  style={{ padding: '6px 8px', borderRadius: '99px', background: 'var(--soft)', color: 'var(--mute)', border: '1px solid var(--line)', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700 }}
+                                  style={{ padding: '6px 8px', borderRadius: '99px', background: 'var(--soft)', color: 'var(--mute)', border: '1px solid var(--line)', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                                 >
-                                  ✕
+                                  <X className="w-3.5 h-3.5" />
                                 </button>
                               </div>
                             ) : (

@@ -91,7 +91,7 @@ export default function CandidateDetailPage({
 
             setPaymentNotice({
               type: 'success',
-              title: '🎉 Vote Confirmé & Comptabilisé !',
+              title: 'Vote Confirmé & Comptabilisé !',
               message: `Votre paiement a été vérifié avec succès. ${data.voteCount || 1} vote(s) crédité(s) !`,
             });
 
@@ -101,14 +101,14 @@ export default function CandidateDetailPage({
             attempts++;
             setPaymentNotice({
               type: 'info',
-              title: '⏳ Validation du Paiement en cours...',
+              title: 'Validation du Paiement en cours...',
               message: 'Confirmation du débit Mobile Money auprès de l’opérateur...',
             });
             return false;
           } else {
             setPaymentNotice({
               type: 'info',
-              title: '📲 Validation Mobile Money',
+              title: 'Validation Mobile Money',
               message: 'Si vous avez validé la transaction, le vote sera comptabilisé automatiquement.',
             });
             window.history.replaceState({}, document.title, window.location.pathname);

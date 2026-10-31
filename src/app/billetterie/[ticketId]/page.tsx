@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { getAutoDomain } from '@/utils/domain';
+import { Loader2, AlertCircle, Ticket, CheckCircle2, XCircle, Lock, Camera, ArrowLeft } from 'lucide-react';
 
 interface TicketData {
   id: string;
@@ -78,7 +79,9 @@ export default function SingleTicketPage() {
     <>
       <Header />
       <div style={{ ...page, justifyContent: 'center' }}>
-        <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '1rem' }}>⏳ Chargement du billet…</div>
+        <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Loader2 className="w-5 h-5 animate-spin" /> Chargement du billet…
+        </div>
       </div>
     </>
   );
@@ -92,16 +95,20 @@ export default function SingleTicketPage() {
           borderRadius: '24px', border: '1.5px solid rgba(255,255,255,0.15)',
           padding: '40px 32px', textAlign: 'center', maxWidth: '360px',
         }}>
-          <div style={{ fontSize: '3rem', marginBottom: '12px' }}>⛔</div>
+          <div style={{ marginBottom: '12px', display: 'flex', justifyContent: 'center' }}>
+            <AlertCircle style={{ width: '48px', height: '48px', color: '#ef4444' }} />
+          </div>
           <h2 style={{ color: '#fff', fontWeight: 900, fontSize: '1.3rem', marginBottom: '8px' }}>Billet introuvable</h2>
           <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.9rem' }}>
             Le code <code style={{ color: '#D9D4FA' }}>{cleanCode}</code> ne correspond à aucun billet officiel.
           </p>
           <a href="/billetterie" style={{
-            display: 'inline-block', marginTop: '20px', padding: '10px 24px',
+            display: 'inline-flex', alignItems: 'center', gap: '6px', marginTop: '20px', padding: '10px 24px',
             borderRadius: '12px', background: 'rgba(255,255,255,0.12)',
             color: '#fff', fontWeight: 700, textDecoration: 'none',
-          }}>← Retour à la billetterie</a>
+          }}>
+            <ArrowLeft className="w-4 h-4" />Retour à la billetterie
+          </a>
         </div>
       </div>
     </>
@@ -114,8 +121,9 @@ export default function SingleTicketPage() {
       <Header />
       <div style={page}>
         {/* Title */}
-        <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '8px' }}>
-          🎟️ Billet Officiel
+        <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+          <Ticket style={{ width: '14px', height: '14px' }} />
+          Billet Officiel
         </p>
         <h1 style={{ color: '#fff', fontWeight: 900, fontSize: 'clamp(1.3rem,5vw,1.7rem)', marginBottom: '28px', textAlign: 'center' }}>
           {ticket?.eventTitle}
@@ -155,8 +163,19 @@ export default function SingleTicketPage() {
               color: isUsed ? '#fca5a5' : '#6ee7b7',
               fontSize: '0.72rem', fontWeight: 900,
               letterSpacing: '0.08em', whiteSpace: 'nowrap',
+              display: 'inline-flex', alignItems: 'center', gap: '5px',
             }}>
-              {isUsed ? '✗ UTILISÉ' : '✓ VALIDE'}
+              {isUsed ? (
+                <>
+                  <XCircle style={{ width: '12px', height: '12px' }} />
+                  UTILISÉ
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 style={{ width: '12px', height: '12px' }} />
+                  VALIDE
+                </>
+              )}
             </div>
           </div>
 
@@ -247,8 +266,9 @@ export default function SingleTicketPage() {
             justifyContent: 'space-between',
             alignItems: 'center',
           }}>
-            <p style={{ margin: 0, fontSize: '0.72rem', color: '#9ca3af', fontWeight: 600 }}>
-              🔒 Billet sécurisé & unique
+            <p style={{ margin: 0, fontSize: '0.72rem', color: '#9ca3af', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+              <Lock style={{ width: '12px', height: '12px' }} />
+              Billet sécurisé & unique
             </p>
             <p style={{ margin: 0, fontSize: '0.72rem', color: '#9ca3af', fontWeight: 600 }}>
               MK Prog © 2025
@@ -270,7 +290,7 @@ export default function SingleTicketPage() {
           gap: '14px',
           alignItems: 'flex-start',
         }}>
-          <span style={{ fontSize: '1.6rem', lineHeight: 1 }}>📸</span>
+          <Camera style={{ width: '24px', height: '24px', color: '#fff', flexShrink: 0, marginTop: '2px' }} />
           <div>
             <p style={{ color: '#fff', fontWeight: 800, fontSize: '0.92rem', margin: '0 0 4px' }}>
               Faites une capture d&apos;écran de votre billet !
@@ -291,9 +311,9 @@ export default function SingleTicketPage() {
           gap: '10px',
         }}>
           {[
-            { icon: '1️⃣', text: 'Faites une capture d\'écran de cette page maintenant' },
-            { icon: '2️⃣', text: 'Présentez le QR code à l\'entrée de l\'événement' },
-            { icon: '3️⃣', text: 'Un agent scannera votre billet pour valider l\'accès' },
+            { num: '1', text: 'Faites une capture d\'écran de cette page maintenant' },
+            { num: '2', text: 'Présentez le QR code à l\'entrée de l\'événement' },
+            { num: '3', text: 'Un agent scannera votre billet pour valider l\'accès' },
           ].map((step, i) => (
             <div key={i} style={{
               background: 'rgba(255,255,255,0.06)',
@@ -304,7 +324,9 @@ export default function SingleTicketPage() {
               alignItems: 'center',
               gap: '12px',
             }}>
-              <span style={{ fontSize: '1.2rem' }}>{step.icon}</span>
+              <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'rgba(255,255,255,0.15)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 800, flexShrink: 0 }}>
+                {step.num}
+              </span>
               <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.84rem', margin: 0, fontWeight: 500 }}>
                 {step.text}
               </p>
@@ -314,11 +336,11 @@ export default function SingleTicketPage() {
 
         {/* Back link */}
         <a href="/billetterie" style={{
-          display: 'inline-block', marginTop: '32px',
+          display: 'inline-flex', alignItems: 'center', gap: '6px', marginTop: '32px',
           color: 'rgba(255,255,255,0.45)', fontSize: '0.82rem',
           textDecoration: 'none', fontWeight: 600,
         }}>
-          ← Retour à la billetterie
+          <ArrowLeft className="w-4 h-4" />Retour à la billetterie
         </a>
       </div>
     </>

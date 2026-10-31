@@ -79,7 +79,7 @@ export default function CompetitionDetailPage() {
 
             setPaymentNotice({
               type: 'success',
-              title: '🎉 Vote Confirmé & Comptabilisé !',
+              title: 'Vote Confirmé & Comptabilisé !',
               message: `Votre paiement a été vérifié avec succès. ${data.voteCount || 1} vote(s) crédité(s) !`,
             });
 
@@ -89,14 +89,14 @@ export default function CompetitionDetailPage() {
             attempts++;
             setPaymentNotice({
               type: 'info',
-              title: '⏳ Validation du Paiement en cours...',
+              title: 'Validation du Paiement en cours...',
               message: 'Confirmation du débit Mobile Money auprès de l’opérateur...',
             });
             return false;
           } else {
             setPaymentNotice({
               type: 'info',
-              title: '📲 Validation Mobile Money',
+              title: 'Validation Mobile Money',
               message: 'Si vous avez validé le code USSD, le vote sera comptabilisé automatiquement.',
             });
             window.history.replaceState({}, document.title, window.location.pathname);
@@ -247,7 +247,7 @@ export default function CompetitionDetailPage() {
               )}
               <div>
                 <p className="eb" style={{ margin: 0 }}>
-                  {competition.status} · 1 VOTE = {competition.votePrice || 100} FCFA
+                  {competition.status} - 1 VOTE = {competition.votePrice || 100} FCFA
                 </p>
                 <h1 className="pt" style={{ marginTop: '4px' }}>{competition.title}</h1>
               </div>
@@ -259,7 +259,7 @@ export default function CompetitionDetailPage() {
               <span>Fin des votes dans :</span>
               <Countdown targetDate={competition.endDate} />
               <span className="mute" style={{ marginLeft: '12px' }}>
-                · {candidates.length > 0 ? candidates.length : (competition.totalCandidates || 1)} candidat{(candidates.length || competition.totalCandidates) > 1 ? 's' : ''} · {totalVotes.toLocaleString('fr-FR')} votes enregistrés
+                - {candidates.length > 0 ? candidates.length : (competition.totalCandidates || 1)} candidat{(candidates.length || competition.totalCandidates) > 1 ? 's' : ''} - {totalVotes.toLocaleString('fr-FR')} votes enregistrés
               </span>
             </div>
 

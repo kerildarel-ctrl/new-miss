@@ -145,7 +145,7 @@ export const CompetitionCard: React.FC<CompetitionCardProps> = ({ competition, c
       {/* GO FOOTER */}
       <div className="go">
         <span>
-          {actualCandidateCount} candidat{actualCandidateCount !== 1 ? 's' : ''} ·{' '}
+          {actualCandidateCount} candidat{actualCandidateCount !== 1 ? 's' : ''} -{' '}
           {competition.totalVotes.toLocaleString('fr-FR')} votes
         </span>
         <span>Voir →</span>

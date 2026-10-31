@@ -24,6 +24,8 @@ import {
   Zap,
   X,
   Globe,
+  XCircle,
+  ArrowRight,
 } from 'lucide-react';
 import { VoteMoiCard } from '@/components/VoteMoiCard';
 import { getAutoDomain, getOrganizerLink } from '@/utils/domain';
@@ -195,7 +197,7 @@ export default function KerilFinancesPage() {
       const data = await res.json();
       if (data.success) {
         await loadAllFinancials();
-        showToast(newStatus === 'PAID' ? 'Reversement marqué comme payé ✅' : 'Reversement rejeté.');
+        showToast(newStatus === 'PAID' ? 'Reversement marqué comme payé' : 'Reversement rejeté.');
       } else {
         showToast(data.error || 'Erreur lors de la mise à jour', 'error');
       }
@@ -224,7 +226,7 @@ export default function KerilFinancesPage() {
       });
       const data = await res.json();
       if (data.success) {
-        showToast(data.message || 'Virement Fapshi Disburse envoyé ✅');
+        showToast(data.message || 'Virement Fapshi Disburse envoyé');
         await loadAllFinancials();
       } else {
         showToast(data.error || 'Erreur Fapshi Disburse', 'error');
@@ -250,7 +252,7 @@ export default function KerilFinancesPage() {
         {/* TOAST NOTIFICATION */}
         {toast && (
           <div className={`fixed top-5 right-5 z-[9999] flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl text-sm font-bold text-white transition-all animate-fade-in ${toast.type === 'error' ? 'bg-red-600' : 'bg-emerald-600'}`}>
-            {toast.type === 'error' ? '❌' : '✅'} {toast.msg}
+            {toast.type === 'error' ? <XCircle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />} {toast.msg}
             <button onClick={() => setToast(null)} className="ml-2 opacity-70 hover:opacity-100 cursor-pointer">×</button>
           </div>
         )}
@@ -278,8 +280,9 @@ export default function KerilFinancesPage() {
                 <button onClick={() => setConfirmModal(null)} className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-600 dark:text-slate-300 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800">
                   Annuler
                 </button>
-                <button onClick={executePayWithFapshi} className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold cursor-pointer shadow-md shadow-indigo-500/25">
-                  Confirmer le virement →
+                <button onClick={executePayWithFapshi} className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold cursor-pointer shadow-md shadow-indigo-500/25 flex items-center justify-center gap-1.5">
+                  <span>Confirmer le virement</span>
+                  <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -296,7 +299,7 @@ export default function KerilFinancesPage() {
                 Gains Plateforme &amp; <span className="text-[var(--p)]">Paliers Organisateur</span>
               </h1>
               <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                Modèle d&apos;Alternative 1 actif : 75% à 83% pour l&apos;organisateur · 13% à 21% net pour VoteMoi · 4% frais API
+                Modèle d&apos;Alternative 1 actif : 75% à 83% pour l&apos;organisateur — 13% à 21% net pour VoteMoi — 4% frais API
               </p>
             </div>
 
@@ -468,7 +471,7 @@ export default function KerilFinancesPage() {
                             {tierData.organizerEarnings.toLocaleString('fr-FR')} FCFA
                           </div>
                           <div className="text-[10px] text-slate-400 font-medium mt-0.5">
-                            Versé : {paidAmount.toLocaleString('fr-FR')} F · Reste : {remainingToPay.toLocaleString('fr-FR')} F
+                            Versé : {paidAmount.toLocaleString('fr-FR')} F — Reste : {remainingToPay.toLocaleString('fr-FR')} F
                           </div>
                         </td>
                         <td className="py-4 px-4 font-black font-mono text-indigo-600 dark:text-indigo-400 text-sm">
@@ -607,7 +610,7 @@ export default function KerilFinancesPage() {
                         <td className="py-3.5 px-4">
                           <div className="font-bold">{payout.organizerName}</div>
                           <div className="text-[11px] text-slate-400 font-mono">
-                            {payout.operator === 'ORANGE_MONEY' ? 'Orange Money' : 'MTN MoMo'} · {payout.organizerPhone}
+                            {payout.operator === 'ORANGE_MONEY' ? 'Orange Money' : 'MTN MoMo'} — {payout.organizerPhone}
                           </div>
                         </td>
                         <td className="py-3.5 px-4 font-black text-sm text-slate-900 dark:text-white">

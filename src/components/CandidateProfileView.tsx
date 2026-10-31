@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Share2, Copy, Check, QrCode, MessageCircle } from 'lucide-react';
 import { VoteModal } from '@/components/VoteModal';
 import { Candidate, Competition } from '@/data/mockData';
 import { useLanguage } from '@/context/LanguageContext';
@@ -92,7 +93,7 @@ export function CandidateProfileView({
 
   const shareWhatsApp = () => {
     if (typeof window !== 'undefined') {
-      const text = `Soutenez et votez pour ${candidate.firstName} ${candidate.lastName} (#${candidateNumberClean}) dans ${competition?.title || 'la compétition'} ! 👉 ${profileUrl}`;
+      const text = `Soutenez et votez pour ${candidate.firstName} ${candidate.lastName} (#${candidateNumberClean}) dans ${competition?.title || 'la compétition'} ! ${profileUrl}`;
       window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
     }
   };
@@ -295,7 +296,7 @@ export function CandidateProfileView({
                     fontWeight: 500,
                   }}
                 >
-                  votes comptabilisés ({candidate.percentage || 0}% · Rang #{candidate.rank})
+                  votes comptabilisés ({candidate.percentage || 0}% - Rang #{candidate.rank})
                 </span>
               </div>
               <div className="cp-progress-track" style={{ height: '6px', maxWidth: '680px' }}>
@@ -341,7 +342,9 @@ export function CandidateProfileView({
               <label
                 className="cp-section-label"
                 style={{
-                  display: 'block',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
                   marginBottom: '10px',
                   fontFamily: "var(--font-poppins), 'Poppins', sans-serif",
                   fontWeight: 700,
@@ -349,7 +352,8 @@ export function CandidateProfileView({
                   color: 'var(--ink)',
                 }}
               >
-                🔗 {t('profile.share', 'Partager ce profil')}
+                <Share2 className="w-4 h-4" />
+                <span>{t('profile.share', 'Partager ce profil')}</span>
               </label>
 
               {/* BOUTONS D'ACTION */}
@@ -375,7 +379,7 @@ export function CandidateProfileView({
                     transition: 'all 0.2s',
                   }}
                 >
-                  <span>{copied ? '✓' : '📋'}</span>
+                  {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
                   <span>{copied ? t('profile.copied', 'Lien copié !') : t('profile.copyLink', 'Copier le lien')}</span>
                 </button>
 
@@ -400,7 +404,7 @@ export function CandidateProfileView({
                     transition: 'all 0.2s',
                   }}
                 >
-                  <span>📱</span>
+                  <QrCode className="w-4 h-4" />
                   <span>{showQrCode ? t('profile.qrHide', 'Masquer le QR code') : t('profile.qrShow', 'Afficher le QR code')}</span>
                 </button>
 
@@ -423,7 +427,7 @@ export function CandidateProfileView({
                     cursor: 'pointer',
                   }}
                 >
-                  <span>💬</span>
+                  <MessageCircle className="w-4 h-4" />
                   <span>WhatsApp</span>
                 </button>
               </div>
@@ -446,7 +450,7 @@ export function CandidateProfileView({
                   }}
                 >
                   <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'var(--p)', fontSize: '0.82rem', fontWeight: 600, marginBottom: '8px' }}>
-                    <span>📱</span>
+                    <QrCode className="w-4 h-4" />
                     <span>{t('profile.qrBadge', 'QR code officiel du profil')}</span>
                   </div>
 

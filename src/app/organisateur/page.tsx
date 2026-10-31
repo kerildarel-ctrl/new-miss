@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
-import { KeyRound, ArrowRight, ShieldCheck, Lock, Sparkles, AlertCircle } from 'lucide-react';
+import { KeyRound, ArrowRight, ShieldCheck, Lock, Sparkles, AlertCircle, Medal, Gem } from 'lucide-react';
 
 export default function OrganisateurIndexPage() {
   const [accessKey, setAccessKey] = useState('');
@@ -106,16 +106,25 @@ export default function OrganisateurIndexPage() {
               <span>Grille de commission par paliers incitatifs :</span>
             </div>
             <ul className="mt-2.5 space-y-1.5 text-[11px] text-slate-600 dark:text-slate-300 font-medium">
-              <li className="flex justify-between">
-                <span>🥉 <b>Palier 1</b> (1 à 2 000 votes)</span>
+              <li className="flex justify-between items-center">
+                <span className="inline-flex items-center gap-1.5">
+                  <Medal className="w-3.5 h-3.5 text-amber-700" />
+                  <span><b>Palier 1</b> (1 à 2 000 votes)</span>
+                </span>
                 <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">75 FCFA / vote</span>
               </li>
-              <li className="flex justify-between">
-                <span>🥈 <b>Palier 2</b> (2 001 à 10 000 votes)</span>
+              <li className="flex justify-between items-center">
+                <span className="inline-flex items-center gap-1.5">
+                  <Medal className="w-3.5 h-3.5 text-slate-400" />
+                  <span><b>Palier 2</b> (2 001 à 10 000 votes)</span>
+                </span>
                 <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">80 FCFA / vote</span>
               </li>
-              <li className="flex justify-between">
-                <span>💎 <b>Palier 3</b> (Au-delà de 10 000 votes)</span>
+              <li className="flex justify-between items-center">
+                <span className="inline-flex items-center gap-1.5">
+                  <Gem className="w-3.5 h-3.5 text-cyan-500" />
+                  <span><b>Palier 3</b> (Au-delà de 10 000 votes)</span>
+                </span>
                 <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">83 FCFA / vote</span>
               </li>
             </ul>
