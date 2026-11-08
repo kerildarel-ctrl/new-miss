@@ -5,7 +5,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { Header } from '@/components/Header';
-import { Footer } from '@/components/Footer';
 import { CandidateCard } from '@/components/CandidateCard';
 import { Countdown } from '@/components/Countdown';
 import { VoteModal } from '@/components/VoteModal';
@@ -346,7 +345,6 @@ export default function CompetitionDetailPage() {
         onConfirmVote={handleConfirmVote}
       />
 
-      <Footer />
     </>
   );
 }
