@@ -139,16 +139,19 @@ export default function CompetitionDetailPage() {
     );
   };
 
-  const filteredCandidates = candidates.filter((cand) => {
-    const matchesCategory = categoryFilter === 'TOUT' || cand.category === categoryFilter;
-    const matchesSearch =
-      cand.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      cand.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      cand.candidateNumber.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+  const filteredCandidates = candidates
+    .filter((cand) => {
+      const matchesCategory = categoryFilter === 'TOUT' || cand.category === categoryFilter;
+      const matchesSearch =
+        cand.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        cand.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        cand.candidateNumber.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesCategory && matchesSearch;
+    })
+    .sort((a, b) => b.voteCount - a.voteCount);
 
   const totalVotes = candidates.reduce((sum, c) => sum + c.voteCount, 0);
+  const maxVotes = filteredCandidates.length > 0 ? filteredCandidates[0].voteCount : 1;
 
   if (isLoading) {
     return (
@@ -319,12 +322,13 @@ export default function CompetitionDetailPage() {
                 </p>
               </div>
             ) : (
-              <div className="pcs">
+              <div className="pcs-dark">
                 {filteredCandidates.map((candidate, idx) => (
                   <CandidateCard
                     key={candidate.id}
                     candidate={candidate}
-                    index={idx}
+                    rank={idx + 1}
+                    maxVotes={maxVotes}
                     onVoteClick={handleVoteClick}
                   />
                 ))}
