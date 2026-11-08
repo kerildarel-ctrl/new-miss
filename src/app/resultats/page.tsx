@@ -1,8 +1,7 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Header } from '@/components/Header';
-import { Footer } from '@/components/Footer';
 import { getCompetitions, getCandidates } from '@/services/dbService';
 import { Competition, Candidate } from '@/data/mockData';
 import { RefreshCw } from 'lucide-react';
@@ -241,8 +240,6 @@ export default function ResultatsPage() {
           </div>
         </section>
       </main>
-
-      <Footer />
     </>
   );
 }

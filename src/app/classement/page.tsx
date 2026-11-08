@@ -1,8 +1,7 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import { Header } from '@/components/Header';
-import { Footer } from '@/components/Footer';
 import { Podium } from '@/components/Podium';
 import { RankingCard } from '@/components/RankingCard';
 import { VoteModal } from '@/components/VoteModal';
@@ -185,8 +184,6 @@ export default function ClassementPage() {
         onClose={() => setIsVoteModalOpen(false)}
         onConfirmVote={handleConfirmVote}
       />
-
-      <Footer />
     </>
   );
 }

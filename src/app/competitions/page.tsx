@@ -1,8 +1,7 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import { Header } from '@/components/Header';
-import { Footer } from '@/components/Footer';
 import { CompetitionCard } from '@/components/CompetitionCard';
 import { getCompetitions } from '@/services/dbService';
 import { Competition } from '@/data/mockData';
@@ -95,8 +94,6 @@ export default function CompetitionsPage() {
           </div>
         </section>
       </main>
-
-      <Footer />
     </>
   );
 }

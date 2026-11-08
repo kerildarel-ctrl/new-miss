@@ -1,10 +1,9 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Header } from '@/components/Header';
-import { Footer } from '@/components/Footer';
 import {
   Ticket, Bell, CheckCircle2, QrCode, CreditCard,
   ArrowRight, Calendar, MapPin, Sparkles,
@@ -236,8 +235,6 @@ export default function BilletteriePage() {
 
         </div>
       </main>
-
-      <Footer />
     </>
   );
 }

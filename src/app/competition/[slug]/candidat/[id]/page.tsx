@@ -3,7 +3,7 @@
 import React, { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import { Header } from '@/components/Header';
-import { Footer } from '@/components/Footer';
+
 import { CandidateProfileView } from '@/components/CandidateProfileView';
 import { getCompetitions, getCandidates, submitVote } from '@/services/dbService';
 import { Candidate, Competition } from '@/data/mockData';
@@ -59,7 +59,7 @@ export default function CandidateDetailPage({
         <main style={{ padding: '80px 0', textAlign: 'center', color: 'var(--mute)' }}>
           Chargement du profil du candidat...
         </main>
-        <Footer />
+
       </>
     );
   }
@@ -79,7 +79,7 @@ export default function CandidateDetailPage({
             </Link>
           </div>
         </main>
-        <Footer />
+
       </>
     );
   }
@@ -95,8 +95,6 @@ export default function CandidateDetailPage({
           onConfirmVote={handleConfirmVote}
         />
       </main>
-
-      <Footer />
     </>
   );
 }

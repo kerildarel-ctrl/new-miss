@@ -1,9 +1,8 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/Header';
-import { Footer } from '@/components/Footer';
 import { KeyRound, ArrowRight, ShieldCheck, Lock, Sparkles, AlertCircle, Medal, Gem } from 'lucide-react';
 
 export default function OrganisateurIndexPage() {
@@ -138,7 +137,6 @@ export default function OrganisateurIndexPage() {
 
         </div>
       </main>
-      <Footer />
     </>
   );
 }

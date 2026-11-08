@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Header } from '@/components/Header';
-import { Footer } from '@/components/Footer';
+
 import {
   Trophy,
   Vote,
@@ -620,8 +620,6 @@ export default function OrganisateurDashboardPage() {
           </div>
         </div>
       )}
-
-      <Footer />
     </>
   );
 }

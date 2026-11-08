@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { Header } from '@/components/Header';
-import { Footer } from '@/components/Footer';
 import { saveEventRequest } from '@/services/dbService';
 import { useLanguage } from '@/context/LanguageContext';
 import {
@@ -383,7 +382,6 @@ export default function CreerEvenementPage() {
 
         </div>
       </main>
-      <Footer />
     </>
   );
 }
