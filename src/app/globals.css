@@ -416,24 +416,13 @@ section {
   margin-top: 24px;
 }
 
-.candidate-card-new:hover {
+.pcs-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 36px rgba(0,0,0,0.5) !important;
-}
-
-@media (min-width: 640px) {
-  .pcs-dark {
-    grid-template-columns: repeat(2, 1fr);
-    max-width: 540px;
-    margin-left: auto;
-    margin-right: auto;
-  }
 }
 
 @media (min-width: 1024px) {
   .pcs-dark {
     grid-template-columns: repeat(4, 1fr);
-    max-width: 100%;
   }
 }
 
@@ -498,7 +487,7 @@ section {
   position: absolute;
   left: 10px;
   top: 10px;
-  font-size: 0.76rem;
+  font-size: 0.72rem;
   font-weight: 700;
   font-style: normal;
   background: rgba(15, 23, 42, 0.65);
@@ -506,10 +495,30 @@ section {
   -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: #ffffff;
-  padding: 4px 12px;
-  border-radius: 99px;
+  padding: 4px 10px;
+  border-radius: 8px;
   z-index: 2;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.vote-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  padding: 4px 9px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  z-index: 2;
 }
 
 .ph em.one {
