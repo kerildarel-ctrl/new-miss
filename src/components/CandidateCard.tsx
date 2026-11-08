@@ -3,7 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Zap, TrendingUp } from 'lucide-react';
+import { TrendingUp } from 'lucide-react';
 import { Candidate } from '@/data/mockData';
 
 interface CandidateCardProps {
@@ -75,9 +75,6 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
           <p style={{ margin: 0, fontWeight: 900, fontSize: '0.9rem', lineHeight: 1.2 }}>
             {truncatedName}
           </p>
-          <p style={{ margin: '2px 0 0', fontSize: '0.7rem', color: 'var(--mute)', fontWeight: 600, letterSpacing: '0.03em', textTransform: 'uppercase' }}>
-            {candidate.category}{candidate.candidateNumber ? ` · ${candidate.candidateNumber}` : ''}
-          </p>
         </Link>
 
         {/* Evolution bar */}
@@ -106,9 +103,8 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
           type="button"
           className="btn full"
           onClick={() => onVoteClick && onVoteClick(candidate)}
-          style={{ marginTop: '2px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px 0' }}
+          style={{ marginTop: '2px', padding: '10px 0' }}
         >
-          <Zap style={{ width: 14, height: 14 }} />
           VOTER
         </button>
       </div>
